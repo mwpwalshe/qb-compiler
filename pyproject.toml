@@ -1,0 +1,144 @@
+[build-system]
+requires = ["hatchling>=1.25.0", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qb-compiler"
+dynamic = ["version"]
+description = "Calibration-aware quantum circuit compiler. Compiles circuits that survive today's hardware."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "QubitBoost", email = "compiler@qubitboost.io" },
+]
+keywords = [
+    "quantum", "compiler", "transpiler", "calibration", "noise-aware",
+    "qiskit", "quantum-computing", "qec", "error-correction",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.26,<3.0",
+    "rustworkx>=0.14,<1.0",
+]
+
+[project.optional-dependencies]
+qiskit = [
+    "qiskit>=1.0,<2.0",
+]
+cirq = [
+    "cirq-core>=1.3,<2.0",
+]
+braket = [
+    "amazon-braket-sdk>=1.75,<2.0",
+]
+openqasm = [
+    "openqasm3>=1.0,<2.0",
+]
+ml = [
+    "torch>=2.2,<3.0",
+]
+full = [
+    "qb-compiler[qiskit,openqasm]",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "pytest-benchmark>=4.0",
+    "pytest-timeout>=2.2",
+    "pytest-mock>=3.12",
+    "ruff>=0.5.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6",
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+    "myst-parser>=3.0",
+    "nbsphinx>=0.9",
+]
+
+[project.scripts]
+qbc = "qb_compiler.cli.main:cli"
+
+[project.entry-points."qiskit.transpiler.stage"]
+qb_calibration_mapping = "qb_compiler.qiskit_plugin:QBCalibrationMappingStage"
+
+[project.urls]
+Homepage = "https://github.com/qubitboost/qb-compiler"
+Documentation = "https://qb-compiler.readthedocs.io"
+Repository = "https://github.com/qubitboost/qb-compiler"
+Issues = "https://github.com/qubitboost/qb-compiler/issues"
+Changelog = "https://github.com/qubitboost/qb-compiler/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qb_compiler"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "TCH"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["qb_compiler"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "unit: Unit tests (fast, no I/O)",
+    "integration: Integration tests (may need extras)",
+    "benchmark: Performance benchmarks",
+    "requires_qiskit: Requires qiskit extra",
+    "requires_cirq: Requires cirq extra",
+    "requires_braket: Requires braket extra",
+    "slow: Tests that take >10s",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src/qb_compiler"]
+branch = true
+omit = [
+    "*/cli/*",
+    "*/telemetry/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "\\.{3}$",
+]
+fail_under = 80
+show_missing = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
