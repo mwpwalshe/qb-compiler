@@ -141,6 +141,36 @@ a new hardware backend:
 5. **Add a configuration entry** so the CLI and transpiler plugin can reference
    the backend by name.
 
+## ML Models
+
+ML models live in `src/qb_compiler/ml/`. The pipeline has four phases:
+
+| Phase | Module | Architecture | Install |
+|-------|--------|-------------|---------|
+| 1 | `data_generator.py` | Training data pipeline | Core |
+| 2 | `layout_predictor.py` | XGBoost qubit scorer | `[ml]` |
+| 3 | `gnn_router.py` | Dual-graph GCN | `[gnn]` |
+| 4 | `rl_router.py` | PPO SWAP routing | `[gnn]` |
+
+**Model weights** are stored in `src/qb_compiler/ml/_weights/` with
+`*.meta.json` metadata files. To retrain:
+
+```bash
+# Phase 2: XGBoost
+python -m qb_compiler.ml.train
+
+# Phase 3: GNN
+python -c "from qb_compiler.ml.gnn_router import train_gnn_model; train_gnn_model()"
+```
+
+**Adding a new ML model:**
+1. Create the model in `src/qb_compiler/ml/`.
+2. Follow the `predict_candidate_qubits(circuit, backend) -> list[int]` interface
+   so it's plug-compatible with `CalibrationMapper`.
+3. Save weights in `_weights/` with a `.meta.json` metadata file.
+4. Write tests in `tests/unit/test_ml/`.
+5. Guard imports behind optional dependency checks (see `ml/__init__.py`).
+
 ## Pull Request Process
 
 **Branch naming:**

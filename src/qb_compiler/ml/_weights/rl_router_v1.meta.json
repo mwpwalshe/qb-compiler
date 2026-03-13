@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "architecture": "ppo_actor_critic",
+  "state_dim": 64,
+  "hidden_dim": 128,
+  "n_actions": 177,
+  "n_parameters": 47794,
+  "model_size_bytes": 194899,
+  "n_episodes": 100,
+  "final_avg_reward": -1.9572628611198293,
+  "final_avg_swaps": 49.25,
+  "backend": "ibm_fez"
+}

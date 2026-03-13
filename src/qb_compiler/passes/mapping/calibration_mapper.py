@@ -7,10 +7,39 @@ scores candidate mappings by combining:
 - **Gate error rates** — prefer lower-error 2Q links
 - **Qubit coherence** — prefer higher T1/T2 qubits
 - **Readout error** — prefer lower-error measurement qubits for output qubits
+- **T1 asymmetry** — penalise qubits where |1⟩ decays disproportionately
+- **Temporal correlation** — penalise qubit pairs with correlated error drift
 - **Weighted scoring** combining all factors
 
 The pass uses ``rustworkx.vf2_mapping`` for subgraph isomorphism search
 to enumerate candidate layouts, scores each one, and picks the best.
+
+T1 Asymmetry
+~~~~~~~~~~~~
+
+On superconducting qubits, the probability of reading ``0`` when the qubit
+is in ``|1⟩`` (relaxation, P(0|1)) can be 10-25x higher than reading ``1``
+when the qubit is in ``|0⟩`` (thermal excitation, P(1|0)).  This asymmetry
+means circuits that hold qubits in ``|1⟩`` — after X gates, as CNOT
+targets, or in long-lived entangled states — lose fidelity faster on
+high-asymmetry qubits.
+
+Standard transpilers use the *symmetrised* readout error and miss this
+effect entirely.  CalibrationMapper uses the raw asymmetric readout data
+(``readout_error_0to1`` vs ``readout_error_1to0``) to penalise
+high-asymmetry qubits.
+
+Temporal Correlation
+~~~~~~~~~~~~~~~~~~~~
+
+When calibration data from multiple time points is available, the mapper
+can detect qubit pairs whose error rates co-vary.  Correlated errors
+violate the independent-error assumption used by quantum error correction
+codes, reducing effective code distance.  Penalising correlated edges
+during layout selection reduces exposure to this failure mode.
+
+For real-time correlation monitoring, see QubitBoost SafetyGate
+(requires ``qubitboost-sdk``).
 """
 
 from __future__ import annotations
@@ -31,6 +60,10 @@ if TYPE_CHECKING:
     from qb_compiler.calibration.models.coupling_properties import GateProperties
     from qb_compiler.calibration.models.qubit_properties import QubitProperties
     from qb_compiler.calibration.provider import CalibrationProvider
+    from qb_compiler.ml.layout_predictor import MLLayoutPredictor
+    from qb_compiler.passes.mapping.temporal_correlation import (
+        TemporalCorrelationAnalyzer,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +79,8 @@ _DEFAULT_T2_US = 80.0
 _DEFAULT_GATE_ERROR_WEIGHT = 10.0
 _DEFAULT_QUBIT_COHERENCE_WEIGHT = 0.3
 _DEFAULT_READOUT_WEIGHT = 5.0
+_DEFAULT_T1_ASYMMETRY_WEIGHT = 3.0
+_DEFAULT_CORRELATION_WEIGHT = 2.0
 
 
 @dataclass
@@ -60,6 +95,14 @@ class CalibrationMapperConfig:
         Weight of qubit coherence (1/T1 + 1/T2) contribution.
     readout_weight:
         Weight of readout error contribution.
+    t1_asymmetry_weight:
+        Weight of T1 asymmetry penalty.  Penalises qubits where
+        P(0|1) >> P(1|0), indicating fast |1⟩ state decay.
+        Set to 0 to disable.
+    correlation_weight:
+        Weight of temporal error correlation penalty.  Penalises
+        qubit pairs whose errors co-vary across calibration snapshots.
+        Requires a :class:`TemporalCorrelationAnalyzer`.  Set to 0 to disable.
     max_candidates:
         Maximum number of VF2 candidate mappings to evaluate.
         Higher values give better solutions but take longer.
@@ -71,6 +114,8 @@ class CalibrationMapperConfig:
     gate_error_weight: float = _DEFAULT_GATE_ERROR_WEIGHT
     coherence_weight: float = _DEFAULT_QUBIT_COHERENCE_WEIGHT
     readout_weight: float = _DEFAULT_READOUT_WEIGHT
+    t1_asymmetry_weight: float = _DEFAULT_T1_ASYMMETRY_WEIGHT
+    correlation_weight: float = _DEFAULT_CORRELATION_WEIGHT
     max_candidates: int = 10_000
     vf2_call_limit: int | None = 100_000
 
@@ -88,14 +133,22 @@ class CalibrationMapper(TransformationPass):
         a :class:`CalibrationProvider` or a :class:`BackendProperties`.
     config:
         Optional scoring and search tuning parameters.
+    correlation_analyzer:
+        Optional temporal correlation analyzer.  When provided, the mapper
+        penalises layouts that place interacting qubits on physically
+        correlated edges.
     """
 
     def __init__(
         self,
         calibration: CalibrationProvider | BackendProperties,
         config: CalibrationMapperConfig | None = None,
+        correlation_analyzer: TemporalCorrelationAnalyzer | None = None,
+        layout_predictor: MLLayoutPredictor | None = None,
     ) -> None:
         self._config = config or CalibrationMapperConfig()
+        self._correlation = correlation_analyzer
+        self._layout_predictor = layout_predictor
 
         # Normalise input into uniform lookup structures
         if isinstance(calibration, BackendProperties):
@@ -159,15 +212,25 @@ class CalibrationMapper(TransformationPass):
         # Step 4: apply the mapping to produce a new circuit
         mapped_circuit = self._apply_layout(circuit, layout)
 
+        # Build detailed scoring breakdown for diagnostics
+        breakdown = self._score_breakdown(layout, interactions, circuit)
+
         # Record results in context
         context["initial_layout"] = dict(layout)
         context["calibration_score"] = score
+        context["score_breakdown"] = breakdown
 
         logger.info(
-            "CalibrationMapper: mapped %d logical -> %d physical qubits, score=%.6f",
+            "CalibrationMapper: mapped %d logical -> %d physical qubits, "
+            "score=%.6f (gate=%.4f coh=%.4f ro=%.4f asym=%.4f corr=%.4f)",
             n_logical,
             self._n_physical,
             score,
+            breakdown.get("gate_error", 0),
+            breakdown.get("coherence", 0),
+            breakdown.get("readout", 0),
+            breakdown.get("t1_asymmetry", 0),
+            breakdown.get("correlation", 0),
         )
 
         return PassResult(
@@ -175,6 +238,7 @@ class CalibrationMapper(TransformationPass):
             metadata={
                 "initial_layout": dict(layout),
                 "calibration_score": score,
+                "score_breakdown": breakdown,
             },
             modified=True,
         )
@@ -200,7 +264,7 @@ class CalibrationMapper(TransformationPass):
     # ── qubit scoring helpers ────────────────────────────────────────
 
     def _qubit_score(self, physical_qubit: int) -> float:
-        """Lower is better.  Combines coherence and readout error."""
+        """Lower is better.  Combines coherence, readout error, and T1 asymmetry."""
         qp = self._qubit_map.get(physical_qubit)
         t1 = qp.t1_us if (qp and qp.t1_us) else _DEFAULT_T1_US
         t2 = qp.t2_us if (qp and qp.t2_us) else _DEFAULT_T2_US
@@ -209,13 +273,28 @@ class CalibrationMapper(TransformationPass):
         )
 
         # Coherence contribution: higher T1/T2 → lower score
-        # Use 1/T1 + 1/T2 scaled to a [0,1]-ish range
         coherence_term = (1.0 / t1 + 1.0 / t2) * 10.0  # scale factor
 
-        return (
+        score = (
             self._config.coherence_weight * coherence_term
             + self._config.readout_weight * readout
         )
+
+        # T1 asymmetry penalty
+        if self._config.t1_asymmetry_weight > 0 and qp is not None:
+            score += self._config.t1_asymmetry_weight * qp.t1_asymmetry_penalty
+
+        # Temporal volatility penalty (if available)
+        if (
+            self._config.correlation_weight > 0
+            and self._correlation is not None
+        ):
+            vol = self._correlation.qubit_volatility(physical_qubit)
+            # Volatility is in readout error units (e.g. 0.01 = 1% swing)
+            # Scale up to be comparable with other terms
+            score += self._config.correlation_weight * vol * 100.0
+
+        return score
 
     def _edge_score(
         self, phys_a: int, phys_b: int, interaction_count: int
@@ -223,7 +302,26 @@ class CalibrationMapper(TransformationPass):
         """Score for mapping a logical 2Q interaction to a physical edge."""
         # Look up the gate error for this physical edge
         error = self._get_two_qubit_error(phys_a, phys_b)
-        return self._config.gate_error_weight * error * interaction_count
+        score = self._config.gate_error_weight * error * interaction_count
+
+        # Temporal correlation penalty
+        if (
+            self._config.correlation_weight > 0
+            and self._correlation is not None
+        ):
+            corr = self._correlation.edge_correlation(phys_a, phys_b)
+            # Positive correlation = errors move together = bad for QEC
+            # Scale by interaction count: more interactions on a correlated
+            # edge means more exposure
+            if corr > 0:
+                score += (
+                    self._config.correlation_weight
+                    * corr
+                    * interaction_count
+                    * 0.01  # scale to be comparable with gate error terms
+                )
+
+        return score
 
     def _get_two_qubit_error(self, phys_a: int, phys_b: int) -> float:
         """Best 2Q gate error between phys_a and phys_b in either direction."""
@@ -260,6 +358,63 @@ class CalibrationMapper(TransformationPass):
             score += self._edge_score(phys_a, phys_b, count)
 
         return score
+
+    def _score_breakdown(
+        self,
+        layout: dict[int, int],
+        interactions: dict[tuple[int, int], int],
+        circuit: QBCircuit,
+    ) -> dict[str, float]:
+        """Detailed per-component score breakdown for diagnostics."""
+        gate_err = 0.0
+        coherence = 0.0
+        readout = 0.0
+        t1_asym = 0.0
+        correlation = 0.0
+
+        for _logical_q, physical_q in layout.items():
+            qp = self._qubit_map.get(physical_q)
+            t1 = qp.t1_us if (qp and qp.t1_us) else _DEFAULT_T1_US
+            t2 = qp.t2_us if (qp and qp.t2_us) else _DEFAULT_T2_US
+            ro = (
+                qp.readout_error
+                if (qp and qp.readout_error is not None)
+                else _DEFAULT_READOUT_ERROR
+            )
+
+            coherence_term = (1.0 / t1 + 1.0 / t2) * 10.0
+            coherence += self._config.coherence_weight * coherence_term
+            readout += self._config.readout_weight * ro
+
+            if self._config.t1_asymmetry_weight > 0 and qp is not None:
+                t1_asym += self._config.t1_asymmetry_weight * qp.t1_asymmetry_penalty
+
+            if self._config.correlation_weight > 0 and self._correlation is not None:
+                vol = self._correlation.qubit_volatility(physical_q)
+                correlation += self._config.correlation_weight * vol * 100.0
+
+        for (log_a, log_b), count in interactions.items():
+            phys_a = layout[log_a]
+            phys_b = layout[log_b]
+            error = self._get_two_qubit_error(phys_a, phys_b)
+            gate_err += self._config.gate_error_weight * error * count
+
+            if self._config.correlation_weight > 0 and self._correlation is not None:
+                corr = self._correlation.edge_correlation(phys_a, phys_b)
+                if corr > 0:
+                    correlation += (
+                        self._config.correlation_weight
+                        * corr * count * 0.01
+                    )
+
+        return {
+            "gate_error": gate_err,
+            "coherence": coherence,
+            "readout": readout,
+            "t1_asymmetry": t1_asym,
+            "correlation": correlation,
+            "total": gate_err + coherence + readout + t1_asym + correlation,
+        }
 
     # ── best individual qubits (no 2Q gates) ─────────────────────────
 
@@ -308,11 +463,40 @@ class CalibrationMapper(TransformationPass):
                     logical_nodes[q] = logical_graph.add_node(q)
             logical_graph.add_edge(logical_nodes[log_a], logical_nodes[log_b], None)
 
+        # ML-accelerated candidate filtering: restrict physical graph
+        # to the top-K most promising qubits predicted by the ML model.
+        ml_candidates: set[int] | None = None
+        if self._layout_predictor is not None and self._backend_props is not None:
+            try:
+                candidate_list = self._layout_predictor.predict_candidate_qubits(
+                    circuit, self._backend_props
+                )
+                ml_candidates = set(candidate_list)
+                logger.info(
+                    "ML predictor narrowed search to %d/%d physical qubits",
+                    len(ml_candidates),
+                    self._n_physical,
+                )
+            except Exception:
+                logger.warning(
+                    "ML predictor failed, falling back to full search",
+                    exc_info=True,
+                )
+
         # Build physical coupling graph (undirected)
+        # If ML candidates are available, only include those qubits.
+        coupling_edges = self._coupling_map
+        if ml_candidates is not None:
+            coupling_edges = [
+                (q1, q2)
+                for q1, q2 in self._coupling_map
+                if q1 in ml_candidates and q2 in ml_candidates
+            ]
+
         physical_graph = rx.PyGraph()
         physical_nodes: dict[int, int] = {}  # physical qubit -> node index
         seen_edges: set[tuple[int, int]] = set()
-        for (q1, q2) in self._coupling_map:
+        for (q1, q2) in coupling_edges:
             for q in (q1, q2):
                 if q not in physical_nodes:
                     physical_nodes[q] = physical_graph.add_node(q)
@@ -362,6 +546,14 @@ class CalibrationMapper(TransformationPass):
 
             n_evaluated += 1
 
+        if best_layout is None and ml_candidates is not None:
+            # ML-restricted search found nothing — retry with full graph
+            logger.info(
+                "CalibrationMapper: ML-restricted VF2 found no mapping, "
+                "retrying with full coupling map"
+            )
+            return self._find_best_layout_full(circuit, interactions)
+
         if best_layout is None:
             # VF2 found no subgraph isomorphism — fall back to greedy
             logger.warning(
@@ -379,6 +571,20 @@ class CalibrationMapper(TransformationPass):
             best_score,
         )
         return best_layout
+
+    def _find_best_layout_full(
+        self,
+        circuit: QBCircuit,
+        interactions: dict[tuple[int, int], int],
+    ) -> dict[int, int]:
+        """Run VF2 without ML filtering (fallback)."""
+        # Temporarily disable the ML predictor for one call
+        predictor = self._layout_predictor
+        self._layout_predictor = None
+        try:
+            return self._find_best_layout(circuit, interactions)
+        finally:
+            self._layout_predictor = predictor
 
     def _complete_layout(
         self, circuit: QBCircuit, partial: dict[int, int]

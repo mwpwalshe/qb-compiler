@@ -49,7 +49,6 @@ __all__ = [
     "BudgetExceededError",
     "CalibrationError",
     "CalibrationNotFoundError",
-    # protocols
     "CalibrationProvider",
     "CalibrationStaleError",
     "CompilationError",
@@ -60,14 +59,23 @@ __all__ = [
     "GateOp",
     "InvalidCircuitError",
     "NoiseModel",
-    # passes
     "PassManager",
     "PassResult",
     "QBCircuit",
-    # compiler
     "QBCompiler",
-    # exceptions
     "QBCompilerError",
-    # version
     "__version__",
 ]
+
+
+def _lazy_ml_imports() -> None:
+    """Populate ML classes into module namespace on first access.
+
+    Usage::
+
+        from qb_compiler.ml import is_available, is_gnn_available
+        if is_available():
+            from qb_compiler.ml.layout_predictor import MLLayoutPredictor
+        if is_gnn_available():
+            from qb_compiler.ml.gnn_router import GNNLayoutPredictor
+    """

@@ -713,12 +713,30 @@ def _run_calibration_pipeline(
         coherence_weight=0.3,     # Secondary: prefer longer-lived qubits
         readout_weight=5.0,       # Readout error ~5x CZ error on IBM Heron
     )
+    # Auto-detect ML layout predictor if available
+    layout_predictor = None
     try:
-        mapper = CalibrationMapper(calibration_props, config=mapper_config)
+        from qb_compiler.ml import is_available as _ml_available
+
+        if _ml_available():
+            from qb_compiler.ml.layout_predictor import MLLayoutPredictor
+
+            layout_predictor = MLLayoutPredictor.load_bundled("ibm_heron")
+            logger.info("ML layout predictor loaded")
+    except Exception:
+        pass  # ML not available or weights missing — use standard VF2
+
+    try:
+        mapper = CalibrationMapper(
+            calibration_props,
+            config=mapper_config,
+            layout_predictor=layout_predictor,
+        )
         result = mapper.run(ir_circ, context)
         ir_circ = result.circuit
         metadata["calibration_mapper"] = result.metadata
         metadata["initial_layout"] = context.get("initial_layout", {})
+        metadata["ml_layout_predictor"] = layout_predictor is not None
     except Exception as e:
         logger.warning("CalibrationMapper failed, skipping: %s", e)
         metadata["calibration_mapper_error"] = str(e)
