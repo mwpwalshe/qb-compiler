@@ -7,9 +7,7 @@ so that millions of them can live in memory without overhead.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-
+from dataclasses import dataclass
 
 # ── Operations ───────────────────────────────────────────────────────
 
@@ -35,7 +33,7 @@ class QBGate:
     name: str
     qubits: tuple[int, ...]
     params: tuple[float, ...] = ()
-    condition: Optional[tuple[int, float]] = None
+    condition: tuple[int, float] | None = None
 
     # convenience ──────────────────────────────────────────────────────
 

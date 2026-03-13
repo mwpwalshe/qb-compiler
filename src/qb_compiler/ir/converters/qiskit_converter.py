@@ -65,7 +65,7 @@ def from_qiskit(qc: QuantumCircuit) -> QBCircuit:
                 cond_clbit, cond_val = op.condition
                 if hasattr(cond_clbit, "__iter__"):
                     # ClassicalRegister — use first bit index
-                    cond_idx = clbit_map.get(list(cond_clbit)[0], 0)
+                    cond_idx = clbit_map.get(next(iter(cond_clbit)), 0)
                 else:
                     cond_idx = clbit_map.get(cond_clbit, 0)
                 condition = (cond_idx, float(cond_val))
@@ -96,10 +96,10 @@ def to_qiskit(circuit: QBCircuit) -> QuantumCircuit:
         Equivalent Qiskit circuit.
     """
     _ensure_qiskit()
-    from qiskit.circuit import QuantumCircuit as QC
+    from qiskit.circuit import QuantumCircuit
     from qiskit.circuit.library import standard_gates
 
-    qc = QC(circuit.n_qubits, circuit.n_clbits, name=circuit.name)
+    qc = QuantumCircuit(circuit.n_qubits, circuit.n_clbits, name=circuit.name)
 
     # Build a lookup for standard gate classes by lowercase name
     _gate_map: dict[str, type] = {}
@@ -107,7 +107,7 @@ def to_qiskit(circuit: QBCircuit) -> QuantumCircuit:
         cls = getattr(standard_gates, attr_name)
         if isinstance(cls, type) and hasattr(cls, "name"):
             try:
-                inst = cls.__new__(cls)
+                inst = cls.__new__(cls)  # type: ignore[call-overload]
                 if hasattr(inst, "name"):
                     _gate_map[inst.name.lower()] = cls
             except Exception:

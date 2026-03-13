@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from qb_compiler.ir.circuit import QBCircuit
+from typing import TYPE_CHECKING
+
 from qb_compiler.passes.base import AnalysisPass
+
+if TYPE_CHECKING:
+    from qb_compiler.ir.circuit import QBCircuit
 
 
 class DepthAnalysis(AnalysisPass):

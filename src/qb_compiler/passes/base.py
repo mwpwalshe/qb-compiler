@@ -12,9 +12,12 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Sequence
+from typing import TYPE_CHECKING
 
-from qb_compiler.ir.circuit import QBCircuit
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from qb_compiler.ir.circuit import QBCircuit
 
 logger = logging.getLogger(__name__)
 

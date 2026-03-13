@@ -4,9 +4,46 @@ from __future__ import annotations
 
 import abc
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
+if TYPE_CHECKING:
+    from qb_compiler.calibration.models.coupling_properties import GateProperties
+    from qb_compiler.calibration.models.qubit_properties import QubitProperties
+
+ALLOWED_CALIBRATION_HOSTS = frozenset({
+    "api.quantum-computing.ibm.com",
+    "quantum.ibm.com",
+    "api.qubitboost.io",
+    "calibration.qubitboost.io",
+})
+
+
+def validate_calibration_url(url: str) -> None:
+    """Validate that *url* points to an approved calibration host over HTTPS.
+
+    Parameters
+    ----------
+    url:
+        The URL to validate.
+
+    Raises
+    ------
+    CalibrationError
+        If the host is not in the allowlist or the scheme is not HTTPS.
+    """
+    from qb_compiler.exceptions import CalibrationError
+
+    parsed = urlparse(url)
+    if parsed.hostname not in ALLOWED_CALIBRATION_HOSTS:
+        raise CalibrationError(
+            f"Refusing to fetch calibration from untrusted host: {parsed.hostname}. "
+            f"Allowed hosts: {', '.join(sorted(ALLOWED_CALIBRATION_HOSTS))}"
+        )
+    if parsed.scheme != "https":
+        raise CalibrationError(
+            f"Calibration endpoints must use HTTPS, got: {parsed.scheme}"
+        )
 
 
 class CalibrationProvider(abc.ABC):

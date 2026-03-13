@@ -15,16 +15,16 @@ from qb_compiler.ir.operations import (
 )
 
 __all__ = [
-    "QBCircuit",
-    "QBDag",
-    "QBBarrier",
-    "QBGate",
-    "QBMeasure",
-    "STANDARD_GATES",
     "IBM_BASIS",
-    "RIGETTI_BASIS",
     "IONQ_BASIS",
     "IQM_BASIS",
+    "RIGETTI_BASIS",
+    "STANDARD_GATES",
+    "QBBarrier",
+    "QBCircuit",
+    "QBDag",
+    "QBGate",
+    "QBMeasure",
     "from_qasm",
     "to_qasm",
 ]

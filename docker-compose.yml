@@ -1,0 +1,10 @@
+services:
+  test:
+    build: .
+    command: pytest tests/ -v --timeout=60
+  lint:
+    build: .
+    command: ruff check src/ tests/
+  typecheck:
+    build: .
+    command: mypy src/qb_compiler/ --ignore-missing-imports

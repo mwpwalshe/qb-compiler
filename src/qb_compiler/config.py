@@ -7,12 +7,10 @@ noise-aware scheduling, basis-gate targeting, and cost estimation.
 
 from __future__ import annotations
 
-import copy
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from typing import Any
 
 from qb_compiler.exceptions import BackendNotSupportedError
-
 
 # ── per-backend hardware metadata ────────────────────────────────────
 
@@ -37,10 +35,7 @@ class BackendSpec:
         Based on T2 / (2-qubit gate time ~400 ns for superconducting,
         ~200 us for trapped-ion).  This is intentionally conservative.
         """
-        if self.provider in ("ionq", "iqm_trapped_ion"):
-            gate_time_us = 200.0
-        else:
-            gate_time_us = 0.4  # 400 ns for superconducting
+        gate_time_us = 200.0 if self.provider in ("ionq", "iqm_trapped_ion") else 0.4
         return max(1, int(self.t2_us / gate_time_us * 0.5))
 
 
@@ -136,6 +131,18 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         median_readout_error=0.015,
         t1_us=40.0,
         t2_us=20.0,
+    ),
+    # ── Quantinuum ────────────────────────────────────────────────────
+    "quantinuum_h2": BackendSpec(
+        provider="quantinuum",
+        n_qubits=32,
+        basis_gates=("rz", "u1q", "zz"),
+        coupling_map="all-to-all 32q (H2-1)",
+        cost_per_shot=8.00,
+        median_cx_error=0.001,
+        median_readout_error=0.002,
+        t1_us=10_000_000.0,  # effectively infinite for trapped-ion
+        t2_us=1_000_000.0,
     ),
 }
 

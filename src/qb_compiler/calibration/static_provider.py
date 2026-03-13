@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from qb_compiler.calibration.models.backend_properties import BackendProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
 from qb_compiler.calibration.provider import CalibrationProvider
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from qb_compiler.calibration.models.coupling_properties import GateProperties
+    from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
 
 class StaticCalibrationProvider(CalibrationProvider):

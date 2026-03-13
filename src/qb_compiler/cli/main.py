@@ -9,7 +9,6 @@ Usage
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -20,7 +19,7 @@ except ImportError:
     # so the rest of the package stays importable.
     raise SystemExit(
         "The qb-compiler CLI requires 'click'. Install with: pip install click"
-    )
+    ) from None
 
 from qb_compiler._version import __version__
 from qb_compiler.config import BACKEND_CONFIGS, get_backend_spec

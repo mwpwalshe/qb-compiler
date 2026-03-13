@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Iterator
 
 from qb_compiler.ir.circuit import QBCircuit
-from qb_compiler.ir.operations import STANDARD_GATES, QBGate
+from qb_compiler.ir.operations import QBGate
 
 # ── QASM 2.0 parser ──────────────────────────────────────────────────
 
@@ -51,12 +50,54 @@ def _parse_params(param_str: str) -> tuple[float, ...]:
 
 
 def _safe_eval(expr: str) -> float:
-    """Evaluate a simple arithmetic expression with +, -, *, / and floats."""
-    # Only allow digits, decimal points, +, -, *, /, whitespace, e (scientific)
+    """Evaluate a simple arithmetic expression with +, -, *, / and floats.
+
+    Uses a tokenizer + recursive descent parser instead of ``eval()``
+    to avoid code injection risks from user-supplied QASM files.
+    """
+    import ast
+    import operator
+
     cleaned = expr.strip()
+    # Fast path: if it's just a number, parse directly
+    try:
+        return float(cleaned)
+    except ValueError:
+        pass
+
+    # Only allow digits, decimal points, +, -, *, /, whitespace, e (scientific)
     if not re.match(r"^[\d\.\+\-\*/eE\s]+$", cleaned):
         raise ValueError(f"Unsafe expression: {expr!r}")
-    return float(eval(cleaned, {"__builtins__": {}}, {}))  # noqa: S307
+
+    # Parse as an AST and evaluate only safe numeric operations
+    try:
+        tree = ast.parse(cleaned, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"Cannot parse expression: {expr!r}") from exc
+
+    _OPS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    def _eval_node(node: ast.AST) -> float:
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return float(node.value)
+        if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            return float(_OPS[type(node.op)](left, right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
+            return float(_OPS[type(node.op)](_eval_node(node.operand)))
+        raise ValueError(f"Unsupported expression node: {ast.dump(node)}")
+
+    return _eval_node(tree)
 
 
 def _parse_args(
@@ -216,7 +257,7 @@ def _gate_to_qasm(gate: QBGate) -> str:
     """Format a single gate as a QASM 2.0 line."""
     prefix = ""
     if gate.condition is not None:
-        clbit, val = gate.condition
+        _clbit, val = gate.condition
         prefix = f"if(c=={int(val)}) "
 
     qubit_args = ",".join(f"q[{q}]" for q in gate.qubits)
@@ -227,7 +268,7 @@ def _gate_to_qasm(gate: QBGate) -> str:
             # Try to express in terms of pi for readability
             ratio = p / math.pi if math.pi != 0 else 0
             if abs(ratio - round(ratio)) < 1e-10 and abs(round(ratio)) <= 8:
-                r = int(round(ratio))
+                r = round(ratio)
                 if r == 0:
                     param_strs.append("0")
                 elif r == 1:

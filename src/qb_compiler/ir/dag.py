@@ -9,12 +9,15 @@ Requires ``rustworkx`` (listed as a core dependency in ``pyproject.toml``).
 
 from __future__ import annotations
 
-from typing import Iterator, Union
+from typing import TYPE_CHECKING
 
 import rustworkx as rx
 
 from qb_compiler.ir.circuit import Operation, QBCircuit
 from qb_compiler.ir.operations import QBBarrier, QBGate, QBMeasure
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class QBDag:
@@ -24,10 +27,10 @@ class QBDag:
     Edges carry the qubit index that creates the dependency.
     """
 
-    __slots__ = ("_dag", "_n_qubits", "_n_clbits", "_name")
+    __slots__ = ("_dag", "_n_clbits", "_n_qubits", "_name")
 
     def __init__(self, n_qubits: int, n_clbits: int = 0, name: str = "") -> None:
-        self._dag: rx.PyDAG = rx.PyDAG()
+        self._dag: rx.PyDAG = rx.PyDAG(check_cycle=True)
         self._n_qubits = n_qubits
         self._n_clbits = n_clbits
         self._name = name
@@ -114,9 +117,23 @@ class QBDag:
     # ── traversal ─────────────────────────────────────────────────────
 
     def topological_ops(self) -> Iterator[Operation]:
-        """Yield operations in a valid topological order."""
-        for node_id in rx.topological_sort(self._dag):
-            yield self._dag[node_id]
+        """Yield operations in a valid topological order.
+
+        Raises :class:`~qb_compiler.exceptions.CompilationError` if the DAG
+        contains a cycle (should never happen for DAGs built via
+        :meth:`from_circuit`).
+        """
+        try:
+            for node_id in rx.topological_sort(self._dag):
+                yield self._dag[node_id]
+        except Exception as exc:
+            if "cycle" in str(exc).lower():
+                from qb_compiler.exceptions import CompilationError
+
+                raise CompilationError(
+                    "DAG contains a cycle — this indicates a bug in DAG construction"
+                ) from exc
+            raise
 
     def layers(self) -> list[list[Operation]]:
         """Partition operations into parallel layers.
@@ -132,7 +149,7 @@ class QBDag:
         node_ids = list(self._dag.node_indices())
         in_degree: dict[int, int] = {nid: 0 for nid in node_ids}
         for nid in node_ids:
-            for pred in self._dag.predecessor_indices(nid):
+            for _pred in self._dag.predecessor_indices(nid):
                 in_degree[nid] += 1
 
         # BFS-style topological layering

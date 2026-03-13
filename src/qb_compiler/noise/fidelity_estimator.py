@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import math
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qb_compiler.noise.noise_model import NoiseModel
-
 if TYPE_CHECKING:
-    from qb_compiler.ir.operations import QBGate, QBMeasure, QBBarrier
-
+    from qb_compiler.noise.noise_model import NoiseModel
 
 # ── lightweight circuit representation ───────────────────────────────
 # The full QBCircuit IR is being built in a separate module.  For now,
@@ -103,7 +99,9 @@ class FidelityEstimator:
                 fidelity *= (1.0 - dec_err)
 
         # ── 3. Readout penalty ───────────────────────────────────────
-        measured = circuit.measurements if circuit.measurements else frozenset(range(circuit.n_qubits))
+        measured = (
+            circuit.measurements if circuit.measurements else frozenset(range(circuit.n_qubits))
+        )
         for qubit in measured:
             ro_err = noise_model.readout_error(qubit)
             fidelity *= (1.0 - ro_err)
@@ -119,7 +117,7 @@ class FidelityEstimator:
         """Try to get gate time from noise model, else use default."""
         # EmpiricalNoiseModel exposes gate_time_ns; duck-type check
         if hasattr(noise_model, "gate_time_ns"):
-            return noise_model.gate_time_ns(gate_name, qubits)  # type: ignore[attr-defined]
+            return float(noise_model.gate_time_ns(gate_name, qubits))  # type: ignore[attr-defined]
         return self._default_gate_time_ns
 
     def estimate_depth_limited_fidelity(

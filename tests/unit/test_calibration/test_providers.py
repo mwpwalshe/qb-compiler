@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING
 
 import pytest
 
-from qb_compiler.calibration.models.backend_properties import BackendProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
-from qb_compiler.calibration.static_provider import StaticCalibrationProvider
 from qb_compiler.calibration.cached_provider import CachedCalibrationProvider
+from qb_compiler.calibration.static_provider import StaticCalibrationProvider
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestStaticProvider:

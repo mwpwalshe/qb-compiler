@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from qb_compiler.noise.noise_model import NoiseModel
 
 if TYPE_CHECKING:
-    from qb_compiler.calibration.provider import CalibrationProvider
-    from qb_compiler.calibration.models.qubit_properties import QubitProperties
     from qb_compiler.calibration.models.coupling_properties import GateProperties
+    from qb_compiler.calibration.models.qubit_properties import QubitProperties
+    from qb_compiler.calibration.provider import CalibrationProvider
 
 
 # Conservative fallback values when calibration data is missing
@@ -62,7 +62,7 @@ class EmpiricalNoiseModel(NoiseModel):
     def qubit_error(self, qubit: int) -> float:
         """Combined error: average of best single-qubit gate error, readout
         error, and a T2-based idling decoherence term over one gate time."""
-        qp = self._qubits.get(qubit)
+        self._qubits.get(qubit)
         gate_err = self._best_single_qubit_gate_error(qubit)
         ro_err = self.readout_error(qubit)
         dec_err = self.decoherence_factor(qubit, _DEFAULT_GATE_TIME_NS)
@@ -122,7 +122,7 @@ class EmpiricalNoiseModel(NoiseModel):
     def _best_single_qubit_gate_error(self, qubit: int) -> float:
         """Find the lowest error 1-qubit gate on *qubit*."""
         best = _DEFAULT_SINGLE_QUBIT_ERROR
-        for (gtype, gqubits), gp in self._gates.items():
+        for (_gtype, gqubits), gp in self._gates.items():
             if gqubits == (qubit,) and gp.error_rate is not None:
                 best = min(best, gp.error_rate)
         return best

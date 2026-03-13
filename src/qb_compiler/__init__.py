@@ -13,61 +13,61 @@ from __future__ import annotations
 
 from qb_compiler._version import __version__
 
-# ── eagerly imported (lightweight, always needed) ────────────────────
-from qb_compiler.config import CompilerConfig, BackendSpec, BACKEND_CONFIGS
-from qb_compiler.exceptions import (
-    QBCompilerError,
-    CompilationError,
-    CalibrationError,
-    CalibrationNotFoundError,
-    CalibrationStaleError,
-    BackendNotSupportedError,
-    BudgetExceededError,
-    InvalidCircuitError,
-)
-
 # ── core types (cheap imports from compiler.py) ──────────────────────
 from qb_compiler.compiler import (
-    QBCompiler,
-    QBCircuit,
-    GateOp,
+    BasePass,
+    CalibrationProvider,
     CompileResult,
     CostEstimate,
     CostEstimator,
-    PassResult,
-    BasePass,
-    PassManager,
-    CalibrationProvider,
+    GateOp,
     NoiseModel,
+    PassManager,
+    PassResult,
+    QBCircuit,
+    QBCompiler,
+)
+
+# ── eagerly imported (lightweight, always needed) ────────────────────
+from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
+from qb_compiler.exceptions import (
+    BackendNotSupportedError,
+    BudgetExceededError,
+    CalibrationError,
+    CalibrationNotFoundError,
+    CalibrationStaleError,
+    CompilationError,
+    InvalidCircuitError,
+    QBCompilerError,
 )
 
 __all__ = [
-    # version
-    "__version__",
-    # compiler
-    "QBCompiler",
-    "QBCircuit",
-    "GateOp",
-    "CompileResult",
-    "CostEstimate",
-    "CompilerConfig",
-    "BackendSpec",
     "BACKEND_CONFIGS",
-    # passes
-    "PassManager",
+    "BackendNotSupportedError",
+    "BackendSpec",
     "BasePass",
-    "PassResult",
-    # protocols
-    "CalibrationProvider",
-    "NoiseModel",
-    "CostEstimator",
-    # exceptions
-    "QBCompilerError",
-    "CompilationError",
+    "BudgetExceededError",
     "CalibrationError",
     "CalibrationNotFoundError",
+    # protocols
+    "CalibrationProvider",
     "CalibrationStaleError",
-    "BackendNotSupportedError",
-    "BudgetExceededError",
+    "CompilationError",
+    "CompileResult",
+    "CompilerConfig",
+    "CostEstimate",
+    "CostEstimator",
+    "GateOp",
     "InvalidCircuitError",
+    "NoiseModel",
+    # passes
+    "PassManager",
+    "PassResult",
+    "QBCircuit",
+    # compiler
+    "QBCompiler",
+    # exceptions
+    "QBCompilerError",
+    # version
+    "__version__",
 ]

@@ -48,33 +48,31 @@ class GateCancellationPass(TransformationPass):
                 while j < len(ops):
                     next_op = ops[j]
 
-                    if isinstance(next_op, QBBarrier) or isinstance(next_op, QBMeasure):
+                    if isinstance(next_op, (QBBarrier, QBMeasure)):
                         # Barriers and measurements break adjacency
                         break
 
-                    if isinstance(next_op, QBGate):
-                        # Check if qubits overlap
-                        if set(next_op.qubits) & set(op.qubits):
-                            # Same gate on same qubits? Cancel both.
-                            if (
-                                next_op.name == op.name
-                                and next_op.qubits == op.qubits
-                                and next_op.params == op.params
-                                and next_op.condition is None
-                                and op.condition is None
-                            ):
-                                # Cancel: skip both i and j, but keep
-                                # anything between them
-                                for k in range(i + 1, j):
-                                    result_ops.append(ops[k])
-                                cancelled += 2
-                                i = j + 1
-                                found_cancel = True
-                                break
-                            else:
-                                # Different gate on overlapping qubits — stop
-                                break
-                        # else: non-overlapping gate, keep scanning
+                    if isinstance(next_op, QBGate) and set(next_op.qubits) & set(op.qubits):
+                        # Same gate on same qubits? Cancel both.
+                        if (
+                            next_op.name == op.name
+                            and next_op.qubits == op.qubits
+                            and next_op.params == op.params
+                            and next_op.condition is None
+                            and op.condition is None
+                        ):
+                            # Cancel: skip both i and j, but keep
+                            # anything between them
+                            for k in range(i + 1, j):
+                                result_ops.append(ops[k])
+                            cancelled += 2
+                            i = j + 1
+                            found_cancel = True
+                            break
+                        else:
+                            # Different gate on overlapping qubits — stop
+                            break
+                    # else: non-overlapping gate, keep scanning
                     j += 1
 
                 if found_cancel:

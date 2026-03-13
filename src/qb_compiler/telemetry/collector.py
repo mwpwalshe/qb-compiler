@@ -11,7 +11,7 @@ Enable via environment variable ``QBC_TELEMETRY=1`` or by calling
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 

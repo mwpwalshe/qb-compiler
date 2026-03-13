@@ -1,0 +1,50 @@
+name: Fuzz Testing
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - fuzz_qasm_parser
+          - fuzz_circuit_ir
+          - fuzz_calibration_parser
+          - fuzz_compiler_config
+          - fuzz_cli_input
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install atheris
+
+      - name: Run fuzz target
+        timeout-minutes: 120
+        run: |
+          python tests/fuzz/${{ matrix.target }}.py
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes-${{ matrix.target }}
+          path: |
+            crash-*
+            oom-*
+            timeout-*
+          retention-days: 30

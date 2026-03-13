@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from qb_compiler.compiler import QBCircuit, GateOp, _GateCancellationPass
+from qb_compiler.compiler import QBCircuit, _GateCancellationPass
 from qb_compiler.config import CompilerConfig
 
 

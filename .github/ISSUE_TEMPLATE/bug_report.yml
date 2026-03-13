@@ -1,0 +1,82 @@
+name: Bug Report
+description: Report a bug in qb-compiler
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out the fields below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the bug.
+      placeholder: What went wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the behaviour.
+      placeholder: |
+        1. Create a QBCircuit with ...
+        2. Compile with QBCompiler.from_backend(...)
+        3. See error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What actually happened? Include error messages / tracebacks if applicable.
+    validations:
+      required: false
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.11.8"
+    validations:
+      required: true
+
+  - type: input
+    id: qbc-version
+    attributes:
+      label: qb-compiler version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: backend
+    attributes:
+      label: Backend (if applicable)
+      placeholder: "ibm_fez, rigetti_ankaa, ionq_aria, ..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: true

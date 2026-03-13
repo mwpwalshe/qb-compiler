@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from qb_compiler.compiler import QBCircuit, QBCompiler, CostEstimator
-from qb_compiler.config import BACKEND_CONFIGS, get_backend_spec
+from qb_compiler.compiler import QBCircuit, QBCompiler
 from qb_compiler.exceptions import (
     BackendNotSupportedError,
     BudgetExceededError,
@@ -29,8 +28,13 @@ class TestQBCompiler:
         assert len(result.pass_log) > 0
 
     def test_compile_reduces_depth(self) -> None:
-        """Aggressive optimisation on a cancellable circuit should reduce depth."""
-        # Create a circuit with cancellable H-H pairs
+        """Optimisation on a cancellable circuit should reduce gate count.
+
+        Note: with a backend set, basis translation may decompose gates
+        (e.g. H -> rz sx rz), which can increase depth even when
+        cancellation removes pairs.  So we test without a backend to
+        verify cancellation reduces the gate count.
+        """
         circ = QBCircuit(2)
         circ.h(0)
         circ.h(0)  # should cancel with first H
@@ -38,10 +42,12 @@ class TestQBCompiler:
         circ.h(1)
         circ.h(1)  # should cancel with previous H on q1
 
-        compiler = QBCompiler(backend="ibm_fez", strategy="fidelity_optimal")
+        # No backend -> no basis translation -> pure cancellation
+        compiler = QBCompiler(backend=None, strategy="fidelity_optimal")
         result = compiler.compile(circ)
 
-        # After cancellation, only CX should remain (possibly decomposed)
+        # After cancellation of H-H pairs, only CX remains
+        assert result.compiled_circuit.gate_count < circ.gate_count
         assert result.compiled_depth <= result.original_depth
 
     def test_from_backend_factory(self) -> None:

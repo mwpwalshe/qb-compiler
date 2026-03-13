@@ -28,3 +28,4 @@ Thumbs.db
 .env.local
 docs/_build/
 *.ipynb_checkpoints/
+*:Zone.Identifier

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from qb_compiler.ir.circuit import QBCircuit
 from qb_compiler.ir.dag import QBDag
 from qb_compiler.ir.operations import QBGate

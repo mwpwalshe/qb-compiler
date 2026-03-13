@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from qb_compiler.calibration.models.backend_properties import BackendProperties
 from qb_compiler.calibration.models.coupling_properties import GateProperties
 from qb_compiler.calibration.models.qubit_properties import QubitProperties
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def parse_ibm_calibration(data: dict) -> BackendProperties:

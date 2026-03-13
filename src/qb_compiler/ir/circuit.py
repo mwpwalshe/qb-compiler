@@ -10,16 +10,18 @@ from __future__ import annotations
 
 import copy
 from collections import Counter
-from typing import Iterator, Sequence, Union
+from typing import TYPE_CHECKING
 
 from qb_compiler.ir.operations import (
-    STANDARD_GATES,
     QBBarrier,
     QBGate,
     QBMeasure,
 )
 
-Operation = Union[QBGate, QBMeasure, QBBarrier]
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+Operation = QBGate | QBMeasure | QBBarrier
 
 
 class QBCircuit:
@@ -35,7 +37,7 @@ class QBCircuit:
         Optional human-readable label.
     """
 
-    __slots__ = ("n_qubits", "n_clbits", "name", "_ops")
+    __slots__ = ("_ops", "n_clbits", "n_qubits", "name")
 
     def __init__(self, n_qubits: int, n_clbits: int = 0, name: str = "") -> None:
         if n_qubits < 1:
@@ -72,10 +74,7 @@ class QBCircuit:
 
     def add_barrier(self, qubits: Sequence[int] | None = None) -> None:
         """Append a barrier over the given qubits (default: all)."""
-        if qubits is None:
-            qubits = tuple(range(self.n_qubits))
-        else:
-            qubits = tuple(qubits)
+        qubits = tuple(range(self.n_qubits)) if qubits is None else tuple(qubits)
         for q in qubits:
             if q < 0 or q >= self.n_qubits:
                 raise IndexError(

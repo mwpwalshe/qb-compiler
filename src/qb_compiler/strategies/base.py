@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from qb_compiler.calibration.provider import CalibrationProvider
     from qb_compiler.config import CompilerConfig
     from qb_compiler.noise.noise_model import NoiseModel
@@ -53,7 +55,7 @@ class PassManager:
     def __len__(self) -> int:
         return len(self.passes)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PassConfig]:
         return iter(self.passes)
 
     def describe(self) -> str:

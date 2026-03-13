@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
 from qb_compiler.calibration.models.coupling_properties import GateProperties
+from qb_compiler.calibration.models.qubit_properties import QubitProperties
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @dataclass(frozen=True, slots=True)

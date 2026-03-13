@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from functools import lru_cache
 
 
 @dataclass(frozen=True)
@@ -103,14 +102,14 @@ class BackendTarget:
         return adj
 
     def _get_adjacency(self) -> dict[int, set[int]]:
-        return object.__getattribute__(self, "_adjacency")
+        return object.__getattribute__(self, "_adjacency")  # type: ignore[no-any-return]
 
     # ── factory ──────────────────────────────────────────────────────
 
     @classmethod
     def from_backend_properties(
         cls,
-        props: "BackendProperties",  # noqa: F821 — avoid circular import
+        props: BackendProperties,  # type: ignore[name-defined]  # noqa: F821
     ) -> BackendTarget:
         """Build from a :class:`BackendProperties` calibration snapshot."""
         return cls(

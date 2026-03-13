@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import threading
 import time
-from datetime import datetime, timezone
-from typing import Callable
+from typing import TYPE_CHECKING
 
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
 from qb_compiler.calibration.provider import CalibrationProvider
 from qb_compiler.exceptions import CalibrationStaleError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from datetime import datetime
+
+    from qb_compiler.calibration.models.coupling_properties import GateProperties
+    from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
 
 class CachedCalibrationProvider(CalibrationProvider):
@@ -81,7 +85,7 @@ class CachedCalibrationProvider(CalibrationProvider):
                         backend=self._inner.backend_name,
                         age_hours=age_h,
                         max_hours=self._hard_limit_hours,
-                    )
+                    ) from None
                 raise  # No cached data at all — propagate original error
 
     # ── CalibrationProvider interface ────────────────────────────────

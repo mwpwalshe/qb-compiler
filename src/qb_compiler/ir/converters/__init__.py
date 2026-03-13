@@ -6,8 +6,8 @@ from qb_compiler.ir.converters.openqasm_converter import from_qasm, to_qasm
 
 __all__ = [
     "from_qasm",
-    "to_qasm",
     "from_qiskit",
+    "to_qasm",
     "to_qiskit",
 ]
 
