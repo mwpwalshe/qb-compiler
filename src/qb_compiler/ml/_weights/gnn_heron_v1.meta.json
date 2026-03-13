@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "architecture": "dual_graph_gcn",
+  "hidden_dim": 32,
+  "n_layers": 3,
+  "device_features": 7,
+  "circuit_features": 3,
+  "n_parameters": 8833,
+  "model_size_bytes": 42921,
+  "training_auc": 0.8916,
+  "best_loss": 0.340648,
+  "n_epochs": 50,
+  "n_circuits": 16,
+  "n_trials_per_circuit": 200,
+  "backend": "ibm_fez"
+}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -34,6 +35,47 @@ class QubitProperties:
     frequency_ghz: float | None = None
     readout_error_0to1: float | None = None
     readout_error_1to0: float | None = None
+
+    @property
+    def t1_asymmetry_ratio(self) -> float:
+        """Ratio of |1⟩→|0⟩ decay error to |0⟩→|1⟩ excitation error.
+
+        On superconducting qubits, thermal excitation P(1|0) is typically
+        much smaller than relaxation P(0|1).  A high ratio means the qubit
+        loses |1⟩ states disproportionately — circuits that hold qubits in
+        |1⟩ (after X gates, CNOT targets, etc.) suffer more on these qubits.
+
+        Returns 1.0 when asymmetry data is unavailable, meaning no penalty.
+        """
+        if (
+            self.readout_error_0to1 is not None
+            and self.readout_error_1to0 is not None
+            and self.readout_error_0to1 > 1e-9
+        ):
+            return self.readout_error_1to0 / self.readout_error_0to1
+        return 1.0
+
+    @property
+    def t1_asymmetry_penalty(self) -> float:
+        """Readout-scaled penalty for T1 asymmetry.
+
+        Returns ``readout_error * ln(ratio)`` so the penalty is proportional
+        to both the *magnitude* of the readout error and the asymmetry.
+        This keeps the penalty in the same units as readout error, ensuring
+        it doesn't overwhelm other scoring terms.
+
+        - ratio=1  → penalty=0 (symmetric, no penalty)
+        - ratio=10, ro=0.01 → penalty≈0.023
+        - ratio=24, ro=0.01 → penalty≈0.032
+
+        Clamped so ratios below 1 produce zero penalty (those qubits
+        are actually *better* at holding |1⟩ states).
+        """
+        ratio = self.t1_asymmetry_ratio
+        if ratio <= 1.0:
+            return 0.0
+        ro = self.readout_error if self.readout_error is not None else 0.01
+        return ro * math.log(ratio)
 
     @staticmethod
     def symmetrise_readout(

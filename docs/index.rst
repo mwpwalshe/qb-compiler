@@ -8,8 +8,42 @@ within budget.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
+   :caption: Getting Started
 
    getting-started
+   optimization-guide
+   cli-reference
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Guides
+
    architecture
-   api
+   calibration-guide
+   custom-passes
+   migration-from-qiskit
+   faq
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+
+   tutorials/01-basic-compilation
+   tutorials/02-calibration-aware
+   tutorials/03-budget-aware
+   tutorials/04-qec-aware
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   changelog
+   contributing
+   RELEASE
+   SIGNING

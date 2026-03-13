@@ -2,8 +2,8 @@
 
 [![PyPI](https://img.shields.io/pypi/v/qb-compiler.svg)](https://pypi.org/project/qb-compiler/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![CI](https://github.com/qubitboost/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/qubitboost/qb-compiler/actions)
-[![Coverage](https://codecov.io/gh/qubitboost/qb-compiler/branch/main/graph/badge.svg)](https://codecov.io/gh/qubitboost/qb-compiler)
+[![CI](https://github.com/mwpwalshe/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/mwpwalshe/qb-compiler/actions)
+[![Coverage](https://codecov.io/gh/mwpwalshe/qb-compiler/branch/master/graph/badge.svg)](https://codecov.io/gh/mwpwalshe/qb-compiler)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Downloads](https://img.shields.io/pypi/dm/qb-compiler.svg)](https://pypi.org/project/qb-compiler/)
 
@@ -24,7 +24,9 @@
 | Feature | Qiskit Default | qb-compiler |
 |---------|---------------|-------------|
 | Calibration-aware mapping | - | Yes |
+| ML-accelerated layout | - | Yes (optional) |
 | T1 asymmetry handling | - | Yes |
+| Temporal correlation detection | - | Yes |
 | Multi-vendor support | IBM only | IBM, Rigetti, IonQ, IQM |
 | Budget constraints | - | Yes |
 | Cost estimation | - | Yes |
@@ -98,9 +100,26 @@ Calibration Data (T1, T2, gate error, readout error)
 
 ## Key Features
 
+- **ML-Accelerated Layout** -- XGBoost model predicts the best physical qubits
+  for your circuit, narrowing VF2 search from 156 qubits to ~20 candidates.
+  **Up to 5% better fidelity** and **23x faster** than standard VF2 on 8-qubit
+  circuits. Install with `pip install "qb-compiler[ml]"`.
+
 - **CalibrationMapper** -- VF2 subgraph isomorphism search scored by gate error,
-  coherence (T1/T2), and readout fidelity. Finds the best physical qubit
-  placement for your circuit on today's device.
+  coherence (T1/T2), readout fidelity, **T1 asymmetry**, and **temporal
+  correlation**. Finds the best physical qubit placement for your circuit on
+  today's device.
+
+- **T1 Asymmetry Awareness** -- On IBM Heron, the probability of reading `0`
+  when a qubit is in `|1⟩` (P(0|1)) can be **up to 24x higher** than P(1|0).
+  Standard transpilers use symmetrised readout error and miss this entirely.
+  qb-compiler uses the raw asymmetric readout data to penalise high-asymmetry
+  qubits for circuits that hold qubits in `|1⟩`.
+
+- **Temporal Correlation Detection** -- When multiple calibration snapshots are
+  available, qb-compiler detects qubit pairs whose error rates co-vary over
+  time. Correlated errors break QEC's independent-error assumption. The mapper
+  penalises correlated edges during layout selection.
 
 - **NoiseAwareRouter** -- Dijkstra shortest-error-path SWAP insertion. Minimises
   accumulated gate error instead of SWAP count. Each SWAP decomposes to 3 CX
@@ -127,21 +146,73 @@ Calibration Data (T1, T2, gate error, readout error)
 Estimated fidelity improvement over topology-only mapping, using real IBM Fez
 calibration data (March 2026, 156 qubits):
 
-| Circuit   | Qubits | 2Q Gates | Baseline Fidelity | qb-compiler Fidelity | Improvement |
-|-----------|--------|----------|-------------------|-----------------------|-------------|
-| Bell      | 2      | 1        | 0.966             | 0.989                 | +2.4%       |
-| GHZ-5     | 5      | 4        | 0.915             | 0.947                 | +3.5%       |
-| GHZ-8     | 8      | 7        | 0.866             | 0.900                 | +4.0%       |
-| GHZ-16    | 16     | 15       | 0.748             | 0.767                 | +2.6%       |
-| QAOA-4    | 4      | 6        | 0.923             | 0.961                 | +4.1%       |
-| QAOA-8    | 8      | 14       | 0.846             | 0.885                 | +4.5%       |
-| QAOA-12   | 12     | 22       | 0.776             | 0.802                 | +3.2%       |
+| Circuit   | Qubits | 2Q Gates | Baseline | qb-compiler | Improvement |
+|-----------|--------|----------|----------|-------------|-------------|
+| Bell      | 2      | 1        | 0.9664   | 0.9868      | +2.1%       |
+| GHZ-5     | 5      | 4        | 0.9147   | 0.9471      | +3.5%       |
+| GHZ-8     | 8      | 7        | 0.8657   | 0.8664      | +0.1%       |
+| QAOA-4    | 4      | 6        | 0.9226   | 0.9608      | +4.1%       |
+
+### T1 Asymmetry: What Qiskit Misses
+
+Standard transpilers use *symmetrised* readout error and cannot see T1
+asymmetry. qb-compiler models the raw asymmetric readout, revealing hidden
+fidelity loss:
+
+| Circuit   | Qubits | Symmetric Estimate | Asymmetric Estimate | Overestimate |
+|-----------|--------|--------------------|---------------------|--------------|
+| GHZ-5     | 5      | 0.9471             | 0.9437              | 0.36%        |
+| GHZ-8     | 8      | 0.8664             | 0.8598              | 0.77%        |
+| QAOA-8    | 8      | 0.8403             | 0.8338              | 0.77%        |
+
+> The symmetric model overestimates fidelity because it hides T1-driven
+> `|1⟩` decay. This is the error Qiskit's default transpiler makes. On
+> IBM Fez, qubit asymmetry ratios range from 0.2x to 24x.
+
+### ML-Accelerated Layout (with `qb-compiler[ml]`)
+
+XGBoost narrows VF2 search to the best ~20 qubits, producing better layouts
+faster:
+
+| Circuit   | Qubits | Greedy | VF2    | ML+VF2 | ML vs VF2 | Speedup |
+|-----------|--------|--------|--------|--------|-----------|---------|
+| GHZ-5     | 5      | 0.8923 | 0.9471 | 0.9463 | -0.1%     | 5.8x    |
+| GHZ-8     | 8      | 0.8372 | 0.8519 | 0.8975 | **+5.4%** | 22.6x   |
+| QAOA-8    | 8      | 0.8204 | 0.8342 | 0.8771 | **+5.1%** | 27.9x   |
+| QFT-4     | 4      | 0.8852 | 0.8852 | 0.8852 | 0.0%      | 0.6x    |
+
+> Model: XGBoost, AUC=0.94, 454 KB. Trained on IBM Fez calibration data.
+> Top features: readout_error, frequency, T2, gate_error, connectivity,
+> T1_asymmetry. Run `python scripts/benchmark_ml_router.py` to reproduce.
+
+### GNN Layout Predictor (with `qb-compiler[gnn]`)
+
+A dual-graph GCN captures device topology structure that flat XGBoost features
+miss. Outperforms XGBoost on larger circuits:
+
+| Circuit   | Qubits | XGBoost | GNN    | GNN vs XGB | Model Size |
+|-----------|--------|---------|--------|------------|------------|
+| GHZ-8     | 8      | 0.8975  | 0.9062 | **+1.0%**  | 42 KB      |
+| QAOA-8    | 8      | 0.8771  | 0.8880 | **+1.2%**  | 42 KB      |
+| QAOA-4    | 4      | 0.9552  | 0.9608 | +0.6%      | 42 KB      |
+
+> Architecture: device coupling graph (7 calibration features/qubit) +
+> circuit interaction graph (3 features/qubit) + cross-attention + MLP.
+> 8,833 parameters, 10x smaller than XGBoost.
+> Install with `pip install "qb-compiler[gnn]"`.
+
+### RL SWAP Router (experimental)
+
+PPO-based reinforcement learning agent for SWAP routing decisions.
+Observes routing state + calibration data and learns to minimise
+accumulated gate error. Per-backend, nightly retrainable.
 
 > **Note:** Baseline uses median device error rates (topology-only qubit
 > selection). qb-compiler uses calibration-aware VF2 mapping scored by today's
-> per-qubit gate error, readout error, and T1/T2 coherence. Benchmarked against
-> real IBM Fez calibration snapshot. Improvement depends on circuit structure
-> and daily calibration variance.
+> per-qubit gate error, readout error, T1/T2 coherence, T1 asymmetry, and
+> temporal error correlation. Benchmarked against real IBM Fez calibration
+> snapshot. Improvement depends on circuit structure and daily calibration
+> variance. Run `python scripts/benchmark_phase_comparison.py` to reproduce.
 
 ---
 
@@ -243,6 +314,12 @@ qbc calibration show ibm_fez
 ```bash
 # Core (IBM backends via Qiskit)
 pip install qb-compiler
+
+# With ML-accelerated layout (XGBoost)
+pip install "qb-compiler[ml]"
+
+# With GNN layout predictor (PyTorch)
+pip install "qb-compiler[gnn]"
 
 # With Rigetti support
 pip install "qb-compiler[rigetti]"
