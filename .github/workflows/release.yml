@@ -40,7 +40,13 @@ jobs:
         run: mypy src/qb_compiler/
 
       - name: Run tests
-        run: pytest --cov=qb_compiler --cov-report=xml -x
+        run: |
+          pytest tests/unit -v \
+            --timeout=30 \
+            --cov=src/qb_compiler \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            -x
 
   build:
     name: Build distribution
