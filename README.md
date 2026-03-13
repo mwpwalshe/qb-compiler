@@ -153,7 +153,7 @@ calibration data (156 qubits, March 2026):
 
 | Circuit | Qubits | 2Q Gates | Greedy | VF2 | Improvement |
 |---------|-------:|---------:|-------:|----:|------------:|
-| Bell    |      2 |        1 | 0.9892 | 0.9868 | -0.2% |
+| Bell    |      2 |        1 | 0.9868 | 0.9868 | +0.0% |
 | GHZ-5   |      5 |        4 | 0.8923 | 0.9471 | **+6.1%** |
 | GHZ-8   |      8 |        7 | 0.8372 | 0.8519 | **+1.8%** |
 | QAOA-4  |      4 |        6 | 0.9018 | 0.9608 | **+6.5%** |
@@ -169,7 +169,7 @@ structure that flat features miss. Both shine on larger circuits:
 
 | Circuit | Qubits | Greedy | VF2 | ML+VF2 | GNN+VF2 | Best vs Greedy |
 |---------|-------:|-------:|----:|-------:|--------:|---------------:|
-| Bell    |      2 | 0.9892 | 0.9868 | 0.9868 | 0.9868 | -0.2% |
+| Bell    |      2 | 0.9868 | 0.9868 | 0.9868 | 0.9868 | +0.0% |
 | GHZ-5   |      5 | 0.8923 | 0.9471 | 0.9463 | 0.9440 | **+6.1%** |
 | GHZ-8   |      8 | 0.8372 | 0.8519 | 0.8975 | 0.9062 | **+8.2%** |
 | QAOA-4  |      4 | 0.9018 | 0.9608 | 0.9552 | 0.9608 | **+6.5%** |
@@ -198,7 +198,7 @@ fidelity loss:
 
 > **Footnote:** Greedy = edge-ranked qubit placement (no search). All fidelity
 > estimates use per-qubit calibration data from IBM Fez (March 2026, 156 qubits).
-> Improvement depends on circuit structure and daily calibration variance.
+> All tables use the same baseline and estimator.
 > Reproduce: `python scripts/benchmark_readme.py`
 
 ---
