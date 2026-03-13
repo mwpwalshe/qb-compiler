@@ -19,9 +19,9 @@
 
 ---
 
-## qb-compiler vs Qiskit Default
+## Feature Comparison
 
-| Feature | Qiskit Default | qb-compiler |
+| Feature | Standard Transpiler | qb-compiler |
 |---------|---------------|-------------|
 | Calibration-aware mapping | - | Yes |
 | ML-accelerated layout | - | Yes (optional) |
@@ -136,8 +136,9 @@ Calibration Data (T1, T2, gate error, readout error)
 - **ErrorBudgetEstimator** -- Predicts circuit fidelity before execution using
   calibration data. Know if your circuit is viable before spending QPU time.
 
-- **Qiskit Plugin** -- Drop-in `AnalysisPass` that replaces Qiskit's layout
-  stage. Works with `generate_preset_pass_manager` at any optimization level.
+- **Qiskit Plugin** -- Drop-in `AnalysisPass` that adds calibration-aware
+  layout to any Qiskit pipeline. Works with `generate_preset_pass_manager`
+  at any optimization level.
 
 ---
 
@@ -178,7 +179,7 @@ structure that flat features miss. Both shine on larger circuits:
 *ML+VF2: XGBoost, AUC=0.94, 454 KB. GNN+VF2: dual-graph GCN, 8,833 params,
 42 KB. Both trained on IBM Fez calibration data.*
 
-### T1 Asymmetry: What Qiskit Misses
+### T1 Asymmetry: Beyond Symmetric Readout Error
 
 Standard transpilers use symmetrised readout error and cannot see T1
 asymmetry. qb-compiler models the raw asymmetric readout, revealing hidden
@@ -194,7 +195,7 @@ fidelity loss:
 
 > The symmetric model overestimates fidelity because it hides T1-driven
 > `|1⟩` decay. On IBM Fez, qubit asymmetry ratios range from 0.2x to 24x.
-> This is the error Qiskit's default transpiler makes.
+> Standard symmetric readout models miss this effect.
 
 > **Footnote:** Greedy = edge-ranked qubit placement (no search). All fidelity
 > estimates use per-qubit calibration data from IBM Fez (March 2026, 156 qubits).
