@@ -188,7 +188,7 @@ def _build_model() -> Any:
 
             if edge_index.size(1) == 0:
                 # No edges: just apply linear (self-loop only)
-                return self.linear(x)
+                return self.linear(x)  # type: ignore[no-any-return]
 
             # Add self-loops
             self_loops = torch.arange(n, device=device).unsqueeze(0).expand(2, -1)
@@ -297,7 +297,7 @@ def _build_model() -> Any:
 
             # Score each physical qubit
             scores = self.score_head(combined).squeeze(-1)
-            return scores
+            return scores  # type: ignore[no-any-return]
 
     return GNNLayoutModel()
 
@@ -446,7 +446,7 @@ class GNNLayoutPredictor:
         return dict(self._metadata)
 
     @property
-    def model(self):
+    def model(self) -> Any:
         """The underlying PyTorch model (for inspection/export)."""
         return self._model
 

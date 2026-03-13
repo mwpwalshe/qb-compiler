@@ -262,7 +262,10 @@ def train_model(
 
         # Feature importance
         importance = model.get_score(importance_type="gain")
-        sorted_imp = sorted(importance.items(), key=lambda x: -x[1])
+        sorted_imp = sorted(
+            importance.items(),
+            key=lambda x: -float(x[1]) if isinstance(x[1], (int, float)) else 0.0,
+        )
         print("\nTop features by gain:")
         for fname, gain in sorted_imp[:10]:
             print(f"  {fname:>30s}: {gain:.2f}")
