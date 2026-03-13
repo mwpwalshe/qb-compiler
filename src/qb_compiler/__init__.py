@@ -1,4 +1,6 @@
-"""qb-compiler — A quantum circuit compiler with calibration-aware optimisation.
+"""qb-compiler — calibration-aware quantum circuit compiler by QubitBoost.
+
+Built by `QubitBoost <https://qubitboost.io>`_.
 
 Public API
 ----------
