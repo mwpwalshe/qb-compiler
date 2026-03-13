@@ -1020,12 +1020,12 @@ class QBCompiler:
                 # Map logical qubits to physical for error lookup
                 phys_0 = layout.get(op.qubits[0], op.qubits[0])
                 phys_1 = layout.get(op.qubits[1], op.qubits[1])
-                err = gate_map.get((phys_0, phys_1))
-                if err is None:
-                    err = gate_map.get((phys_1, phys_0))
-                if err is None:
-                    err = spec.median_cx_error if spec else 0.01
-                fidelity *= (1.0 - err)
+                err_val = gate_map.get((phys_0, phys_1))
+                if err_val is None:
+                    err_val = gate_map.get((phys_1, phys_0))
+                if err_val is None:
+                    err_val = spec.median_cx_error if spec else 0.01
+                fidelity *= (1.0 - err_val)
             else:
                 # Single-qubit gate error (unchanged from baseline)
                 err = (spec.median_cx_error if spec else 0.01) / 10.0

@@ -494,7 +494,8 @@ class RLRouter:
                     action = RoutingAction(action_type="advance")
                     layer_swap_count = 0
                 else:
-                    swaps.append(action.swap_edge)
+                    if action.swap_edge is not None:
+                        swaps.append(action.swap_edge)
                     layer_swap_count += 1
 
             if action.action_type == "advance":
@@ -689,8 +690,8 @@ def train_rl_router(
 
 
 def _ppo_update(
-    agent,
-    optimizer,
+    agent: Any,
+    optimizer: Any,
     trajectory: list[RoutingStep],
     gamma: float = 0.99,
     clip_eps: float = 0.2,
