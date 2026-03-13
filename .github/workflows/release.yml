@@ -117,14 +117,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install cyclonedx
-        run: pip install cyclonedx-bom
-
       - name: Install package
         run: pip install -e "."
 
       - name: Generate SBOM
-        run: cyclonedx-py environment -o sbom.json --format json || cyclonedx-py environment > sbom.json || true
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py environment > sbom.json || echo '{}' > sbom.json
 
       - uses: actions/upload-artifact@v4
         with:
