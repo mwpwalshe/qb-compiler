@@ -1,5 +1,7 @@
 """Built-in transformation passes."""
 
+from __future__ import annotations
+
 from qb_compiler.passes.transformation.circuit_simplification import CircuitSimplifier
 from qb_compiler.passes.transformation.commutation_analysis import CommutationOptimizer
 from qb_compiler.passes.transformation.gate_cancellation import GateCancellationPass
