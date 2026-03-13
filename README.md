@@ -357,4 +357,4 @@ pytest
 
 Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
-Copyright 2026 Walshe Thornwell Fotheringham Trading Ltd.
+Copyright 2026 [QubitBoost](https://www.qubitboost.io).

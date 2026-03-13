@@ -1,7 +1,7 @@
 """Sphinx configuration for qb-compiler documentation."""
 
 project = "qb-compiler"
-copyright = "2026, Walshe Thornwell Fotheringham Trading Ltd"  # noqa: A001
+copyright = "2026, QubitBoost (https://www.qubitboost.io)"  # noqa: A001
 author = "Mike"
 
 extensions = [
