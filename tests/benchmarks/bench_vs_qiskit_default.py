@@ -17,7 +17,6 @@ import pytest
 from qb_compiler.compiler import QBCircuit, QBCompiler
 from tests.conftest import requires_qiskit
 
-
 # ── circuit builders ─────────────────────────────────────────────────
 
 

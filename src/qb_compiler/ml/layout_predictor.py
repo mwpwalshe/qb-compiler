@@ -125,7 +125,7 @@ class MLLayoutPredictor:
 
         # Sort by probability (highest first)
         scored = sorted(
-            zip(qubit_ids, probabilities),
+            zip(qubit_ids, probabilities, strict=False),
             key=lambda x: -x[1],
         )
 

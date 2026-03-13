@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from qb_compiler.config import CompilerConfig
 from qb_compiler.strategies import FidelityOptimalStrategy, PassManager
 

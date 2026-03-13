@@ -8,8 +8,9 @@ Targets ``qb_compiler.ir.converters.openqasm_converter.from_qasm`` with:
 """
 from __future__ import annotations
 
-import atheris
 import sys
+
+import atheris
 
 with atheris.instrument_imports():
     from qb_compiler.ir.converters.openqasm_converter import from_qasm

@@ -75,7 +75,7 @@ def _safe_eval(expr: str) -> float:
     except SyntaxError as exc:
         raise ValueError(f"Cannot parse expression: {expr!r}") from exc
 
-    _OPS = {
+    _ops = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
@@ -89,12 +89,12 @@ def _safe_eval(expr: str) -> float:
             return _eval_node(node.body)
         if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
             return float(node.value)
-        if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+        if isinstance(node, ast.BinOp) and type(node.op) in _ops:
             left = _eval_node(node.left)
             right = _eval_node(node.right)
-            return float(_OPS[type(node.op)](left, right))
-        if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
-            return float(_OPS[type(node.op)](_eval_node(node.operand)))
+            return float(_ops[type(node.op)](left, right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in _ops:
+            return float(_ops[type(node.op)](_eval_node(node.operand)))
         raise ValueError(f"Unsupported expression node: {ast.dump(node)}")
 
     return _eval_node(tree)

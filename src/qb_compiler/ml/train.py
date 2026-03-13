@@ -17,13 +17,14 @@ import math
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 _WEIGHTS_DIR = Path(__file__).parent / "_weights"
 
 
-def _build_training_circuits() -> list[tuple[str, "QBCircuit"]]:
+def _build_training_circuits() -> list[tuple[str, Any]]:
     """Build a diverse set of training circuits at various qubit counts."""
     from qb_compiler.ir.circuit import QBCircuit
     from qb_compiler.ir.operations import QBGate
@@ -86,7 +87,7 @@ def _build_training_circuits() -> list[tuple[str, "QBCircuit"]]:
     return circuits
 
 
-def _load_calibration_snapshots() -> list["BackendProperties"]:
+def _load_calibration_snapshots() -> list[Any]:
     """Load all available calibration snapshots."""
     import glob
 
@@ -206,11 +207,11 @@ def train_model(
         )
 
     # Train/validation split
-    X = np.array(all_features, dtype=np.float32)
+    features_arr = np.array(all_features, dtype=np.float32)
     y = np.array(all_labels, dtype=np.float32)
 
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, random_state=seed, stratify=y
+    x_train, x_val, y_train, y_val = train_test_split(
+        features_arr, y, test_size=0.2, random_state=seed, stratify=y
     )
 
     # Handle class imbalance
@@ -219,8 +220,8 @@ def train_model(
     scale_pos = n_neg_train / max(n_pos_train, 1)
 
     # Train XGBoost
-    dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names())
-    dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names())
+    dtrain = xgb.DMatrix(x_train, label=y_train, feature_names=feature_names())
+    dval = xgb.DMatrix(x_val, label=y_val, feature_names=feature_names())
 
     params = {
         "objective": "binary:logistic",

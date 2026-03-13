@@ -6,23 +6,20 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from qb_compiler.calibration.models.backend_properties import BackendProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
-from qb_compiler.ir.circuit import QBCircuit
-from qb_compiler.ir.operations import QBGate
-from qb_compiler.ml.rl_router import (
-    RL_HIDDEN_DIM,
+from qb_compiler.calibration.models.backend_properties import BackendProperties  # noqa: E402
+from qb_compiler.calibration.models.coupling_properties import GateProperties  # noqa: E402
+from qb_compiler.calibration.models.qubit_properties import QubitProperties  # noqa: E402
+from qb_compiler.ir.circuit import QBCircuit  # noqa: E402
+from qb_compiler.ir.operations import QBGate  # noqa: E402
+from qb_compiler.ml.rl_router import (  # noqa: E402
     RL_STATE_DIM,
     RLRouter,
     RoutingAction,
     RoutingEnvironment,
-    RoutingState,
     _build_ppo_model,
     _ppo_update,
     train_rl_router,
 )
-
 
 # ── fixtures ──────────────────────────────────────────────────────────
 
@@ -109,7 +106,7 @@ class TestRoutingEnvironment:
         n_layers = len(state.remaining_layers)
 
         action = RoutingAction(action_type="advance")
-        new_state, reward, done = env.step(state, action)
+        new_state, _reward, _done = env.step(state, action)
         assert len(new_state.remaining_layers) == n_layers - 1
 
     def test_advance_on_executable_gate_has_small_error(self):
@@ -119,7 +116,7 @@ class TestRoutingEnvironment:
         state = env.reset()
 
         action = RoutingAction(action_type="advance")
-        new_state, reward, done = env.step(state, action)
+        _new_state, reward, _done = env.step(state, action)
         # Reward should be negative (error) but small
         assert reward < 0
         assert reward > -0.1  # small error since qubits are adjacent
@@ -131,7 +128,7 @@ class TestRoutingEnvironment:
         state = env.reset()
 
         action = RoutingAction(action_type="swap", swap_edge=(0, 1))
-        new_state, reward, done = env.step(state, action)
+        new_state, _reward, _done = env.step(state, action)
         # Layout should be swapped
         assert new_state.layout[0] == 1
         assert new_state.layout[1] == 0
@@ -144,7 +141,7 @@ class TestRoutingEnvironment:
         state = env.reset()
 
         action = RoutingAction(action_type="swap", swap_edge=(0, 1))
-        new_state, reward, done = env.step(state, action)
+        new_state, _reward, _done = env.step(state, action)
         # SWAP = 3 CX gates, each with error 0.005
         expected_error = 3 * 0.005
         assert abs(new_state.accumulated_error - expected_error) < 1e-6
@@ -223,7 +220,7 @@ class TestPPOAgent:
         agent = _build_ppo_model(state_dim=RL_STATE_DIM, n_actions=5)
         states = torch.randn(3, RL_STATE_DIM)
         actions = torch.randint(0, 5, (3,))
-        log_probs, values, entropy = agent.evaluate(states, actions)
+        log_probs, values, _entropy = agent.evaluate(states, actions)
 
         loss = -log_probs.mean() + 0.5 * values.pow(2).mean()
         loss.backward()
@@ -379,7 +376,7 @@ class TestRLRouter:
 
     def test_route_ghz(self, trained_router: RLRouter):
         layout = {0: 0, 1: 1, 2: 2}
-        final_layout, swaps, error = trained_router.route(_make_ghz(3), layout)
+        final_layout, _swaps, _error = trained_router.route(_make_ghz(3), layout)
         assert len(final_layout) >= 3
 
     def test_missing_weights_raises(self):

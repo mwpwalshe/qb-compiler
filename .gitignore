@@ -29,3 +29,5 @@ Thumbs.db
 docs/_build/
 *.ipynb_checkpoints/
 *:Zone.Identifier
+CLAUDE.md
+qb-compiler-*.md

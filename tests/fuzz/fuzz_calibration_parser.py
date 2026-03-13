@@ -8,14 +8,15 @@ Targets ``BackendProperties.from_qubitboost_dict`` with:
 """
 from __future__ import annotations
 
-import atheris
 import math
 import sys
 
+import atheris
+
 with atheris.instrument_imports():
     from qb_compiler.calibration.models.backend_properties import BackendProperties
-    from qb_compiler.calibration.models.qubit_properties import QubitProperties
     from qb_compiler.calibration.models.coupling_properties import GateProperties
+    from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
 
 _SPECIAL_FLOATS = [0.0, -1.0, 1e-10, 1e30, math.inf, -math.inf, math.nan, -0.0]
@@ -27,15 +28,31 @@ def _make_qubit_dict(fdp: atheris.FuzzedDataProvider) -> dict:
     if fdp.ConsumeBool():
         d["qubit"] = fdp.ConsumeIntInRange(-100, 10000)
     if fdp.ConsumeBool():
-        d["T1"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+        d["T1"] = (
+            fdp.PickValueInList(_SPECIAL_FLOATS)
+            if fdp.ConsumeBool()
+            else fdp.ConsumeRegularFloat()
+        )
     if fdp.ConsumeBool():
-        d["T2"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+        d["T2"] = (
+            fdp.PickValueInList(_SPECIAL_FLOATS)
+            if fdp.ConsumeBool()
+            else fdp.ConsumeRegularFloat()
+        )
     if fdp.ConsumeBool():
         d["frequency"] = fdp.ConsumeRegularFloat()
     if fdp.ConsumeBool():
-        d["readout_error_0to1"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+        d["readout_error_0to1"] = (
+            fdp.PickValueInList(_SPECIAL_FLOATS)
+            if fdp.ConsumeBool()
+            else fdp.ConsumeRegularFloat()
+        )
     if fdp.ConsumeBool():
-        d["readout_error_1to0"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+        d["readout_error_1to0"] = (
+            fdp.PickValueInList(_SPECIAL_FLOATS)
+            if fdp.ConsumeBool()
+            else fdp.ConsumeRegularFloat()
+        )
     return d
 
 
@@ -50,9 +67,17 @@ def _make_gate_dict(fdp: atheris.FuzzedDataProvider) -> dict:
     if fdp.ConsumeBool():
         params: dict = {}
         if fdp.ConsumeBool():
-            params["gate_error"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+            params["gate_error"] = (
+                fdp.PickValueInList(_SPECIAL_FLOATS)
+                if fdp.ConsumeBool()
+                else fdp.ConsumeRegularFloat()
+            )
         if fdp.ConsumeBool():
-            params["gate_length"] = fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
+            params["gate_length"] = (
+                fdp.PickValueInList(_SPECIAL_FLOATS)
+                if fdp.ConsumeBool()
+                else fdp.ConsumeRegularFloat()
+            )
         d["parameters"] = params
     return d
 

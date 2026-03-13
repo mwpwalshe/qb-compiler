@@ -8,9 +8,8 @@ import pytest
 
 from qb_compiler.ir.circuit import QBCircuit
 from qb_compiler.ir.converters.openqasm_converter import from_qasm, to_qasm
-from qb_compiler.ir.operations import QBGate, QBMeasure
+from qb_compiler.ir.operations import QBGate
 from tests.conftest import requires_qiskit
-
 
 # ── OpenQASM converter ───────────────────────────────────────────────
 

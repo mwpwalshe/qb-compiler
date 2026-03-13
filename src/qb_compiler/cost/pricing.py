@@ -40,8 +40,7 @@ class VendorPricing:
 
 
 # ── Master pricing table ────────────────────────────────────────────
-# Kept in sync with QubitBoost CLAUDE.md Hardware Cost Reference and
-# config.py BackendSpec.cost_per_shot.
+# Kept in sync with config.py BackendSpec.cost_per_shot.
 
 VENDOR_PRICING: dict[str, VendorPricing] = {
     # IBM Heron (Utility tier, ~$1.60/sec)

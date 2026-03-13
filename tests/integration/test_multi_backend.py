@@ -11,7 +11,6 @@ import pytest
 from qb_compiler.compiler import QBCircuit, QBCompiler
 from qb_compiler.config import BACKEND_CONFIGS
 
-
 # ── helpers ──────────────────────────────────────────────────────────
 
 

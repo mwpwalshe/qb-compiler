@@ -6,12 +6,12 @@ import pytest
 
 xgb = pytest.importorskip("xgboost")
 
-from qb_compiler.calibration.models.backend_properties import BackendProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
-from qb_compiler.ir.circuit import QBCircuit
-from qb_compiler.ir.operations import QBGate
-from qb_compiler.ml.layout_predictor import MLLayoutPredictor, _WEIGHTS_DIR
+from qb_compiler.calibration.models.backend_properties import BackendProperties  # noqa: E402
+from qb_compiler.calibration.models.coupling_properties import GateProperties  # noqa: E402
+from qb_compiler.calibration.models.qubit_properties import QubitProperties  # noqa: E402
+from qb_compiler.ir.circuit import QBCircuit  # noqa: E402
+from qb_compiler.ir.operations import QBGate  # noqa: E402
+from qb_compiler.ml.layout_predictor import _WEIGHTS_DIR, MLLayoutPredictor  # noqa: E402
 
 
 def _make_backend(n: int = 10) -> BackendProperties:
@@ -123,7 +123,7 @@ class TestMLMapperIntegration:
         )
         circ = _make_bell()
         ctx: dict = {}
-        result = mapper.run(circ, ctx)
+        mapper.run(circ, ctx)
         assert "initial_layout" in ctx
         layout = ctx["initial_layout"]
         # Layout should map both logical qubits to valid physical qubits

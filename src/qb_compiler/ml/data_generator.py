@@ -13,11 +13,10 @@ from __future__ import annotations
 import logging
 import random
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from qb_compiler.ml.features import (
-    build_feature_matrix,
     extract_circuit_features,
     extract_qubit_features,
     to_feature_vector,
@@ -26,7 +25,6 @@ from qb_compiler.ml.features import (
 if TYPE_CHECKING:
     from qb_compiler.calibration.models.backend_properties import BackendProperties
     from qb_compiler.ir.circuit import QBCircuit
-    from qb_compiler.passes.mapping.calibration_mapper import CalibrationMapperConfig
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +269,7 @@ class TrainingDataGenerator:
         )
 
         layout: dict[int, int] = {}
-        for log_q, phys_q in zip(logical_order, physical_order):
+        for log_q, phys_q in zip(logical_order, physical_order, strict=False):
             layout[log_q] = phys_q
 
         return layout

@@ -7,13 +7,15 @@ Targets ``qb_compiler.cli.main`` via click's CliRunner with:
 """
 from __future__ import annotations
 
-import atheris
 import os
 import sys
 import tempfile
 
+import atheris
+
 with atheris.instrument_imports():
     from click.testing import CliRunner
+
     from qb_compiler.cli.main import cli
 
 

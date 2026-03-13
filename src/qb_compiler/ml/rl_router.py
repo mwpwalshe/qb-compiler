@@ -22,12 +22,11 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import random
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from qb_compiler.calibration.models.backend_properties import BackendProperties
@@ -336,7 +335,7 @@ def _build_ppo_model(
     state_dim: int = RL_STATE_DIM,
     n_actions: int = 1,
     hidden_dim: int = RL_HIDDEN_DIM,
-) -> "PPOAgent":
+) -> Any:
     """Build the PPO policy+value network."""
     _check_torch()
     import torch
@@ -568,7 +567,6 @@ def train_rl_router(
     """
     _check_torch()
     import torch
-    import torch.nn as nn
 
     torch.manual_seed(seed)
     random.seed(seed)
@@ -608,7 +606,7 @@ def train_rl_router(
         total_reward = 0.0
         n_swaps_ep = 0
 
-        for step_i in range(max_steps_per_episode):
+        for _step_i in range(max_steps_per_episode):
             if state.done:
                 break
 
@@ -704,10 +702,10 @@ def _ppo_update(
 
     # Compute returns
     returns: list[float] = []
-    R = 0.0
+    running_return = 0.0
     for step in reversed(trajectory):
-        R = step.reward + gamma * R * (0.0 if step.done else 1.0)
-        returns.insert(0, R)
+        running_return = step.reward + gamma * running_return * (0.0 if step.done else 1.0)
+        returns.insert(0, running_return)
 
     states = torch.tensor(
         [s.state_features for s in trajectory], dtype=torch.float32
