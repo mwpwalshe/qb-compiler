@@ -1,5 +1,7 @@
 """Backend target definitions and vendor-specific support."""
 
+from __future__ import annotations
+
 from qb_compiler.backends.base import BackendTarget
 from qb_compiler.backends.ibm import (
     IBM_EAGLE_BASIS,

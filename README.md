@@ -143,76 +143,63 @@ Calibration Data (T1, T2, gate error, readout error)
 
 ## Benchmarks
 
-Estimated fidelity improvement over topology-only mapping, using real IBM Fez
-calibration data (March 2026, 156 qubits):
+All tables use the same baseline and fidelity estimator. Reproduce with
+`python scripts/benchmark_readme.py`.
 
-| Circuit   | Qubits | 2Q Gates | Baseline | qb-compiler | Improvement |
-|-----------|--------|----------|----------|-------------|-------------|
-| Bell      | 2      | 1        | 0.9664   | 0.9868      | +2.1%       |
-| GHZ-5     | 5      | 4        | 0.9147   | 0.9471      | +3.5%       |
-| GHZ-8     | 8      | 7        | 0.8657   | 0.8664      | +0.1%       |
-| QAOA-4    | 4      | 6        | 0.9226   | 0.9608      | +4.1%       |
+### Core Compiler (no ML dependencies)
+
+Calibration-aware VF2 mapping vs naive greedy placement, on real IBM Fez
+calibration data (156 qubits, March 2026):
+
+| Circuit | Qubits | 2Q Gates | Greedy | VF2 | Improvement |
+|---------|-------:|---------:|-------:|----:|------------:|
+| Bell    |      2 |        1 | 0.9892 | 0.9868 | -0.2% |
+| GHZ-5   |      5 |        4 | 0.8923 | 0.9471 | **+6.1%** |
+| GHZ-8   |      8 |        7 | 0.8372 | 0.8519 | **+1.8%** |
+| QAOA-4  |      4 |        6 | 0.9018 | 0.9608 | **+6.5%** |
+| QAOA-8  |      8 |       14 | 0.8204 | 0.8342 | **+1.7%** |
+
+*Greedy = edge-ranked placement. VF2 = calibration-weighted subgraph
+isomorphism (max_candidates=500, call_limit=50k).*
+
+### With ML Acceleration (`pip install "qb-compiler[ml,gnn]"`)
+
+XGBoost narrows VF2 search to ~20 candidates. GNN captures device topology
+structure that flat features miss. Both shine on larger circuits:
+
+| Circuit | Qubits | Greedy | VF2 | ML+VF2 | GNN+VF2 | Best vs Greedy |
+|---------|-------:|-------:|----:|-------:|--------:|---------------:|
+| Bell    |      2 | 0.9892 | 0.9868 | 0.9868 | 0.9868 | -0.2% |
+| GHZ-5   |      5 | 0.8923 | 0.9471 | 0.9463 | 0.9440 | **+6.1%** |
+| GHZ-8   |      8 | 0.8372 | 0.8519 | 0.8975 | 0.9062 | **+8.2%** |
+| QAOA-4  |      4 | 0.9018 | 0.9608 | 0.9552 | 0.9608 | **+6.5%** |
+| QAOA-8  |      8 | 0.8204 | 0.8342 | 0.8771 | 0.8880 | **+8.2%** |
+
+*ML+VF2: XGBoost, AUC=0.94, 454 KB. GNN+VF2: dual-graph GCN, 8,833 params,
+42 KB. Both trained on IBM Fez calibration data.*
 
 ### T1 Asymmetry: What Qiskit Misses
 
-Standard transpilers use *symmetrised* readout error and cannot see T1
+Standard transpilers use symmetrised readout error and cannot see T1
 asymmetry. qb-compiler models the raw asymmetric readout, revealing hidden
 fidelity loss:
 
-| Circuit   | Qubits | Symmetric Estimate | Asymmetric Estimate | Overestimate |
-|-----------|--------|--------------------|---------------------|--------------|
-| GHZ-5     | 5      | 0.9471             | 0.9437              | 0.36%        |
-| GHZ-8     | 8      | 0.8664             | 0.8598              | 0.77%        |
-| QAOA-8    | 8      | 0.8403             | 0.8338              | 0.77%        |
+| Circuit | Qubits | Symmetric | Asymmetric | Overestimate |
+|---------|-------:|----------:|-----------:|-------------:|
+| Bell    |      2 | 0.9868    | 0.9851     | 0.17%        |
+| GHZ-5   |      5 | 0.9471    | 0.9437     | 0.36%        |
+| GHZ-8   |      8 | 0.8519    | 0.8481     | 0.45%        |
+| QAOA-4  |      4 | 0.9608    | 0.9569     | 0.40%        |
+| QAOA-8  |      8 | 0.8342    | 0.8304     | 0.45%        |
 
 > The symmetric model overestimates fidelity because it hides T1-driven
-> `|1⟩` decay. This is the error Qiskit's default transpiler makes. On
-> IBM Fez, qubit asymmetry ratios range from 0.2x to 24x.
+> `|1⟩` decay. On IBM Fez, qubit asymmetry ratios range from 0.2x to 24x.
+> This is the error Qiskit's default transpiler makes.
 
-### ML-Accelerated Layout (with `qb-compiler[ml]`)
-
-XGBoost narrows VF2 search to the best ~20 qubits, producing better layouts
-faster:
-
-| Circuit   | Qubits | Greedy | VF2    | ML+VF2 | ML vs VF2 | Speedup |
-|-----------|--------|--------|--------|--------|-----------|---------|
-| GHZ-5     | 5      | 0.8923 | 0.9471 | 0.9463 | -0.1%     | 5.8x    |
-| GHZ-8     | 8      | 0.8372 | 0.8519 | 0.8975 | **+5.4%** | 22.6x   |
-| QAOA-8    | 8      | 0.8204 | 0.8342 | 0.8771 | **+5.1%** | 27.9x   |
-| QFT-4     | 4      | 0.8852 | 0.8852 | 0.8852 | 0.0%      | 0.6x    |
-
-> Model: XGBoost, AUC=0.94, 454 KB. Trained on IBM Fez calibration data.
-> Top features: readout_error, frequency, T2, gate_error, connectivity,
-> T1_asymmetry. Run `python scripts/benchmark_ml_router.py` to reproduce.
-
-### GNN Layout Predictor (with `qb-compiler[gnn]`)
-
-A dual-graph GCN captures device topology structure that flat XGBoost features
-miss. Outperforms XGBoost on larger circuits:
-
-| Circuit   | Qubits | XGBoost | GNN    | GNN vs XGB | Model Size |
-|-----------|--------|---------|--------|------------|------------|
-| GHZ-8     | 8      | 0.8975  | 0.9062 | **+1.0%**  | 42 KB      |
-| QAOA-8    | 8      | 0.8771  | 0.8880 | **+1.2%**  | 42 KB      |
-| QAOA-4    | 4      | 0.9552  | 0.9608 | +0.6%      | 42 KB      |
-
-> Architecture: device coupling graph (7 calibration features/qubit) +
-> circuit interaction graph (3 features/qubit) + cross-attention + MLP.
-> 8,833 parameters, 10x smaller than XGBoost.
-> Install with `pip install "qb-compiler[gnn]"`.
-
-### RL SWAP Router (experimental)
-
-PPO-based reinforcement learning agent for SWAP routing decisions.
-Observes routing state + calibration data and learns to minimise
-accumulated gate error. Per-backend, nightly retrainable.
-
-> **Note:** Baseline uses median device error rates (topology-only qubit
-> selection). qb-compiler uses calibration-aware VF2 mapping scored by today's
-> per-qubit gate error, readout error, T1/T2 coherence, T1 asymmetry, and
-> temporal error correlation. Benchmarked against real IBM Fez calibration
-> snapshot. Improvement depends on circuit structure and daily calibration
-> variance. Run `python scripts/benchmark_phase_comparison.py` to reproduce.
+> **Footnote:** Greedy = edge-ranked qubit placement (no search). All fidelity
+> estimates use per-qubit calibration data from IBM Fez (March 2026, 156 qubits).
+> Improvement depends on circuit structure and daily calibration variance.
+> Reproduce: `python scripts/benchmark_readme.py`
 
 ---
 

@@ -1,5 +1,7 @@
 """Calibration subsystem — models, providers, and caching."""
 
+from __future__ import annotations
+
 from qb_compiler.calibration.cached_provider import CachedCalibrationProvider
 from qb_compiler.calibration.models import (
     BackendProperties,

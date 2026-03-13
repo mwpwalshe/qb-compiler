@@ -13,6 +13,8 @@ qb_transpile
     Convenience function — transpile with calibration-aware layout in one call.
 """
 
+from __future__ import annotations
+
 from qb_compiler.qiskit_plugin.pass_manager import QBPassManager
 from qb_compiler.qiskit_plugin.transpiler_plugin import (
     QBCalibrationLayout,

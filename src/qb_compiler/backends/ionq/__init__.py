@@ -1,5 +1,7 @@
 """IonQ backend support."""
 
+from __future__ import annotations
+
 from qb_compiler.backends.ionq.calibration import (
     load_ionq_calibration,
     parse_ionq_calibration,

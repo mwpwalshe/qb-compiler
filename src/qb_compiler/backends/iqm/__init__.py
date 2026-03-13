@@ -1,5 +1,7 @@
 """IQM backend support."""
 
+from __future__ import annotations
+
 from qb_compiler.backends.iqm.calibration import (
     load_iqm_calibration,
     parse_iqm_calibration,
