@@ -100,8 +100,6 @@ packages = ["src/qb_compiler"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    "CLAUDE.md",
-    "qb-compiler-*.md",
     "*:Zone.Identifier",
     "tests/fixtures/calibration_snapshots/*.json",
     ".github/",
