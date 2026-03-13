@@ -63,14 +63,14 @@ print(f"Estimated cost: ${cost.total_usd:.2f}")
 
 ## The Problem
 
-Standard transpilers treat quantum hardware as a static graph. They pick qubit
-mappings and routing paths based on topology alone, ignoring the fact that gate
-error rates, coherence times, and readout fidelities change with every
-calibration cycle. On IBM Heron processors, calibration data updates daily --
-and qubit quality can vary by 10x across the chip.
+Topology-only compilation treats quantum hardware as a static graph — picking
+qubit mappings and routing paths based on connectivity alone. But gate error
+rates, coherence times, and readout fidelities change with every calibration
+cycle. On IBM Heron processors, calibration data updates daily and qubit
+quality can vary by 10x across the chip.
 
-The result: **15-40% fidelity left on the table** because your compiler does not
-know which qubits are good *today*.
+The result: **significant fidelity left on the table** because compilation
+decisions aren't informed by which qubits are good *today*.
 
 ## The Solution
 
@@ -112,9 +112,9 @@ Calibration Data (T1, T2, gate error, readout error)
 
 - **T1 Asymmetry Awareness** -- On IBM Heron, the probability of reading `0`
   when a qubit is in `|1⟩` (P(0|1)) can be **up to 24x higher** than P(1|0).
-  Standard transpilers use symmetrised readout error and miss this entirely.
-  qb-compiler uses the raw asymmetric readout data to penalise high-asymmetry
-  qubits for circuits that hold qubits in `|1⟩`.
+  qb-compiler goes beyond symmetric readout error and uses the raw asymmetric
+  readout data to penalise high-asymmetry qubits for circuits that hold
+  qubits in `|1⟩`.
 
 - **Temporal Correlation Detection** -- When multiple calibration snapshots are
   available, qb-compiler detects qubit pairs whose error rates co-vary over
@@ -181,7 +181,7 @@ structure that flat features miss. Both shine on larger circuits:
 
 ### T1 Asymmetry: Beyond Symmetric Readout Error
 
-Standard transpilers use symmetrised readout error and cannot see T1
+Symmetric readout error models average P(0|1) and P(1|0), hiding T1-driven
 asymmetry. qb-compiler models the raw asymmetric readout, revealing hidden
 fidelity loss:
 
