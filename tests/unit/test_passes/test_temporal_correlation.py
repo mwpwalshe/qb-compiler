@@ -146,12 +146,12 @@ class TestCalibrationMapperWithCorrelation:
 
     def test_mapper_accepts_correlation_analyzer(self):
         """Mapper should accept and use a TemporalCorrelationAnalyzer."""
+        from qb_compiler.ir.circuit import QBCircuit
+        from qb_compiler.ir.operations import QBGate
         from qb_compiler.passes.mapping.calibration_mapper import (
             CalibrationMapper,
             CalibrationMapperConfig,
         )
-        from qb_compiler.ir.circuit import QBCircuit
-        from qb_compiler.ir.operations import QBGate
 
         snap1 = _make_snapshot({0: 0.01, 1: 0.02, 2: 0.01, 3: 0.01}, timestamp="t1")
         snap2 = _make_snapshot({0: 0.05, 1: 0.06, 2: 0.01, 3: 0.01}, timestamp="t2")
@@ -168,7 +168,7 @@ class TestCalibrationMapperWithCorrelation:
         circ.add_gate(QBGate("cx", (0, 1)))
 
         ctx: dict = {}
-        result = mapper.run(circ, ctx)
+        mapper.run(circ, ctx)
 
         assert "initial_layout" in ctx
         assert "score_breakdown" in ctx
@@ -188,12 +188,12 @@ class TestCalibrationMapperWithCorrelation:
 
         analyzer = TemporalCorrelationAnalyzer.from_snapshots([snap1, snap2])
 
+        from qb_compiler.ir.circuit import QBCircuit
+        from qb_compiler.ir.operations import QBGate
         from qb_compiler.passes.mapping.calibration_mapper import (
             CalibrationMapper,
             CalibrationMapperConfig,
         )
-        from qb_compiler.ir.circuit import QBCircuit
-        from qb_compiler.ir.operations import QBGate
 
         mapper = CalibrationMapper(
             snap2,

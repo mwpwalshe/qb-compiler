@@ -187,11 +187,10 @@ class TemporalCorrelationAnalyzer:
                 gate_vol = math.sqrt(variance)
                 # If gate error is volatile, penalize the edge even if
                 # the qubit readout correlation is low
-                if edge_key not in edge_corr:
+                if edge_key not in edge_corr and mean > 1e-9:
                     # Use gate volatility as a proxy for correlation
                     # Normalise by mean to get coefficient of variation
-                    if mean > 1e-9:
-                        edge_corr[edge_key] = min(gate_vol / mean, 1.0)
+                    edge_corr[edge_key] = min(gate_vol / mean, 1.0)
 
         logger.info(
             "TemporalCorrelationAnalyzer: %d qubits, %d edges, %d snapshots",
@@ -226,5 +225,5 @@ class TemporalCorrelationAnalyzer:
         if sx < 1e-15 or sy < 1e-15:
             return None
 
-        cov = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / n
+        cov = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y, strict=False)) / n
         return cov / (sx * sy)

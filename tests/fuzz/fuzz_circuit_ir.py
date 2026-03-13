@@ -8,15 +8,17 @@ Targets:
 """
 from __future__ import annotations
 
-import atheris
+import contextlib
 import math
 import sys
 
+import atheris
+
 with atheris.instrument_imports():
+    from qb_compiler.exceptions import CompilationError
     from qb_compiler.ir.circuit import QBCircuit
     from qb_compiler.ir.dag import QBDag
-    from qb_compiler.ir.operations import QBBarrier, QBGate, QBMeasure
-    from qb_compiler.exceptions import CompilationError
+    from qb_compiler.ir.operations import QBGate
 
 
 _GATE_NAMES = ["h", "x", "y", "z", "cx", "cz", "rz", "rx", "ry", "ecr", "swap", "ccx", "id"]
@@ -61,12 +63,10 @@ def test_one_input(data: bytes) -> None:
                 params=params,
             )
             repr(gate)
-            gate.num_qubits
-            gate.is_parametric
-            try:
+            _ = gate.num_qubits
+            _ = gate.is_parametric
+            with contextlib.suppress(ValueError):
                 gate.inverse()
-            except ValueError:
-                pass
 
         elif choice == 2:
             # to_dag() / from_dag() round-trip
@@ -110,8 +110,8 @@ def test_one_input(data: bytes) -> None:
             for _ in range(depth):
                 q = fdp.ConsumeIntInRange(0, n_qubits - 1)
                 circ.add_gate(QBGate(name="h", qubits=(q,)))
-            circ.depth
-            circ.gate_count
+            _ = circ.depth
+            _ = circ.gate_count
 
         else:
             # QBCircuit with bad n_qubits

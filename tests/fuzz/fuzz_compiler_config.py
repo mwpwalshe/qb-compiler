@@ -7,8 +7,9 @@ Targets ``CompilerConfig`` with:
 """
 from __future__ import annotations
 
-import atheris
 import sys
+
+import atheris
 
 with atheris.instrument_imports():
     from qb_compiler.config import CompilerConfig

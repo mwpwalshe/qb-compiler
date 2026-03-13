@@ -6,23 +6,20 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from qb_compiler.calibration.models.backend_properties import BackendProperties
-from qb_compiler.calibration.models.coupling_properties import GateProperties
-from qb_compiler.calibration.models.qubit_properties import QubitProperties
-from qb_compiler.ir.circuit import QBCircuit
-from qb_compiler.ir.operations import QBGate
-from qb_compiler.ml.gnn_router import (
-    GNN_HIDDEN_DIM,
-    GNNLayoutPredictor,
+from qb_compiler.calibration.models.backend_properties import BackendProperties  # noqa: E402
+from qb_compiler.calibration.models.coupling_properties import GateProperties  # noqa: E402
+from qb_compiler.calibration.models.qubit_properties import QubitProperties  # noqa: E402
+from qb_compiler.ir.circuit import QBCircuit  # noqa: E402
+from qb_compiler.ir.operations import QBGate  # noqa: E402
+from qb_compiler.ml.gnn_router import (  # noqa: E402
     N_CIRCUIT_FEATURES,
     N_DEVICE_FEATURES,
-    _WEIGHTS_DIR,
+    GNNLayoutPredictor,
     _build_model,
     _compute_auc,
     extract_circuit_graph,
     extract_device_graph,
 )
-
 
 # ── fixtures ──────────────────────────────────────────────────────────
 
@@ -323,7 +320,7 @@ class TestGNNMapperIntegration:
         )
         circ = _make_bell()
         ctx: dict = {}
-        result = mapper.run(circ, ctx)
+        mapper.run(circ, ctx)
         assert "initial_layout" in ctx
         layout = ctx["initial_layout"]
         assert len(layout) >= 2

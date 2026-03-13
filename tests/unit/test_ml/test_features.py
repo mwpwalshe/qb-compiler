@@ -11,8 +11,6 @@ from qb_compiler.ir.circuit import QBCircuit
 from qb_compiler.ir.operations import QBGate
 from qb_compiler.ml.features import (
     N_FEATURES,
-    CircuitFeatures,
-    QubitFeatures,
     build_feature_matrix,
     extract_circuit_features,
     extract_qubit_features,

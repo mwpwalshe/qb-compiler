@@ -26,7 +26,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from qb_compiler.calibration.models.backend_properties import BackendProperties
@@ -167,7 +167,7 @@ def extract_circuit_graph(circuit: QBCircuit) -> CircuitGraphData:
 # ── GNN Model ────────────────────────────────────────────────────────
 
 
-def _build_model() -> "GNNLayoutModel":
+def _build_model() -> Any:
     """Construct the GNN model (requires torch)."""
     _check_torch()
     import torch
@@ -399,7 +399,7 @@ class GNNLayoutPredictor:
 
         # Sort by score (highest first)
         scored = sorted(
-            zip(dev_data.qubit_ids, probabilities.tolist()),
+            zip(dev_data.qubit_ids, probabilities.tolist(), strict=False),
             key=lambda x: -x[1],
         )
 
@@ -655,7 +655,7 @@ def train_gnn_model(
 
 def _compute_auc(labels: list[int], predictions: list[float]) -> float:
     """Compute AUC-ROC without sklearn dependency."""
-    pairs = sorted(zip(predictions, labels), key=lambda x: -x[0])
+    pairs = sorted(zip(predictions, labels, strict=False), key=lambda x: -x[0])
     n_pos = sum(labels)
     n_neg = len(labels) - n_pos
 

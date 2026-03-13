@@ -522,7 +522,9 @@ def _from_ir_circuit(ir_circ: Any, original: QBCircuit) -> QBCircuit:
     return new
 
 
-def _build_synthetic_calibration(spec: BackendSpec, backend_name: str, n_qubits: int) -> BackendProperties:
+def _build_synthetic_calibration(
+    spec: BackendSpec, backend_name: str, n_qubits: int,
+) -> BackendProperties:
     """Build a BackendProperties with per-qubit variance from BackendSpec medians.
 
     Uses deterministic pseudo-random variance so results are reproducible.
