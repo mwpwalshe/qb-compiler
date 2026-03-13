@@ -1,7 +1,8 @@
 # Contributing to qb-compiler
 
-Thank you for your interest in contributing to qb-compiler. This guide covers
-everything you need to get started.
+Thank you for your interest in contributing to qb-compiler, the open-source
+calibration-aware quantum circuit compiler by [QubitBoost](https://qubitboost.io).
+This guide covers everything you need to get started.
 
 ## Getting Started
 

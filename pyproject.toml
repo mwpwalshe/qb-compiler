@@ -5,16 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "qb-compiler"
 dynamic = ["version"]
-description = "Calibration-aware quantum circuit compiler. Compiles circuits that survive today's hardware."
+description = "Calibration-aware quantum circuit compiler by QubitBoost. Compiles circuits that survive today's hardware."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
-    { name = "Mike", email = "mike@qubitboost.io" },
+    { name = "QubitBoost", email = "mike@qubitboost.io" },
 ]
 keywords = [
     "quantum", "compiler", "transpiler", "calibration", "noise-aware",
-    "qiskit", "quantum-computing", "qec", "error-correction",
+    "qiskit", "quantum-computing", "qec", "error-correction", "qubitboost",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
