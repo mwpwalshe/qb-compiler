@@ -1,5 +1,7 @@
 """IBM backend support."""
 
+from __future__ import annotations
+
 from qb_compiler.backends.ibm.calibration import (
     load_ibm_calibration,
     parse_ibm_calibration,

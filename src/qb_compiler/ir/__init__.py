@@ -1,5 +1,7 @@
 """Intermediate representation: circuits, DAGs, and operations."""
 
+from __future__ import annotations
+
 from qb_compiler.ir.circuit import QBCircuit
 from qb_compiler.ir.converters import from_qasm, to_qasm
 from qb_compiler.ir.dag import QBDag

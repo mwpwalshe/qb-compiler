@@ -1,5 +1,7 @@
 """Rigetti backend support."""
 
+from __future__ import annotations
+
 from qb_compiler.backends.rigetti.calibration import (
     load_rigetti_calibration,
     parse_rigetti_calibration,
