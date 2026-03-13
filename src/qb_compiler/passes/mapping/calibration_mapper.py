@@ -203,6 +203,12 @@ class CalibrationMapper(TransformationPass):
         if not interactions:
             # No 2Q gates — pick the best individual qubits
             layout = self._best_individual_qubits(circuit)
+        elif n_logical <= 2 and len(interactions) == 1:
+            # Small circuit fast path: skip VF2, directly pick the
+            # best-calibrated edge.  VF2 overhead on trivial circuits
+            # is wasteful and the greedy edge-ranked approach is optimal
+            # when there's only one interacting pair.
+            layout = self._best_edge_direct(circuit, interactions)
         else:
             layout = self._find_best_layout(circuit, interactions)
 
@@ -439,6 +445,41 @@ class CalibrationMapper(TransformationPass):
         for logical_q in range(n_logical):
             layout[logical_q] = scored[logical_q][1]
         return layout
+
+    def _best_edge_direct(
+        self,
+        circuit: QBCircuit,
+        interactions: dict[tuple[int, int], int],
+    ) -> dict[int, int]:
+        """Fast path for small circuits: directly pick the best physical edge.
+
+        For circuits with <= 2 qubits and a single 2Q interaction, VF2
+        subgraph search is unnecessary.  Instead, score every physical
+        edge and pick the one with the lowest combined error.
+        """
+        (log_a, log_b), count = next(iter(interactions.items()))
+
+        # Score every physical edge
+        best_score = float("inf")
+        best_pa, best_pb = 0, 1
+        seen: set[tuple[int, int]] = set()
+        for q1, q2 in self._coupling_map:
+            edge_key = (min(q1, q2), max(q1, q2))
+            if edge_key in seen:
+                continue
+            seen.add(edge_key)
+            score = (
+                self._edge_score(q1, q2, count)
+                + self._qubit_score(q1)
+                + self._qubit_score(q2)
+            )
+            if score < best_score:
+                best_score = score
+                best_pa, best_pb = q1, q2
+
+        layout = {log_a: best_pa, log_b: best_pb}
+        # Complete layout for any other logical qubits (e.g. ancilla)
+        return self._complete_layout(circuit, layout)
 
     # ── VF2-based layout search ──────────────────────────────────────
 
