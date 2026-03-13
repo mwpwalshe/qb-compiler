@@ -117,7 +117,8 @@ class CachedCalibrationProvider(CalibrationProvider):
     def invalidate(self) -> None:
         """Force the next access to refresh from the factory."""
         with self._lock:
-            self._fetched_at = 0.0
+            # Set fetched_at far enough in the past to guarantee staleness
+            self._fetched_at = time.monotonic() - self._max_age - 1.0
 
     def prefetch(self) -> None:
         """Eagerly populate the cache (useful at application startup)."""
