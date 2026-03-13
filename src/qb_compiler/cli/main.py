@@ -28,7 +28,7 @@ from qb_compiler.config import BACKEND_CONFIGS, get_backend_spec
 @click.group()
 @click.version_option(__version__, prog_name="qb-compiler")
 def cli() -> None:
-    """qb-compiler — calibration-aware quantum circuit compiler."""
+    """qb-compiler by QubitBoost — calibration-aware quantum circuit compiler."""
 
 
 # ── qbc compile ──────────────────────────────────────────────────────

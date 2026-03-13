@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Downloads](https://img.shields.io/pypi/dm/qb-compiler.svg)](https://pypi.org/project/qb-compiler/)
 
-**Calibration-aware quantum circuit compiler. Compile circuits that are less likely to fail on today's hardware.**
+**Calibration-aware quantum circuit compiler by [QubitBoost](https://qubitboost.io). Compile circuits that are less likely to fail on today's hardware.**
 
 ---
 
