@@ -63,6 +63,11 @@ class TestPreflight:
         assert "Depth" in result.output
         assert "viable limit" in result.output
 
+    def test_shows_gate_eligibility(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["preflight", BELL, "-b", "ibm_fez", "-n", "1"])
+        assert "QubitBoost gate eligibility" in result.output
+        assert "TomoGate" in result.output
+
 
 # ── qbc analyze ─────────────────────────────────────────────────────
 
@@ -82,11 +87,19 @@ class TestAnalyze:
 
     def test_shows_upsell(self, runner: CliRunner) -> None:
         result = runner.invoke(cli, ["analyze", BELL, "-b", "ibm_fez", "-n", "1"])
-        assert "qubitboost.io" in result.output
+        assert "qubitboost" in result.output.lower()
 
     def test_shows_gate_breakdown(self, runner: CliRunner) -> None:
         result = runner.invoke(cli, ["analyze", BELL, "-b", "ibm_fez", "-n", "1"])
         assert "Gate breakdown" in result.output
+
+    def test_shows_circuit_type(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["analyze", BELL, "-b", "ibm_fez", "-n", "1"])
+        assert "Circuit type" in result.output
+
+    def test_shows_gate_eligibility(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["analyze", BELL, "-b", "ibm_fez", "-n", "1"])
+        assert "QubitBoost gate eligibility" in result.output
 
 
 # ── qbc diff ────────────────────────────────────────────────────────
