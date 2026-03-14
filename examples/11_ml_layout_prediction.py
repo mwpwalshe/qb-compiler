@@ -40,5 +40,5 @@ if is_gnn_available():
     try:
         predictor = GNNLayoutPredictor.load_bundled("ibm_heron")
         print(f"GNN model: AUC={predictor.metadata.get('training_auc', 'N/A')}")
-    except FileNotFoundError:
-        print("GNN weights not found — train with: python -m qb_compiler.ml.train_gnn")
+    except (FileNotFoundError, RuntimeError) as e:
+        print(f"GNN model not loadable: {e}")
