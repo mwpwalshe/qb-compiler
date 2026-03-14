@@ -255,7 +255,9 @@ class BackendRecommender:
         viable_with_cost = [a for a in viable if a.fidelity_per_dollar is not None]
         best_value = None
         if viable_with_cost:
-            best_value = max(viable_with_cost, key=lambda a: a.fidelity_per_dollar).backend
+            def _fpd(a: BackendAnalysis) -> float:
+                return a.fidelity_per_dollar if a.fidelity_per_dollar is not None else float("-inf")
+            best_value = max(viable_with_cost, key=_fpd).backend
 
         if not viable:
             warnings.append(
@@ -319,7 +321,7 @@ class BackendRecommender:
 
         # Transpile with N seeds
         best_tc = None
-        best_2q = float("inf")
+        best_2q: int | float = float("inf")
         best_seed = -1
 
         for seed in range(self._n_seeds):
@@ -332,6 +334,9 @@ class BackendRecommender:
                 best_2q = c2q
                 best_tc = tc
                 best_seed = seed
+
+        if best_tc is None:
+            raise ValueError(f"Transpilation failed for {entry.name}: no valid result")
 
         depth = best_tc.depth()
         n_qubits = circuit.num_qubits
@@ -375,7 +380,7 @@ class BackendRecommender:
             backend=entry.name,
             provider=provider,
             estimated_fidelity=round(fidelity, 6),
-            two_qubit_gate_count=best_2q,
+            two_qubit_gate_count=int(best_2q),
             depth=depth,
             viable=viable,
             status=status,
