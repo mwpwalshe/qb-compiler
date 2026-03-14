@@ -141,7 +141,18 @@ class PassResult:
 
 @dataclass(frozen=True, slots=True)
 class CompileResult:
-    """Full result bundle returned by :meth:`QBCompiler.compile`."""
+    """Full result bundle returned by :meth:`QBCompiler.compile`.
+
+    When ``initial_layout`` is present, use it with Qiskit's transpiler
+    for routing::
+
+        result = compiler.compile(circuit)
+        transpiled = qiskit.transpile(
+            qiskit_circuit, target=backend.target,
+            initial_layout=result.initial_layout_list,
+            optimization_level=3,
+        )
+    """
 
     compiled_circuit: QBCircuit
     original_depth: int
@@ -149,12 +160,21 @@ class CompileResult:
     estimated_fidelity: float
     pass_log: tuple[PassResult, ...]
     compilation_time_ms: float
+    initial_layout: dict[int, int] | None = None
 
     @property
     def depth_reduction_pct(self) -> float:
         if self.original_depth == 0:
             return 0.0
         return (1.0 - self.compiled_depth / self.original_depth) * 100.0
+
+    @property
+    def initial_layout_list(self) -> list[int] | None:
+        """Layout as an ordered list suitable for ``qiskit.transpile(initial_layout=...)``."""
+        if self.initial_layout is None:
+            return None
+        n = max(self.initial_layout.keys()) + 1
+        return [self.initial_layout[i] for i in range(n)]
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -679,13 +699,20 @@ def _run_calibration_pipeline(
     backend_name: str,
     spec: BackendSpec,
     calibration_props: BackendProperties | None,
+    qiskit_target: Any | None = None,
 ) -> tuple[QBCircuit, dict[str, Any]]:
-    """Run CalibrationMapper + NoiseAwareRouter on a circuit.
+    """Run CalibrationMapper to select the best qubit layout.
 
-    Returns the mapped/routed circuit and metadata dict.
+    Returns the mapped circuit and metadata dict containing the
+    ``initial_layout`` that should be passed to Qiskit's transpiler
+    for routing and optimisation.
+
+    The pipeline deliberately does NOT run its own SWAP router.
+    Hardware validation on IBM Fez showed that Qiskit's SabreSwap
+    produces better routing than our NoiseAwareRouter.  The winning
+    strategy is: **our layout + Qiskit's routing**.
     """
     from qb_compiler.passes.mapping.calibration_mapper import CalibrationMapper
-    from qb_compiler.passes.mapping.noise_aware_router import NoiseAwareRouter
 
     # Get or build calibration data
     if calibration_props is None:
@@ -733,6 +760,7 @@ def _run_calibration_pipeline(
             calibration_props,
             config=mapper_config,
             layout_predictor=layout_predictor,
+            qiskit_target=qiskit_target,
         )
         result = mapper.run(ir_circ, context)
         ir_circ = result.circuit
@@ -742,25 +770,6 @@ def _run_calibration_pipeline(
     except Exception as e:
         logger.warning("CalibrationMapper failed, skipping: %s", e)
         metadata["calibration_mapper_error"] = str(e)
-
-    # Build gate error dict for router from calibration
-    gate_errors: dict[tuple[int, int], float] = {}
-    for gp in calibration_props.gate_properties:
-        if len(gp.qubits) == 2 and gp.error_rate is not None:
-            gate_errors[gp.qubits] = gp.error_rate
-
-    # Run NoiseAwareRouter
-    try:
-        router = NoiseAwareRouter(
-            coupling_map=calibration_props.coupling_map,
-            gate_errors=gate_errors,
-        )
-        result = router.run(ir_circ, context)
-        ir_circ = result.circuit
-        metadata["noise_aware_router"] = result.metadata
-    except Exception as e:
-        logger.warning("NoiseAwareRouter failed, skipping: %s", e)
-        metadata["noise_aware_router_error"] = str(e)
 
     # Convert back
     mapped_circuit = _from_ir_circuit(ir_circ, circuit)
@@ -796,6 +805,7 @@ class QBCompiler:
         calibration: CalibrationProvider | None = None,
         strategy: str = "fidelity_optimal",
         calibration_properties: BackendProperties | None = None,
+        qiskit_target: Any | None = None,
     ) -> None:
         if strategy not in self.STRATEGIES:
             raise ValueError(
@@ -808,6 +818,7 @@ class QBCompiler:
         )
         self.calibration = calibration
         self.calibration_properties = calibration_properties
+        self.qiskit_target = qiskit_target
         self.strategy = strategy
         self._pass_manager = PassManager.default(opt_level)
 
@@ -888,6 +899,7 @@ class QBCompiler:
                     self.config.backend,
                     self.config.backend_spec,
                     self.calibration_properties,
+                    qiskit_target=self.qiskit_target,
                 )
             except Exception as e:
                 logger.warning("Calibration pipeline failed, continuing without: %s", e)
@@ -922,6 +934,7 @@ class QBCompiler:
             estimated_fidelity=fidelity,
             pass_log=tuple(pass_log),
             compilation_time_ms=round(compilation_ms, 3),
+            initial_layout=calibration_meta.get("initial_layout") or None,
         )
 
     def estimate_fidelity(self, circuit: QBCircuit) -> float:
