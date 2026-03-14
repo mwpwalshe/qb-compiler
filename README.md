@@ -218,6 +218,27 @@ All transpilation uses Qiskit's routing engine internally. qb-compiler's value i
 
 ---
 
+## QubitBoost Gate Integration
+
+qb-compiler auto-detects circuit type and recommends QubitBoost execution gates for supported workloads:
+
+| Gate | Benefit | Workload |
+|------|---------|----------|
+| OptGate | 117-208x shot reduction (hardware-validated) | QAOA |
+| ChemGate | 32-42% fewer evaluations (hardware-validated) | VQE |
+| TomoGate | Pre-flight certification | Any |
+| LiveGate | Real-time doom detection | Any |
+| SafetyGate | QEC trust scoring (validated at d=7) | QEC |
+| GuardGate | Quality assurance | QAOA |
+| ShotValidator | Result integrity verification | Any |
+
+Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit type is detected with high confidence. Results vary by circuit structure, backend, and calibration state.
+
+Requires: `pip install qubitboost-sdk`
+Learn more: [qubitboost.io](https://qubitboost.io)
+
+---
+
 ## Supported Backends
 
 | Vendor     | Backends                       | Qubits  | Native Basis  |
