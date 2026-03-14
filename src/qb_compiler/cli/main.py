@@ -88,6 +88,9 @@ def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
         click.echo(f"  Cost (4096 shots): ${result.cost_estimate_usd:.4f}")
     click.echo()
 
+    # Gate recommendations
+    _show_gate_recommendations(qc, result.cost_estimate_usd)
+
 
 # ── qbc analyze ─────────────────────────────────────────────────────
 
@@ -118,8 +121,17 @@ def analyze(circuit: str, backend: str, seeds: int) -> None:
     except Exception:
         spec = None
 
+    from qb_compiler.integrations.qubitboost import detect_circuit_type
+
+    circuit_type, confidence = detect_circuit_type(qc)
+    if circuit_type != "general":
+        circuit_type_label = f"{circuit_type.upper()} ({confidence.value} confidence)"
+    else:
+        circuit_type_label = "General"
+
     click.echo()
     click.echo(f"  Circuit Analysis: {result.circuit_name}")
+    click.echo(f"  Circuit type: {circuit_type_label}")
     click.echo(f"  Qubits: {n_qubits}  Gates: {total_gates}  Depth: {qc.depth()}")
     if ops:
         ops_str = ", ".join(
@@ -145,8 +157,8 @@ def analyze(circuit: str, backend: str, seeds: int) -> None:
             click.echo(f"    - {s}")
         click.echo()
 
-    click.echo("  Multi-vendor analysis available at https://qubitboost.io/compiler")
-    click.echo()
+    # Gate recommendations
+    _show_gate_recommendations(qc, result.cost_estimate_usd)
 
 
 # ── qbc diff ────────────────────────────────────────────────────────
@@ -321,7 +333,22 @@ def doctor() -> None:
     except ImportError:
         console.print("[dim]-[/dim]  ML layout predictor not available (optional)")
 
-    # 8. Core dependencies
+    # 8. QubitBoost SDK
+    from qb_compiler.integrations.qubitboost import is_sdk_available
+    if is_sdk_available():
+        try:
+            import qubitboost  # type: ignore[import-untyped]
+            qb_ver = getattr(qubitboost, "__version__", "?")
+            console.print(f"[green]\u2714[/green]  QubitBoost SDK {qb_ver}")
+        except Exception:
+            console.print("[green]\u2714[/green]  QubitBoost SDK available")
+    else:
+        console.print(
+            "[dim]-[/dim]  QubitBoost SDK not installed (optional) "
+            "— pip install qubitboost-sdk"
+        )
+
+    # 9. Core dependencies
     for pkg_name, import_name in [
         ("numpy", "numpy"),
         ("rustworkx", "rustworkx"),
@@ -454,6 +481,37 @@ def calibration_show(backend: str) -> None:
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
+
+
+def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
+    """Show QubitBoost gate recommendations for a circuit."""
+    from qb_compiler.integrations.qubitboost import (
+        detect_circuit_type,
+        is_sdk_available,
+        recommend_gates,
+    )
+
+    circuit_type, confidence = detect_circuit_type(qc)
+    recs = recommend_gates(circuit_type, confidence)
+    if not recs:
+        return
+
+    click.echo("  QubitBoost gate eligibility:")
+    for r in recs:
+        click.echo(f"    * {r.gate:14s} {r.status} — {r.headline}")
+        if r.validated_claim:
+            click.echo(
+                f"      {'':14s} Hardware-validated: "
+                f"{r.validated_claim} {r.qualifier}"
+            )
+    click.echo()
+
+    if is_sdk_available():
+        click.echo("  QubitBoost SDK installed.")
+    else:
+        click.echo("  Requires: pip install qubitboost-sdk")
+        click.echo("  Learn more: https://qubitboost.io")
+    click.echo()
 
 
 def _load_qasm(circuit_path: str) -> Any:
