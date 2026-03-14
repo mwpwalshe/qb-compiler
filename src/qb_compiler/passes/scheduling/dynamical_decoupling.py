@@ -90,10 +90,7 @@ def insert_dd(
     )
 
     # Build DD sequence
-    if dd_type == "XY4":
-        dd_sequence = [XGate(), YGate(), XGate(), YGate()]
-    else:
-        dd_sequence = [XGate(), XGate()]
+    dd_sequence = [XGate(), YGate(), XGate(), YGate()] if dd_type == "XY4" else [XGate(), XGate()]
 
     try:
         # Ensure the target supports delay (required for DD padding)
