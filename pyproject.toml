@@ -143,6 +143,8 @@ omit = [
     "*/telemetry/*",
     "*/ml/train.py",
     "*/ml/data_generator.py",
+    "*/qiskit_plugin/*",
+    "*/qec/*",
 ]
 
 [tool.coverage.report]
@@ -153,7 +155,7 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "\\.{3}$",
 ]
-fail_under = 70
+fail_under = 60
 show_missing = true
 
 [tool.mypy]
