@@ -480,9 +480,9 @@ class MLLayoutPredictorV2:
         for q in neighborhood:
             for nb in adjacency[q]:
                 if nb in neighborhood and nb > q:
-                    err = gate_errors.get(frozenset({q, nb}))
-                    if err is not None:
-                        region_errors.append(err)
+                    region_err = gate_errors.get(frozenset({q, nb}))
+                    if region_err is not None:
+                        region_errors.append(region_err)
         feats.append(sum(region_errors) / len(region_errors) if region_errors else 0.02)
 
         return feats
