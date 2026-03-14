@@ -17,8 +17,7 @@ from __future__ import annotations
 import logging
 import random
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -165,7 +164,7 @@ class TrainingDataGeneratorV2:
                 continue
 
             successes = 0
-            for trial in range(self._n_trials):
+            for _trial in range(self._n_trials):
                 layout = self._random_connected_layout(n_logical, interactions)
                 if layout is None:
                     continue
@@ -373,7 +372,7 @@ class TrainingDataGeneratorV2:
                     phys_degree[pq] += 1
 
         physical_order = sorted(selected, key=lambda q: -phys_degree.get(q, 0))
-        return {l: p for l, p in zip(logical_order, physical_order)}
+        return {lg: p for lg, p in zip(logical_order, physical_order, strict=False)}
 
     def _est_fidelity(self, layout: dict[int, int], n: int) -> float:
         """Estimated GHZ-style fidelity from calibration data."""

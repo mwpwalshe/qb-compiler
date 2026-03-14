@@ -7,12 +7,10 @@ from qiskit import QuantumCircuit
 from qb_compiler.integrations.qubitboost import (
     GATE_REGISTRY,
     Confidence,
-    GateRecommendation,
     detect_circuit_type,
     is_sdk_available,
     recommend_gates,
 )
-
 
 # ── Circuit type detection ──────────────────────────────────────────
 

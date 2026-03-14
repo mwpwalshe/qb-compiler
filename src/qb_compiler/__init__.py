@@ -30,8 +30,6 @@ from qb_compiler.compiler import (
     QBCircuit,
     QBCompiler,
 )
-from qb_compiler.recommender import BackendRecommender, RecommendationReport
-from qb_compiler.viability import ViabilityResult, check_viability
 
 # ── eagerly imported (lightweight, always needed) ────────────────────
 from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
@@ -45,6 +43,8 @@ from qb_compiler.exceptions import (
     InvalidCircuitError,
     QBCompilerError,
 )
+from qb_compiler.recommender import BackendRecommender, RecommendationReport
+from qb_compiler.viability import ViabilityResult, check_viability
 
 __all__ = [
     "BACKEND_CONFIGS",

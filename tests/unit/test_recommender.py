@@ -1,11 +1,9 @@
 """Tests for backend recommendation engine."""
 from __future__ import annotations
 
-import pytest
 from qiskit import QuantumCircuit
 
 from qb_compiler.recommender import (
-    BackendAnalysis,
     BackendRecommender,
     RecommendationReport,
 )

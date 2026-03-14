@@ -746,9 +746,9 @@ class TestPostRoutingRescore:
         bad_layout = {0: 0, 1: 10, 2: 20, 3: 5}  # scattered
 
         # Build a minimal Qiskit target from the backend
-        from qiskit.transpiler import Target
-        from qiskit.circuit.library import CXGate, RZGate, SXGate, XGate, HGate
         from qiskit.circuit import Parameter
+        from qiskit.circuit.library import CXGate, HGate, RZGate, SXGate, XGate
+        from qiskit.transpiler import Target
 
         # Build all CX edges in one dict
         cx_props: dict = {}

@@ -19,7 +19,7 @@ import logging
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from qb_compiler.ml.features import build_feature_matrix, extract_circuit_features, feature_names
 
@@ -316,8 +316,6 @@ class MLLayoutPredictorV2:
         and returns qubits that frequently appear in the best-scoring
         (lowest predicted gate count) layouts.
         """
-        import numpy as np
-        import xgboost as xgb
 
         n_logical = circuit.n_qubits
 
@@ -354,7 +352,7 @@ class MLLayoutPredictorV2:
         scores = self.score_layouts(circuit, layouts, backend)
 
         # Rank layouts by predicted gate count (lower = better)
-        ranked = sorted(zip(scores, layouts), key=lambda x: x[0])
+        ranked = sorted(zip(scores, layouts, strict=False), key=lambda x: x[0])
 
         # Take top 25% of layouts
         n_top = max(len(ranked) // 4, 10)
@@ -493,6 +491,7 @@ class MLLayoutPredictorV2:
     def _extract_interactions(circuit: QBCircuit) -> dict[tuple[int, int], int]:
         """Extract 2Q interaction graph from circuit."""
         from collections import defaultdict
+
         from qb_compiler.ir.operations import QBGate
 
         interactions: dict[tuple[int, int], int] = defaultdict(int)
@@ -568,7 +567,7 @@ class MLLayoutPredictorV2:
                     phys_degree[pq] += 1
 
         physical_order = sorted(selected, key=lambda q: -phys_degree.get(q, 0))
-        return {l: p for l, p in zip(logical_order, physical_order)}
+        return {lg: p for lg, p in zip(logical_order, physical_order, strict=False)}
 
     @classmethod
     def load_bundled(

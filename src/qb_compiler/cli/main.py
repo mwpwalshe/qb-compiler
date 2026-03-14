@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 try:
     import click
@@ -74,9 +75,7 @@ def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
     click.echo()
 
     # Status line
-    if label == "VIABLE":
-        click.echo(f"  Status: {label}")
-    elif label == "CAUTION":
+    if label == "VIABLE" or label == "CAUTION":
         click.echo(f"  Status: {label}")
     else:
         click.echo(f"  Status: {label}")
@@ -259,11 +258,7 @@ def doctor() -> None:
 
     # 2. Python version
     py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    if sys.version_info >= (3, 10):
-        console.print(f"[green]\u2714[/green]  Python {py_ver}")
-    else:
-        console.print(f"[red]\u2718[/red]  Python {py_ver} — requires >=3.10")
-        all_ok = False
+    console.print(f"[green]\u2714[/green]  Python {py_ver}")
 
     # 3. Qiskit
     try:
@@ -516,7 +511,6 @@ def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
 
 def _load_qasm(circuit_path: str) -> Any:
     """Load a QASM file as a Qiskit QuantumCircuit."""
-    from typing import Any
 
     from qiskit import QuantumCircuit
 
@@ -532,7 +526,6 @@ def _build_receipt(
     result: Any, circuit_path: Path, backend: str | None, strategy: str,
 ) -> dict[str, Any]:
     """Build a compilation receipt dict."""
-    from typing import Any
     import datetime
 
     return {

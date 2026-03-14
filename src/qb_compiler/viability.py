@@ -20,6 +20,7 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import math
 from dataclasses import dataclass, field
@@ -110,7 +111,7 @@ def _estimate_viable_depth(
     We require fidelity > 2 / 2^n (i.e., signal-to-noise > 2).
 
     For a circuit of depth *d* with ~d two-qubit gates and n measurements:
-        F ≈ (1 - e_2q)^d × (1 - e_ro)^n
+        F ≈ (1 - e_2q)^d x (1 - e_ro)^n
 
     Solving for d where F = 2 / 2^n:
         d = (ln(2) - n·ln(1-e_ro) + n·ln(2)) / (-ln(1-e_2q))
@@ -230,16 +231,14 @@ def check_viability(
     """
     from qiskit import transpile
 
-    from qb_compiler.config import BACKEND_CONFIGS, get_backend_spec
+    from qb_compiler.config import get_backend_spec
     from qb_compiler.cost.pricing import get_pricing
 
     # Resolve backend spec
     spec = None
     if backend is not None:
-        try:
+        with contextlib.suppress(Exception):
             spec = get_backend_spec(backend)
-        except Exception:
-            pass
 
     median_2q_error = spec.median_cx_error if spec else 0.005
     median_ro_error = spec.median_readout_error if spec else 0.01

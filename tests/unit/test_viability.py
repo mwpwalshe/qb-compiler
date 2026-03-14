@@ -1,7 +1,6 @@
 """Tests for circuit viability checking."""
 from __future__ import annotations
 
-import pytest
 from qiskit import QuantumCircuit
 
 from qb_compiler.viability import (
@@ -9,7 +8,6 @@ from qb_compiler.viability import (
     _estimate_viable_depth,
     check_viability,
 )
-
 
 # ── viable depth estimation ──────────────────────────────────────
 
@@ -85,7 +83,10 @@ class TestCheckViability:
         assert result.viable is False
         assert result.status == "NOT VIABLE"
         assert result.estimated_fidelity < 0.01
-        assert any("waste" in s.lower() or "not submit" in s.lower() or "Do not" in s for s in result.suggestions)
+        assert any(
+            "waste" in s.lower() or "not submit" in s.lower() or "Do not" in s
+            for s in result.suggestions
+        )
 
     def test_result_has_cost_estimate(self):
         qc = QuantumCircuit(2, 2)

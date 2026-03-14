@@ -223,7 +223,9 @@ class CalibrationMapper(TransformationPass):
                 candidates = self._diversify_candidates(candidates)
 
             self._last_diversified_candidates = len(candidates)
-            self._last_diversified_regions = self._count_distinct_regions(candidates) if candidates else 0
+            self._last_diversified_regions = (
+                self._count_distinct_regions(candidates) if candidates else 0
+            )
 
             # Inject Qiskit seed layouts into the candidate pool.
             # This guarantees we never lose to Qiskit — their best
@@ -1026,10 +1028,7 @@ class CalibrationMapper(TransformationPass):
     ) -> bool:
         """Check if a layout (by physical qubit set) is already in candidates."""
         target_set = frozenset(layout.values())
-        for c in candidates:
-            if frozenset(c.values()) == target_set:
-                return True
-        return False
+        return any(frozenset(c.values()) == target_set for c in candidates)
 
     def _routed_fidelity(self, tc: Any) -> float:
         """Estimate fidelity from a transpiled circuit's actual 2Q gate placements.
@@ -1082,7 +1081,7 @@ class CalibrationMapper(TransformationPass):
         trial transpiles fail.
         """
         try:
-            from qiskit import QuantumCircuit, transpile
+            from qiskit import transpile
         except ImportError:
             logger.warning("Qiskit not available for post-routing rescore")
             return candidates[0]
