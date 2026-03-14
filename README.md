@@ -2,324 +2,240 @@
 
 [![PyPI](https://img.shields.io/pypi/v/qb-compiler.svg)](https://pypi.org/project/qb-compiler/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![CI](https://github.com/mwpwalshe/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/mwpwalshe/qb-compiler/actions)
-[![Coverage](https://codecov.io/gh/mwpwalshe/qb-compiler/branch/master/graph/badge.svg)](https://codecov.io/gh/mwpwalshe/qb-compiler)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/qb-compiler.svg)](https://pypi.org/project/qb-compiler/)
+[![Tests](https://github.com/mwpwalshe/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/mwpwalshe/qb-compiler/actions)
 
-**Calibration-aware quantum circuit compiler by [QubitBoost](https://qubitboost.io). Compile circuits that are less likely to fail on today's hardware.**
-
----
-
-## Why qb-compiler?
-
-- **Uses TODAY's calibration data** — not just topology. Gate errors, T1/T2 coherence, and readout fidelity change every calibration cycle. qb-compiler reads current data and uses it at every compilation stage.
-- **Multi-vendor: IBM, Rigetti, IonQ, IQM from one API** — compile for any backend with a single interface. Native gate decomposition, calibration parsing, and cost estimation are handled per-vendor.
-- **Budget-aware: compile within your cost constraints** — estimate execution cost before you run, enforce budget limits, and pick the cheapest backend that meets your fidelity target.
+**Quantum Execution Intelligence. Know before you run.**
 
 ---
 
-## Feature Comparison
+## What is qb-compiler?
 
-| Feature | Standard Transpiler | qb-compiler |
-|---------|---------------|-------------|
-| Calibration-aware mapping | - | Yes |
-| ML-accelerated layout | - | Yes (optional) |
-| T1 asymmetry handling | - | Yes |
-| Temporal correlation detection | - | Yes |
-| Multi-vendor support | IBM only | IBM, Rigetti, IonQ, IQM |
-| Budget constraints | - | Yes |
-| Cost estimation | - | Yes |
-| Pre-execution fidelity estimate | - | Yes |
-| Noise-aware SWAP routing | - | Yes |
-| T1/T2-aware scheduling | - | Yes |
+qb-compiler helps quantum developers make better execution decisions. Know which backend to use, whether your circuit is viable, what fidelity to expect, and what it will cost — before you spend QPU time.
 
----
-
-## Quick Start
+Built on top of Qiskit's transpiler.
 
 ```bash
 pip install qb-compiler
 ```
 
-```python
-from qb_compiler import QBCompiler, QBCircuit
+---
 
+## Quick Start
+
+```python
+from qb_compiler import QBCompiler, check_viability
+
+# Is my circuit worth running?
+result = check_viability(circuit, backend="ibm_fez")
+print(result)
+# → Status: VIABLE
+# → Est. fidelity: 0.847
+# → Cost (4096 shots): $0.6554
+# → Suggestions:
+# →   - Circuit looks good — proceed with execution.
+
+# Compile with automatic optimizations
 compiler = QBCompiler.from_backend("ibm_fez")
-circuit = QBCircuit(3).h(0).cx(0, 1).cx(1, 2).measure_all()
-result = compiler.compile(circuit)
-print(f"Depth: {result.compiled_depth}, Est. fidelity: {result.estimated_fidelity:.3f}")
-```
-
-Or with budget enforcement:
-
-```python
-result = compiler.compile(circuit, budget_usd=5.0)
-cost = compiler.estimate_cost(result.compiled_circuit, shots=4096)
-print(f"Estimated cost: ${cost.total_usd:.2f}")
+compiled = compiler.compile(circuit)
 ```
 
 ---
 
-## The Problem
+## CLI
 
-Topology-only compilation treats quantum hardware as a static graph — picking
-qubit mappings and routing paths based on connectivity alone. But gate error
-rates, coherence times, and readout fidelities change with every calibration
-cycle. On IBM Heron processors, calibration data updates daily and qubit
-quality can vary by 10x across the chip.
-
-The result: **significant fidelity left on the table** because compilation
-decisions aren't informed by which qubits are good *today*.
-
-## The Solution
-
-qb-compiler reads today's calibration data and uses it at every stage of
-compilation: qubit mapping, SWAP routing, gate scheduling, and fidelity
-estimation. Every decision is made with current hardware noise in mind.
+### `qbc preflight` — Should I run this?
 
 ```
-Calibration Data (T1, T2, gate error, readout error)
-        |
-        v
-  +-----------------+     +------------------+     +---------------------+
-  | CalibrationMapper| --> | NoiseAwareRouter | --> | NoiseAwareScheduler |
-  | VF2 + noise      |     | Dijkstra lowest- |     | ALAP with T1/T2    |
-  | weighted scoring  |     | error-path SWAPs |     | urgency scoring    |
-  +-----------------+     +------------------+     +---------------------+
-        |                                                   |
-        v                                                   v
-  +-------------------+                          +---------------------+
-  | GateDecomposition |                          | ErrorBudgetEstimator|
-  | Native basis      |                          | Pre-exec fidelity   |
-  | (ECR, CZ, ...)   |                          | prediction          |
-  +-------------------+                          +---------------------+
+$ qbc preflight circuit.qasm --backend ibm_fez
+
+  Circuit: GHZ-8
+  Backend: ibm_fez (156q)
+
+  Status: VIABLE
+  Estimated fidelity: 0.8519
+  Depth: 12  (viable limit: 188)
+  2Q gates: 7
+  Cost (4096 shots): $0.6554
+```
+
+### `qbc analyze` — Detailed analysis with suggestions
+
+```
+$ qbc analyze circuit.qasm --backend ibm_fez
+
+  Circuit Analysis: QAOA-MaxCut
+  Qubits: 6  Gates: 84  Depth: 47
+  Gate breakdown: cx:24, rz:18, rx:12, h:6, measure:6
+
+  Backend: ibm_fez (156q)
+  Status: MARGINAL
+  Estimated fidelity: 0.1823
+  Signal/noise ratio: 11.7x
+  Depth: 47  (viable limit: 188)
+  2Q gates after transpilation: 24
+  Cost (4096 shots): $0.6554
+
+  Suggestions:
+    - Consider ZNE or PEC error mitigation (2-5x improvement possible).
+    - Good candidate for error mitigation to further improve results.
+```
+
+### `qbc diff` — Compare two backends
+
+```
+$ qbc diff circuit.qasm --backend ibm_fez --vs ibm_torino
+
+  Circuit: GHZ-5
+
+                              ibm_fez        ibm_torino
+                           ----------------   ----------------
+  Status                          VIABLE           VIABLE
+  Est. fidelity                  0.9430           0.9285 <
+  2Q gates                            4                4
+  Depth                               5                5
+  Cost/4096 shots              $0.6554          $0.5734 <
+
+  Recommendation: ibm_fez (+0.0145 fidelity)
+```
+
+### `qbc doctor` — Environment health check
+
+```
+$ qbc doctor
+
+qbc doctor
+
+✔  qb-compiler 0.2.0
+✔  Python 3.11.14
+✔  Qiskit 1.4.5
+✔  IBM credentials configured (2 account(s))
+✔  9 backends configured
+✔  5 calibration snapshot(s) available
+✔  numpy 2.3.5
+✔  rustworkx 0.17.1
+
+Environment looks good!
+```
+
+### `qbc compile` — Compile with receipt
+
+```
+$ qbc compile circuit.qasm --backend ibm_fez --receipt
+
+Compiled: depth 12 -> 8 (33.3% reduction)
+Estimated fidelity: 0.8519
+Compilation time: 142.3 ms
+Receipt saved to circuit.receipt.json
 ```
 
 ---
 
-## Key Features
+## Feature Comparison
 
-- **ML-Accelerated Layout** -- XGBoost model predicts the best physical qubits
-  for your circuit, narrowing VF2 search from 156 qubits to ~20 candidates.
-  **Up to 5% better fidelity** and **23x faster** than standard VF2 on 8-qubit
-  circuits. Install with `pip install "qb-compiler[ml]"`.
-
-- **CalibrationMapper** -- VF2 subgraph isomorphism search scored by gate error,
-  coherence (T1/T2), readout fidelity, **T1 asymmetry**, and **temporal
-  correlation**. Finds the best physical qubit placement for your circuit on
-  today's device.
-
-- **T1 Asymmetry Awareness** -- On IBM Heron, the probability of reading `0`
-  when a qubit is in `|1⟩` (P(0|1)) can be **up to 24x higher** than P(1|0).
-  qb-compiler goes beyond symmetric readout error and uses the raw asymmetric
-  readout data to penalise high-asymmetry qubits for circuits that hold
-  qubits in `|1⟩`.
-
-- **Temporal Correlation Detection** -- When multiple calibration snapshots are
-  available, qb-compiler detects qubit pairs whose error rates co-vary over
-  time. Correlated errors break QEC's independent-error assumption. The mapper
-  penalises correlated edges during layout selection.
-
-- **NoiseAwareRouter** -- Dijkstra shortest-error-path SWAP insertion. Minimises
-  accumulated gate error instead of SWAP count. Each SWAP decomposes to 3 CX
-  gates, so error-optimal routing matters.
-
-- **NoiseAwareScheduler** -- ALAP scheduling with T1/T2 urgency scoring. Qubits
-  with shorter coherence times get their gates scheduled first, reducing idle
-  decoherence.
-
-- **GateDecomposition** -- Decomposes to native basis gate sets (IBM ECR,
-  Rigetti CZ, IonQ MS, IQM CZ) using calibration-aware decomposition
-  strategies.
-
-- **ErrorBudgetEstimator** -- Predicts circuit fidelity before execution using
-  calibration data. Know if your circuit is viable before spending QPU time.
-
-- **Qiskit Plugin** -- Drop-in `AnalysisPass` that adds calibration-aware
-  layout to any Qiskit pipeline. Works with `generate_preset_pass_manager`
-  at any optimization level.
+| Feature | Qiskit | qb-compiler |
+|---------|--------|-------------|
+| Transpilation | Excellent | Uses Qiskit internally |
+| Circuit viability check | No | `qbc preflight` |
+| Pre-execution fidelity estimate | No | Yes |
+| Backend recommendation | No | Yes (single), Pro (multi) |
+| Selective dynamical decoupling | No | Yes |
+| Cost estimation | No | Yes |
+| Budget enforcement | No | Yes |
+| Compilation receipts | No | `--receipt` |
+| Multi-vendor backend specs | IBM only | IBM, Rigetti, IonQ, IQM, Quantinuum |
+| Environment health check | No | `qbc doctor` |
+| Circuit analysis with suggestions | No | `qbc analyze` |
+| Backend comparison | No | `qbc diff` |
 
 ---
 
-## Benchmarks
+## Hardware Validation
 
-All tables use the same baseline and fidelity estimator. Reproduce with
-`python scripts/benchmark_readme.py`.
+Validated on IBM Fez (156 qubits, March 2026):
 
-### Core Compiler (no ML dependencies)
+**Layout selection:** qb-compiler's CalibrationMapper matches or slightly exceeds
+Qiskit opt_level=3 on GHZ circuits. On GHZ-5 with different layout selections,
+qb-compiler achieved +1.0% measured fidelity improvement. On GHZ-8 and GHZ-10
+where both converged to the same optimal region, results were statistically
+equivalent.
 
-Calibration-aware VF2 mapping vs naive greedy placement, on real IBM Fez
-calibration data (156 qubits, March 2026):
+**Dynamical decoupling:** Selective DD improved fidelity on circuits with
+significant idle time (QFT-6: +27% relative improvement). DD is automatically
+skipped for dense circuits where it adds noise without benefit (QAOA-6: DD
+correctly identified as harmful, -6.6%).
 
-| Circuit | Qubits | 2Q Gates | Greedy | VF2 | Improvement |
-|---------|-------:|---------:|-------:|----:|------------:|
-| Bell    |      2 |        1 | 0.9868 | 0.9868 | +0.0% |
-| GHZ-5   |      5 |        4 | 0.8923 | 0.9471 | **+6.1%** |
-| GHZ-8   |      8 |        7 | 0.8372 | 0.8519 | **+1.8%** |
-| QAOA-4  |      4 |        6 | 0.9018 | 0.9608 | **+6.5%** |
-| QAOA-8  |      8 |       14 | 0.8204 | 0.8342 | **+1.7%** |
-
-*Greedy = edge-ranked placement. VF2 = calibration-weighted subgraph
-isomorphism (max_candidates=500, call_limit=50k).*
-
-### With ML Acceleration (`pip install "qb-compiler[ml,gnn]"`)
-
-XGBoost narrows VF2 search to ~20 candidates. GNN captures device topology
-structure that flat features miss. Both shine on larger circuits:
-
-| Circuit | Qubits | Greedy | VF2 | ML+VF2 | GNN+VF2 | Best vs Greedy |
-|---------|-------:|-------:|----:|-------:|--------:|---------------:|
-| Bell    |      2 | 0.9868 | 0.9868 | 0.9868 | 0.9868 | +0.0% |
-| GHZ-5   |      5 | 0.8923 | 0.9471 | 0.9463 | 0.9440 | **+6.1%** |
-| GHZ-8   |      8 | 0.8372 | 0.8519 | 0.8975 | 0.9062 | **+8.2%** |
-| QAOA-4  |      4 | 0.9018 | 0.9608 | 0.9552 | 0.9608 | **+6.5%** |
-| QAOA-8  |      8 | 0.8204 | 0.8342 | 0.8771 | 0.8880 | **+8.2%** |
-
-*ML+VF2: XGBoost, AUC=0.94, 454 KB. GNN+VF2: dual-graph GCN, 8,833 params,
-42 KB. Both trained on IBM Fez calibration data.*
-
-### T1 Asymmetry: Beyond Symmetric Readout Error
-
-Symmetric readout error models average P(0|1) and P(1|0), hiding T1-driven
-asymmetry. qb-compiler models the raw asymmetric readout, revealing hidden
-fidelity loss:
-
-| Circuit | Qubits | Symmetric | Asymmetric | Overestimate |
-|---------|-------:|----------:|-----------:|-------------:|
-| Bell    |      2 | 0.9868    | 0.9851     | 0.17%        |
-| GHZ-5   |      5 | 0.9471    | 0.9437     | 0.36%        |
-| GHZ-8   |      8 | 0.8519    | 0.8481     | 0.45%        |
-| QAOA-4  |      4 | 0.9608    | 0.9569     | 0.40%        |
-| QAOA-8  |      8 | 0.8342    | 0.8304     | 0.45%        |
-
-> The symmetric model overestimates fidelity because it hides T1-driven
-> `|1⟩` decay. On IBM Fez, qubit asymmetry ratios range from 0.2x to 24x.
-> Standard symmetric readout models miss this effect.
-
-> **Footnote:** Greedy = edge-ranked qubit placement (no search). All fidelity
-> estimates use per-qubit calibration data from IBM Fez (March 2026, 156 qubits).
-> All tables use the same baseline and estimator.
-> Reproduce: `python scripts/benchmark_readme.py`
+All transpilation uses Qiskit's routing engine internally. qb-compiler focuses on
+execution intelligence — helping you decide where to run and what to expect —
+rather than replacing Qiskit's transpiler.
 
 ---
 
-## Qiskit Integration
+## How It Works
 
-qb-compiler provides two integration paths with Qiskit:
-
-### Drop-in transpile function
-
-```python
-from qb_compiler.qiskit_plugin import qb_transpile
-
-compiled = qb_transpile(
-    circuit,
-    backend="ibm_fez",
-    calibration_path="calibrations/ibm_fez_2026-03-12.json",
-)
 ```
-
-### As a pass in an existing pipeline
-
-```python
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qb_compiler.qiskit_plugin import QBCalibrationLayout
-
-pm = generate_preset_pass_manager(optimization_level=3, backend=backend)
-pm.layout.append(QBCalibrationLayout(calibration_data))
-compiled = pm.run(circuit)
+Your Circuit
+  │
+  ├─→ Viability Check         Is it worth running?
+  │
+  ├─→ Backend Selection        Where should it run?
+  │
+  ├─→ Qiskit Transpilation     Best of N seeds, opt_level=3
+  │
+  ├─→ Selective DD             Protect idle qubits (skip dense circuits)
+  │
+  ├─→ Fidelity Estimation      What to expect
+  │
+  ├─→ Cost Estimation          What it will cost
+  │
+  └─→ Compilation Receipt      Full audit trail (JSON)
 ```
 
 ---
 
 ## Supported Backends
 
-| Vendor   | Backends                          | Native Basis |
-|----------|-----------------------------------|--------------|
-| IBM      | Fez, Torino, Marrakesh (Heron)    | ECR, RZ, SX  |
-| Rigetti  | Ankaa-3                           | CZ, RZ, RX   |
-| IonQ     | Aria, Forte (via Braket)          | MS, GPI, GPI2|
-| IQM      | Garnet, Emerald                   | CZ, PRX      |
+| Vendor     | Backends                       | Qubits  | Native Basis  |
+|------------|--------------------------------|---------|---------------|
+| IBM        | Fez, Torino, Marrakesh (Heron) | 133-156 | ECR, RZ, SX   |
+| Rigetti    | Ankaa-3                        | 84      | CZ, RZ, RX    |
+| IonQ       | Aria, Forte                    | 25-36   | MS, GPI, GPI2 |
+| IQM        | Garnet, Emerald                | 5-20    | CZ, PRX       |
+| Quantinuum | H2                             | 32      | RZ, U1Q, ZZ   |
 
-Calibration data can be loaded from local JSON files, fetched from vendor APIs,
-or streamed from the [QubitBoost](https://qubitboost.io) calibration hub.
-
----
-
-## Architecture
-
-qb-compiler is structured as a configurable pass pipeline. Each pass reads
-calibration data and transforms the circuit IR:
-
-```
-Input Circuit (Qiskit QuantumCircuit or QBCircuit)
-  |
-  v
-[1] Validation          Reject invalid circuits early
-  |
-  v
-[2] CalibrationMapper   VF2 + noise-weighted qubit placement
-  |
-  v
-[3] NoiseAwareRouter    Dijkstra SWAP insertion (min error, not min distance)
-  |
-  v
-[4] GateDecomposition   Decompose to native basis gates
-  |
-  v
-[5] NoiseAwareScheduler ALAP scheduling with T1/T2 urgency
-  |
-  v
-[6] ErrorBudgetEstimate Pre-execution fidelity prediction
-  |
-  v
-CompileResult { compiled_circuit, compiled_depth, estimated_fidelity, cost }
-```
-
-Passes are composable. You can run individual passes, reorder them, or write
-custom passes by extending `BasePass`.
+Calibration data can be loaded from local JSON files or fetched from vendor APIs.
 
 ---
 
-## CLI
+## Open Source vs QubitBoost Pro
 
-```bash
-# Compile a QASM file
-qbc compile circuit.qasm --backend ibm_fez --strategy fidelity_optimal
+| Feature | Open Source | QubitBoost Pro |
+|---------|------------|----------------|
+| Single-backend preflight | Yes | Yes |
+| Multi-backend ranking | — | Yes |
+| Cached calibration | Yes | Live calibration |
+| Local receipts | Yes | Cloud dashboard |
+| Cost estimation | Single vendor | Cross-vendor |
+| Drift alerts | — | Yes |
+| Circuit watchlist | — | Yes |
 
-# Show available backends and specs
-qbc info
-
-# Show calibration summary for a backend
-qbc calibration show ibm_fez
-```
+qb-compiler is free and fully functional standalone. QubitBoost Pro adds live
+multi-vendor calibration, cloud execution history, and advanced optimizations.
+Learn more at [qubitboost.io](https://qubitboost.io).
 
 ---
 
-## Installation Options
+## Installation
 
 ```bash
 # Core (IBM backends via Qiskit)
 pip install qb-compiler
 
-# With ML-accelerated layout (XGBoost)
+# With ML acceleration (optional)
 pip install "qb-compiler[ml]"
 
-# With GNN layout predictor (PyTorch)
+# With GNN layout predictor (optional)
 pip install "qb-compiler[gnn]"
-
-# With Rigetti support
-pip install "qb-compiler[rigetti]"
-
-# With IonQ support (via Amazon Braket)
-pip install "qb-compiler[ionq]"
-
-# With IQM support
-pip install "qb-compiler[iqm]"
-
-# Everything
-pip install "qb-compiler[all]"
 
 # Development
 pip install "qb-compiler[dev]"
@@ -327,12 +243,23 @@ pip install "qb-compiler[dev]"
 
 ---
 
+## CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `qbc preflight <circuit> -b <backend>` | Quick viability check: VIABLE / CAUTION / DO NOT RUN |
+| `qbc analyze <circuit> -b <backend>` | Detailed analysis with suggestions |
+| `qbc diff <circuit> -b <backend> --vs <backend>` | Side-by-side backend comparison |
+| `qbc doctor` | Environment health check |
+| `qbc compile <circuit> -b <backend> --receipt` | Compile with audit trail |
+| `qbc info` | Show version and available backends |
+| `qbc calibration show <backend>` | Show calibration summary |
+
+---
+
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
-guidelines on development setup, testing, and code style.
-
-To run the test suite:
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 pip install "qb-compiler[dev]"
