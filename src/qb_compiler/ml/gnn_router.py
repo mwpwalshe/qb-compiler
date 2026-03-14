@@ -38,7 +38,7 @@ _WEIGHTS_DIR = Path(__file__).parent / "_weights"
 
 # ── Feature dimensions ────────────────────────────────────────────────
 
-N_DEVICE_FEATURES = 7   # t1, t2, ro, asym, freq, connectivity, mean_gate_err
+N_DEVICE_FEATURES = 9   # t1, t2, ro, asym, freq, connectivity, mean_gate_err, routing_headroom, neighborhood_error
 N_CIRCUIT_FEATURES = 3  # degree, total_weight, is_measurement_qubit
 GNN_HIDDEN_DIM = 32
 GNN_N_LAYERS = 3
@@ -82,17 +82,75 @@ def extract_device_graph(backend: BackendProperties) -> DeviceGraphData:
     qubit_ids = sorted({qp.qubit_id for qp in backend.qubit_properties})
     qid_to_idx = {qid: i for i, qid in enumerate(qubit_ids)}
 
+    # Pre-compute adjacency for routing headroom and neighborhood error
+    adjacency: dict[int, list[int]] = defaultdict(list)
+    gate_errors: dict[frozenset[int], float] = {}
+    seen_adj: set[tuple[int, int]] = set()
+    for q0, q1 in backend.coupling_map:
+        key = (min(q0, q1), max(q0, q1))
+        if key not in seen_adj:
+            seen_adj.add(key)
+            adjacency[q0].append(q1)
+            adjacency[q1].append(q0)
+    for gp in backend.gate_properties:
+        if len(gp.qubits) == 2 and gp.error_rate is not None:
+            gate_errors[frozenset(gp.qubits)] = gp.error_rate
+
+    # Find high-connectivity hub qubits (degree >= 3)
+    hub_qubits = {q for q in qubit_ids if len(adjacency.get(q, [])) >= 3}
+
     node_features: list[list[float]] = []
     for qid in qubit_ids:
         qf = extract_qubit_features(qid, backend)
+
+        # routing_headroom: avg shortest path to nearest hub qubit (BFS)
+        if qid in hub_qubits:
+            routing_headroom = 0.0
+        elif hub_qubits:
+            # BFS from qid to find nearest hub
+            dist_to_hub = float("inf")
+            visited_bfs = {qid}
+            queue_bfs = [(qid, 0)]
+            idx_bfs = 0
+            while idx_bfs < len(queue_bfs):
+                cur, d = queue_bfs[idx_bfs]
+                idx_bfs += 1
+                if cur in hub_qubits:
+                    dist_to_hub = d
+                    break
+                for nb in adjacency.get(cur, []):
+                    if nb not in visited_bfs:
+                        visited_bfs.add(nb)
+                        queue_bfs.append((nb, d + 1))
+            routing_headroom = dist_to_hub if dist_to_hub < float("inf") else 5.0
+        else:
+            routing_headroom = 5.0
+
+        # neighborhood_error: mean gate error within 2-hop radius
+        neighborhood = {qid}
+        for nb in adjacency.get(qid, []):
+            neighborhood.add(nb)
+            for nb2 in adjacency.get(nb, []):
+                neighborhood.add(nb2)
+        nb_errors = []
+        for q in neighborhood:
+            for nb in adjacency.get(q, []):
+                if nb in neighborhood and nb > q:
+                    err = gate_errors.get(frozenset({q, nb}))
+                    if err is not None:
+                        nb_errors.append(err)
+        neighborhood_error = sum(nb_errors) / len(nb_errors) if nb_errors else 0.02
+
         node_features.append([
-            qf.t1_us / 300.0,              # normalise to ~1.0 for Heron
+            qf.t1_us / 300.0,
             qf.t2_us / 300.0,
-            qf.readout_error * 10.0,        # scale up small values
+            qf.readout_error * 10.0,
             qf.t1_asymmetry_penalty * 100.0,
             qf.frequency_ghz / 5.5,
-            qf.connectivity_degree / 4.0,   # heavy-hex has degree ~3
+            qf.connectivity_degree / 4.0,
             qf.mean_adjacent_gate_error * 100.0,
+            routing_headroom / 5.0,              # normalise
+            neighborhood_error * 100.0,          # scale up
         ])
 
     # Build edge_index (COO format, undirected → add both directions)
