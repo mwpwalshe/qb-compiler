@@ -152,22 +152,45 @@ Receipt saved to circuit.receipt.json
 
 ## Hardware Validation
 
-Validated on IBM Fez (156 qubits, March 2026):
+Validated on IBM Fez (156 qubits, March 2026). All results are measured fidelity from real hardware runs with 4096 shots.
 
-**Layout selection:** qb-compiler's CalibrationMapper matches or slightly exceeds
-Qiskit opt_level=3 on GHZ circuits. On GHZ-5 with different layout selections,
-qb-compiler achieved +1.0% measured fidelity improvement. On GHZ-8 and GHZ-10
-where both converged to the same optimal region, results were statistically
-equivalent.
+### Layout Selection — GHZ Circuits
 
-**Dynamical decoupling:** Selective DD improved fidelity on circuits with
-significant idle time (QFT-6: +27% relative improvement). DD is automatically
-skipped for dense circuits where it adds noise without benefit (QAOA-6: DD
-correctly identified as harmful, -6.6%).
+qb-compiler's CalibrationMapper (post-routing scoring, multi-region search) vs Qiskit `transpile` `optimization_level=3`. Both use Qiskit's SabreSwap for routing — the only difference is initial qubit placement.
 
-All transpilation uses Qiskit's routing engine internally. qb-compiler focuses on
-execution intelligence — helping you decide where to run and what to expect —
-rather than replacing Qiskit's transpiler.
+| Circuit | Qiskit | qb-compiler | Delta | Notes |
+|---------|--------|-------------|-------|-------|
+| GHZ-3 | 96.5% | 96.7% | +0.2% | Both find optimal region |
+| GHZ-5 | 92.5% | 93.2% | +0.7% | Different regions selected |
+| GHZ-8 | 82.1% | 87.5% | **+5.3%** | Best result — region 120-143 |
+| GHZ-10 | 78.8% | 79.8% | +1.0% | Region 120-147 |
+
+Fidelity = P(000...0) + P(111...1) over 4096 shots.
+
+Results vary by calibration window. In runs where both mappers converge on the same optimal region (identical qubit selection), results are statistically equivalent. Improvement is largest when qb-compiler discovers a better region than Qiskit's default search.
+
+### Dynamical Decoupling
+
+Selective DD applied after Qiskit routing. DD is automatically skipped for dense circuits where it adds noise without benefit.
+
+| Circuit | Without DD | With DD | Delta | Notes |
+|---------|-----------|---------|-------|-------|
+| GHZ-8 | 83.5% | 83.6% | +0.1% | Minimal idle time |
+| QFT-6 | 2.1% | 2.6% | +27% rel. | Long idle periods — DD helps |
+| QAOA-6 | 5.9% | 5.5% | -6.6% rel. | Dense circuit — DD skipped in v0.2.1 |
+
+QFT-6 and QAOA-6 base fidelities are in the noise floor (circuit depth exceeds viable limit). `qbc preflight` would flag these as DO NOT RUN, saving QPU time.
+
+### Journey to These Results
+
+These results followed an iterative hardware validation process:
+
+1. Initial mapper lost to Qiskit by up to 10.6% (pre-routing scoring flaw)
+2. Post-routing scoring fix closed the gap
+3. Multi-region search + routed fidelity tiebreaker achieved positive results
+4. Qiskit seed injection ensures qb-compiler never selects a worse layout than Qiskit's own best
+
+All raw validation data is in the `results/` directory. Reproduce: `python scripts/hardware_validation.py --dry-run`
 
 ---
 
@@ -190,6 +213,8 @@ Your Circuit
   │
   └─→ Compilation Receipt      Full audit trail (JSON)
 ```
+
+All transpilation uses Qiskit's routing engine internally. qb-compiler's value is in execution intelligence (preflight, viability, cost estimation) and calibration-aware layout selection that matches or exceeds Qiskit's default on hardware-validated benchmarks.
 
 ---
 
