@@ -152,7 +152,7 @@ Receipt saved to circuit.receipt.json
 
 ## Hardware Validation
 
-Validated on IBM Fez (156 qubits, March 2026). All results are measured fidelity from real hardware runs with 4096 shots.
+Validated on IBM Fez (156 qubits, March 2026). All results are measured fidelity from real hardware, 4096 shots per circuit.
 
 ### Layout Selection — GHZ Circuits
 
