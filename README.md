@@ -138,7 +138,7 @@ Receipt saved to circuit.receipt.json
 | Transpilation | Excellent | Uses Qiskit internally |
 | Circuit viability check | No | `qbc preflight` |
 | Pre-execution fidelity estimate | No | Yes |
-| Backend recommendation | No | Yes (single), Pro (multi) |
+| Backend recommendation | No | Yes |
 | Selective dynamical decoupling | No | Yes |
 | Cost estimation | No | Yes |
 | Budget enforcement | No | Yes |
@@ -218,24 +218,15 @@ All transpilation uses Qiskit's routing engine internally. qb-compiler's value i
 
 ---
 
-## QubitBoost Gate Integration
+## Optional QubitBoost SDK Integration
 
-qb-compiler auto-detects circuit type and recommends QubitBoost execution gates for supported workloads:
+qb-compiler works fully standalone. For supported workloads, it can optionally integrate with the QubitBoost SDK to surface compatible execution paths:
 
-| Gate | Benefit | Workload |
-|------|---------|----------|
-| OptGate | 117-208x shot reduction (hardware-validated) | QAOA |
-| ChemGate | 32-42% fewer evaluations (hardware-validated) | VQE |
-| TomoGate | Pre-flight certification | Any |
-| LiveGate | Real-time doom detection | Any |
-| SafetyGate | QEC trust scoring (validated at d=7) | QEC |
-| GuardGate | Quality assurance | QAOA |
-| ShotValidator | Result integrity verification | Any |
+- OptGate — adaptive shot reduction for supported QAOA workloads
+- ChemGate — evaluation reduction for supported VQE workflows
+- LiveGate / ShotValidator — optional runtime checks
 
-Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit type is detected with high confidence. Results vary by circuit structure, backend, and calibration state.
-
-Requires: `pip install qubitboost-sdk`
-Learn more: [qubitboost.io](https://qubitboost.io)
+Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit type is detected with high confidence. Performance figures are hardware-validated, workload-dependent, and documented separately at [qubitboost.io](https://qubitboost.io).
 
 ---
 
@@ -250,24 +241,6 @@ Learn more: [qubitboost.io](https://qubitboost.io)
 | Quantinuum | H2                             | 32      | RZ, U1Q, ZZ   |
 
 Calibration data can be loaded from local JSON files or fetched from vendor APIs.
-
----
-
-## Open Source vs QubitBoost Pro
-
-| Feature | Open Source | QubitBoost Pro |
-|---------|------------|----------------|
-| Single-backend preflight | Yes | Yes |
-| Multi-backend ranking | — | Yes |
-| Cached calibration | Yes | Live calibration |
-| Local receipts | Yes | Cloud dashboard |
-| Cost estimation | Single vendor | Cross-vendor |
-| Drift alerts | — | Yes |
-| Circuit watchlist | — | Yes |
-
-qb-compiler is free and fully functional standalone. QubitBoost Pro adds live
-multi-vendor calibration, cloud execution history, and advanced optimizations.
-Learn more at [qubitboost.io](https://qubitboost.io).
 
 ---
 
@@ -318,4 +291,4 @@ pytest
 
 Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
-Copyright 2026 [QubitBoost](https://www.qubitboost.io).
+Copyright 2026 QubitBoost.
