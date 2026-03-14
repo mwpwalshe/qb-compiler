@@ -1,0 +1,115 @@
+{
+  "mode": "dry_run",
+  "plan": [
+    {
+      "circuit": "qaoa_6",
+      "n_qubits": 6,
+      "original_2q": 16,
+      "qiskit": {
+        "seed": 1,
+        "qubits": [
+          141,
+          142,
+          143,
+          123,
+          136,
+          144
+        ],
+        "region": "123-144",
+        "post_routing_2q": 26,
+        "depth": 93,
+        "est_fidelity": 0.883947
+      },
+      "qb_compiler": {
+        "qubits": [
+          123,
+          124,
+          122,
+          136,
+          143,
+          144
+        ],
+        "region": "122-144",
+        "post_routing_2q": 31,
+        "depth": 76,
+        "est_fidelity": 0.876341,
+        "dd_applied": true
+      }
+    },
+    {
+      "circuit": "qft_6",
+      "n_qubits": 6,
+      "original_2q": 30,
+      "qiskit": {
+        "seed": 2,
+        "qubits": [
+          143,
+          144,
+          142,
+          136,
+          141,
+          140
+        ],
+        "region": "136-144",
+        "post_routing_2q": 39,
+        "depth": 93,
+        "est_fidelity": 0.85194
+      },
+      "qb_compiler": {
+        "qubits": [
+          136,
+          143,
+          123,
+          144,
+          142,
+          124
+        ],
+        "region": "123-144",
+        "post_routing_2q": 43,
+        "depth": 105,
+        "est_fidelity": 0.846028,
+        "dd_applied": true
+      }
+    },
+    {
+      "circuit": "su2_8",
+      "n_qubits": 8,
+      "original_2q": 56,
+      "qiskit": {
+        "seed": 12,
+        "qubits": [
+          136,
+          143,
+          123,
+          142,
+          141,
+          144,
+          122,
+          124
+        ],
+        "region": "122-144",
+        "post_routing_2q": 176,
+        "depth": 273,
+        "est_fidelity": 0.604914
+      },
+      "qb_compiler": {
+        "qubits": [
+          123,
+          136,
+          124,
+          143,
+          125,
+          122,
+          142,
+          144
+        ],
+        "region": "122-144",
+        "post_routing_2q": 188,
+        "depth": 294,
+        "est_fidelity": 0.574377,
+        "dd_applied": true
+      }
+    }
+  ],
+  "timestamp": "2026-03-14T11:25:34.781740+00:00"
+}

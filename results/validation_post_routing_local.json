@@ -1,0 +1,438 @@
+{
+  "generated_at": "2026-03-14T09:55:03.751848+00:00",
+  "description": "Local validation comparing OLD mapper (single-region VF2, pre-routing scoring) vs NEW mapper (windowed VF2 + post-routing rescoring) vs Qiskit opt_level=3. No QPU time used \u2014 estimated fidelity from calibration data.",
+  "method": {
+    "old_mapper": "Single VF2 run, top_k=1, pre-routing calibration scoring only",
+    "new_mapper": "Windowed VF2 (multi-region), top_k=20, diversity filter, post-routing rescoring",
+    "qiskit": "transpile(optimization_level=3, seed_transpiler=42)"
+  },
+  "snapshots": [
+    {
+      "snapshot": "ibm_fez_2026_03_12",
+      "timestamp": "2026-03-12T06:00:17.361084",
+      "n_qubits": 156,
+      "n_gates": 1796,
+      "circuits": [
+        {
+          "circuit": "GHZ-3",
+          "n_qubits": 3,
+          "old_mapper": {
+            "physical_qubits": [
+              16,
+              23,
+              22
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.980907
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              22,
+              23,
+              16
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.980907
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              15,
+              19,
+              35
+            ],
+            "region": "15-35",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.943047
+          },
+          "delta_new_vs_qiskit": 0.03786,
+          "delta_new_vs_old": -0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-5",
+          "n_qubits": 5,
+          "old_mapper": {
+            "physical_qubits": [
+              142,
+              143,
+              136,
+              123,
+              124
+            ],
+            "region": "123-143",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.946523
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              142,
+              143,
+              136,
+              123,
+              124
+            ],
+            "region": "123-143",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.946523
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              34,
+              35,
+              19,
+              15,
+              14
+            ],
+            "region": "14-35",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.905109
+          },
+          "delta_new_vs_qiskit": 0.041415,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-8",
+          "n_qubits": 8,
+          "old_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              142,
+              141
+            ],
+            "region": "120-143",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.906437
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              141,
+              142,
+              143,
+              136,
+              123,
+              122,
+              121,
+              120
+            ],
+            "region": "120-143",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.906437
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              147,
+              146,
+              145,
+              144,
+              143,
+              142,
+              141,
+              140
+            ],
+            "region": "140-147",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.883257
+          },
+          "delta_new_vs_qiskit": 0.02318,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-10",
+          "n_qubits": 10,
+          "old_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              144,
+              145,
+              146,
+              147
+            ],
+            "region": "120-147",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.866004
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              144,
+              145,
+              146,
+              147
+            ],
+            "region": "120-147",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.866004
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              141,
+              142,
+              143,
+              144,
+              145,
+              146,
+              147,
+              137,
+              127,
+              128
+            ],
+            "region": "127-147",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.829116
+          },
+          "delta_new_vs_qiskit": 0.036888,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        }
+      ]
+    },
+    {
+      "snapshot": "ibm_fez_2026_03_14",
+      "timestamp": "2026-03-14T08:41:35.899941+00:00",
+      "n_qubits": 156,
+      "n_gates": 352,
+      "circuits": [
+        {
+          "circuit": "GHZ-3",
+          "n_qubits": 3,
+          "old_mapper": {
+            "physical_qubits": [
+              16,
+              23,
+              22
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.974661
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              16,
+              23,
+              22
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.974661
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              116,
+              121,
+              120
+            ],
+            "region": "116-121",
+            "post_routing_2q_gates": 2,
+            "post_routing_depth": 6,
+            "estimated_fidelity": 0.935675
+          },
+          "delta_new_vs_qiskit": 0.038986,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-5",
+          "n_qubits": 5,
+          "old_mapper": {
+            "physical_qubits": [
+              16,
+              23,
+              22,
+              21,
+              20
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.944778
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              16,
+              23,
+              22,
+              21,
+              20
+            ],
+            "region": "16-23",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.944778
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              132,
+              131,
+              138,
+              151,
+              152
+            ],
+            "region": "131-152",
+            "post_routing_2q_gates": 4,
+            "post_routing_depth": 10,
+            "estimated_fidelity": 0.862131
+          },
+          "delta_new_vs_qiskit": 0.082647,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-8",
+          "n_qubits": 8,
+          "old_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              142,
+              141
+            ],
+            "region": "120-143",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.904699
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              142,
+              141
+            ],
+            "region": "120-143",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.904699
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              123,
+              124,
+              125,
+              117,
+              105,
+              106,
+              107,
+              97
+            ],
+            "region": "97-125",
+            "post_routing_2q_gates": 7,
+            "post_routing_depth": 16,
+            "estimated_fidelity": 0.860422
+          },
+          "delta_new_vs_qiskit": 0.044276,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        },
+        {
+          "circuit": "GHZ-10",
+          "n_qubits": 10,
+          "old_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              144,
+              145,
+              146,
+              147
+            ],
+            "region": "120-147",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.874248
+          },
+          "new_mapper": {
+            "physical_qubits": [
+              120,
+              121,
+              122,
+              123,
+              136,
+              143,
+              144,
+              145,
+              146,
+              147
+            ],
+            "region": "120-147",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.874248
+          },
+          "qiskit_opt3": {
+            "physical_qubits": [
+              106,
+              105,
+              117,
+              125,
+              124,
+              123,
+              122,
+              121,
+              116,
+              101
+            ],
+            "region": "101-125",
+            "post_routing_2q_gates": 9,
+            "post_routing_depth": 20,
+            "estimated_fidelity": 0.77017
+          },
+          "delta_new_vs_qiskit": 0.104078,
+          "delta_new_vs_old": 0.0,
+          "winner": "qb-compiler"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_comparisons": 8,
+    "qb_compiler_wins": 8,
+    "qiskit_wins": 0,
+    "ties": 0,
+    "win_rate_pct": 100.0
+  }
+}

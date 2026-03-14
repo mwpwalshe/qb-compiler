@@ -1,0 +1,73 @@
+[
+  {
+    "circuit": "GHZ-8",
+    "n_qubits": 8,
+    "qiskit_seed": 0,
+    "qiskit_2q": 7,
+    "qiskit_depth": 16,
+    "qiskit_fidelity": 0.8604223748162707,
+    "physical_qubits": [
+      123,
+      124,
+      125,
+      117,
+      105,
+      106,
+      107,
+      97
+    ],
+    "dd_gates": 12,
+    "dd_type": "auto",
+    "enhanced_depth": 18,
+    "enhanced_2q": 7,
+    "enhanced_fidelity": 0.8604223748162707,
+    "qiskit_time_ms": 1670.1,
+    "dd_time_ms": 24.3
+  },
+  {
+    "circuit": "QAOA-6",
+    "n_qubits": 6,
+    "qiskit_seed": 8,
+    "qiskit_2q": 19,
+    "qiskit_depth": 54,
+    "qiskit_fidelity": 0.8341418328448107,
+    "physical_qubits": [
+      132,
+      131,
+      138,
+      151,
+      152,
+      130
+    ],
+    "dd_gates": 14,
+    "dd_type": "auto",
+    "enhanced_depth": 54,
+    "enhanced_2q": 19,
+    "enhanced_fidelity": 0.8341418328448107,
+    "qiskit_time_ms": 1381.5,
+    "dd_time_ms": 25.2
+  },
+  {
+    "circuit": "QFT-6",
+    "n_qubits": 6,
+    "qiskit_seed": 1,
+    "qiskit_2q": 46,
+    "qiskit_depth": 122,
+    "qiskit_fidelity": 0.7963393498472005,
+    "physical_qubits": [
+      131,
+      138,
+      130,
+      132,
+      151,
+      152
+    ],
+    "dd_gates": 36,
+    "dd_type": "auto",
+    "enhanced_depth": 123,
+    "enhanced_2q": 46,
+    "enhanced_fidelity": 0.7963393498472005,
+    "qiskit_time_ms": 1732.4,
+    "dd_time_ms": 33.7
+  }
+]

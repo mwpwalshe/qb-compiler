@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "qb-compiler"
 dynamic = ["version"]
-description = "Calibration-aware quantum circuit compiler by QubitBoost. Compiles circuits that survive today's hardware."
+description = "Quantum execution intelligence. Circuit viability, backend recommendation, cost estimation, and automatic optimizations for quantum computing."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"

@@ -22,6 +22,7 @@ from qb_compiler.compiler import (
     CompileResult,
     CostEstimate,
     CostEstimator,
+    EnhancedCompileResult,
     GateOp,
     NoiseModel,
     PassManager,
@@ -29,6 +30,8 @@ from qb_compiler.compiler import (
     QBCircuit,
     QBCompiler,
 )
+from qb_compiler.recommender import BackendRecommender, RecommendationReport
+from qb_compiler.viability import ViabilityResult, check_viability
 
 # ── eagerly imported (lightweight, always needed) ────────────────────
 from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
@@ -46,6 +49,7 @@ from qb_compiler.exceptions import (
 __all__ = [
     "BACKEND_CONFIGS",
     "BackendNotSupportedError",
+    "BackendRecommender",
     "BackendSpec",
     "BasePass",
     "BudgetExceededError",
@@ -58,6 +62,7 @@ __all__ = [
     "CompilerConfig",
     "CostEstimate",
     "CostEstimator",
+    "EnhancedCompileResult",
     "GateOp",
     "InvalidCircuitError",
     "NoiseModel",
@@ -66,7 +71,10 @@ __all__ = [
     "QBCircuit",
     "QBCompiler",
     "QBCompilerError",
+    "RecommendationReport",
+    "ViabilityResult",
     "__version__",
+    "check_viability",
 ]
 
 

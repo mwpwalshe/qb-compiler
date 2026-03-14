@@ -194,12 +194,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Wait for PyPI propagation
-        run: sleep 60
+        run: sleep 120
 
       - name: Install from PyPI
         run: |
           TAG_VERSION=${GITHUB_REF_NAME#v}
-          pip install "qb-compiler==$TAG_VERSION"
+          for i in 1 2 3; do
+            pip install "qb-compiler==$TAG_VERSION" && break
+            echo "Attempt $i failed, waiting 30s..."
+            sleep 30
+          done
 
       - name: Verify import
         run: python -c "import qb_compiler; print('qb-compiler installed successfully')"

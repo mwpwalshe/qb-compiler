@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-03-14T11:01:39.240281+00:00",
+  "mode": "dry_run",
+  "calibration_timestamp": "2026-03-14T08:41:35.899941+00:00",
+  "plan": [
+    {
+      "circuit": "GHZ-5",
+      "n_qubits": 5,
+      "qb_compiler": {
+        "physical_qubits": [
+          144,
+          143,
+          136,
+          123,
+          122
+        ],
+        "region": "122-144",
+        "post_routing_2q_gates": 4,
+        "post_routing_depth": 10,
+        "estimated_fidelity": 0.947607
+      },
+      "qiskit_best": {
+        "seed": 0,
+        "physical_qubits": [
+          132,
+          131,
+          138,
+          151,
+          152
+        ],
+        "region": "131-152",
+        "post_routing_2q_gates": 4,
+        "post_routing_depth": 10,
+        "estimated_fidelity": 0.862131
+      },
+      "delta_estimated": 0.085476
+    },
+    {
+      "circuit": "GHZ-8",
+      "n_qubits": 8,
+      "qb_compiler": {
+        "physical_qubits": [
+          120,
+          121,
+          122,
+          123,
+          136,
+          143,
+          142,
+          141
+        ],
+        "region": "120-143",
+        "post_routing_2q_gates": 7,
+        "post_routing_depth": 16,
+        "estimated_fidelity": 0.904699
+      },
+      "qiskit_best": {
+        "seed": 0,
+        "physical_qubits": [
+          123,
+          124,
+          125,
+          117,
+          105,
+          106,
+          107,
+          97
+        ],
+        "region": "97-125",
+        "post_routing_2q_gates": 7,
+        "post_routing_depth": 16,
+        "estimated_fidelity": 0.860422
+      },
+      "delta_estimated": 0.044276
+    },
+    {
+      "circuit": "GHZ-10",
+      "n_qubits": 10,
+      "qb_compiler": {
+        "physical_qubits": [
+          120,
+          121,
+          122,
+          123,
+          136,
+          143,
+          144,
+          145,
+          146,
+          147
+        ],
+        "region": "120-147",
+        "post_routing_2q_gates": 9,
+        "post_routing_depth": 20,
+        "estimated_fidelity": 0.874248
+      },
+      "qiskit_best": {
+        "seed": 0,
+        "physical_qubits": [
+          106,
+          105,
+          117,
+          125,
+          124,
+          123,
+          122,
+          121,
+          116,
+          101
+        ],
+        "region": "101-125",
+        "post_routing_2q_gates": 9,
+        "post_routing_depth": 20,
+        "estimated_fidelity": 0.77017
+      },
+      "delta_estimated": 0.104078
+    }
+  ]
+}

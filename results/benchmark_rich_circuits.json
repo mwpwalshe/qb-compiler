@@ -1,0 +1,142 @@
+[
+  {
+    "circuit": "QAOA-6",
+    "n_qubits": 6,
+    "original_2q": 16,
+    "qiskit_seed": 19,
+    "qiskit_qubits": [
+      132,
+      131,
+      130,
+      138,
+      151,
+      152
+    ],
+    "qiskit_2q": 29,
+    "qiskit_depth": 60,
+    "qiskit_fid": 0.819538831021691,
+    "qiskit_dd_gates": 0,
+    "qb_qubits": [
+      131,
+      132,
+      130,
+      138,
+      151,
+      152
+    ],
+    "qb_2q": 31,
+    "qb_depth": 64,
+    "qb_fid": 0.8164229690547579,
+    "qb_dd_gates": 0,
+    "delta_2q": 2,
+    "delta_fid": -0.003115861966933142,
+    "delta_dd_fid": -0.003115861966933142
+  },
+  {
+    "circuit": "SU2-8",
+    "n_qubits": 8,
+    "original_2q": 56,
+    "qiskit_seed": 13,
+    "qiskit_qubits": [
+      117,
+      105,
+      125,
+      104,
+      106,
+      107,
+      97,
+      108
+    ],
+    "qiskit_2q": 176,
+    "qiskit_depth": 268,
+    "qiskit_fid": 0.6046535226150442,
+    "qiskit_dd_gates": 0,
+    "qb_qubits": [
+      105,
+      106,
+      117,
+      107,
+      125,
+      104,
+      108,
+      97
+    ],
+    "qb_2q": 188,
+    "qb_depth": 283,
+    "qb_fid": 0.5916969009639647,
+    "qb_dd_gates": 0,
+    "delta_2q": 12,
+    "delta_fid": -0.01295662165107958,
+    "delta_dd_fid": -0.01295662165107958
+  },
+  {
+    "circuit": "QFT-6",
+    "n_qubits": 6,
+    "original_2q": 30,
+    "qiskit_seed": 8,
+    "qiskit_qubits": [
+      138,
+      131,
+      132,
+      130,
+      151,
+      152
+    ],
+    "qiskit_2q": 37,
+    "qiskit_depth": 87,
+    "qiskit_fid": 0.8086632333064435,
+    "qiskit_dd_gates": 0,
+    "qb_qubits": [
+      138,
+      131,
+      151,
+      130,
+      132,
+      152
+    ],
+    "qb_2q": 43,
+    "qb_depth": 99,
+    "qb_fid": 0.7998526718730388,
+    "qb_dd_gates": 0,
+    "delta_2q": 6,
+    "delta_fid": -0.008810561433404751,
+    "delta_dd_fid": -0.008810561433404751
+  },
+  {
+    "circuit": "Random-8",
+    "n_qubits": 8,
+    "original_2q": 23,
+    "qiskit_seed": 1,
+    "qiskit_qubits": [
+      117,
+      108,
+      97,
+      106,
+      107,
+      104,
+      105,
+      125
+    ],
+    "qiskit_2q": 60,
+    "qiskit_depth": 115,
+    "qiskit_fid": 0.7719279692157961,
+    "qiskit_dd_gates": 0,
+    "qb_qubits": [
+      90,
+      94,
+      98,
+      93,
+      91,
+      111,
+      92,
+      89
+    ],
+    "qb_2q": 55,
+    "qb_depth": 88,
+    "qb_fid": 0.7531278262404684,
+    "qb_dd_gates": 0,
+    "delta_2q": -5,
+    "delta_fid": -0.018800142975327727,
+    "delta_dd_fid": -0.018800142975327727
+  }
+]
