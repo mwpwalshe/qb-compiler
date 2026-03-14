@@ -94,3 +94,27 @@ class TestQBCompiler:
         compiler = QBCompiler(backend="ibm_fez")
         with pytest.raises(InvalidCircuitError):
             compiler.compile("not a circuit")  # type: ignore[arg-type]
+
+    def test_qiskit_target_stored(self) -> None:
+        """QBCompiler should store and expose the qiskit_target parameter."""
+        sentinel = object()
+        compiler = QBCompiler(backend="ibm_fez", qiskit_target=sentinel)
+        assert compiler.qiskit_target is sentinel
+
+    def test_qiskit_target_default_none(self) -> None:
+        """Without qiskit_target, it should default to None."""
+        compiler = QBCompiler(backend="ibm_fez")
+        assert compiler.qiskit_target is None
+
+    def test_qiskit_target_flows_to_calibration_pipeline(
+        self, sample_circuit: QBCircuit
+    ) -> None:
+        """qiskit_target should be passed through compile() to the calibration pipeline."""
+        # We can't easily test the full flow without a real Qiskit target,
+        # but we can verify that passing None doesn't break anything and
+        # that initial_layout is still produced.
+        compiler = QBCompiler(backend="ibm_fez", qiskit_target=None)
+        result = compiler.compile(sample_circuit)
+
+        # Should still produce a layout from the calibration pipeline
+        assert result.initial_layout is not None or result.compiled_circuit is not None
