@@ -1,0 +1,135 @@
+{
+  "backend": "ibm_fez",
+  "job_id": "d6qknvfr88ds73dch6r0",
+  "n_shots": 4096,
+  "n_seeds": 20,
+  "results": [
+    {
+      "circuit": "GHZ-8",
+      "variant": "base",
+      "shots": 4096,
+      "quality": 0.83544921875,
+      "metric": "heavy_output_prob",
+      "top_counts": {
+        "00000000": 1857,
+        "11111111": 1565,
+        "01111111": 65,
+        "11111110": 58,
+        "11011111": 49
+      }
+    },
+    {
+      "circuit": "GHZ-8",
+      "variant": "dd",
+      "shots": 4096,
+      "quality": 0.83642578125,
+      "metric": "heavy_output_prob",
+      "top_counts": {
+        "00000000": 1821,
+        "11111111": 1605,
+        "00000001": 58,
+        "11111110": 55,
+        "01111111": 47
+      }
+    },
+    {
+      "circuit": "QAOA-6",
+      "variant": "base",
+      "shots": 4096,
+      "quality": 0.058837890625,
+      "metric": "top_state_prob",
+      "top_counts": {
+        "000000": 241,
+        "111111": 221,
+        "110000": 141,
+        "000110": 139,
+        "110011": 127
+      }
+    },
+    {
+      "circuit": "QAOA-6",
+      "variant": "dd",
+      "shots": 4096,
+      "quality": 0.054931640625,
+      "metric": "top_state_prob",
+      "top_counts": {
+        "000000": 225,
+        "111111": 213,
+        "100001": 131,
+        "111100": 127,
+        "110011": 122
+      }
+    },
+    {
+      "circuit": "QFT-6",
+      "variant": "base",
+      "shots": 4096,
+      "quality": 0.020751953125,
+      "metric": "top_state_prob",
+      "top_counts": {
+        "111011": 85,
+        "100001": 83,
+        "101010": 78,
+        "100000": 78,
+        "011101": 77
+      }
+    },
+    {
+      "circuit": "QFT-6",
+      "variant": "dd",
+      "shots": 4096,
+      "quality": 0.0263671875,
+      "metric": "top_state_prob",
+      "top_counts": {
+        "100110": 108,
+        "100111": 92,
+        "101011": 92,
+        "111000": 92,
+        "100101": 89
+      }
+    }
+  ],
+  "prepared": {
+    "GHZ-8": {
+      "seed": 0,
+      "2q": 7,
+      "dd_gates": 12,
+      "physical_qubits": [
+        124,
+        123,
+        136,
+        143,
+        144,
+        145,
+        146,
+        147
+      ]
+    },
+    "QAOA-6": {
+      "seed": 8,
+      "2q": 19,
+      "dd_gates": 14,
+      "physical_qubits": [
+        142,
+        143,
+        136,
+        123,
+        124,
+        144
+      ]
+    },
+    "QFT-6": {
+      "seed": 1,
+      "2q": 46,
+      "dd_gates": 36,
+      "physical_qubits": [
+        143,
+        136,
+        142,
+        144,
+        123,
+        124
+      ]
+    }
+  }
+}
