@@ -4,6 +4,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://github.com/mwpwalshe/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/mwpwalshe/qb-compiler/actions)
+[![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)]()
+[![Docs](https://img.shields.io/badge/docs-README-blue)](https://github.com/mwpwalshe/qb-compiler#readme)
 
 **Quantum Execution Intelligence. Know before you run.**
 
@@ -191,6 +193,8 @@ These results followed an iterative hardware validation process:
 4. Qiskit seed injection ensures qb-compiler never selects a worse layout than Qiskit's own best
 
 All raw validation data is in the `results/` directory. Reproduce: `python scripts/hardware_validation.py --dry-run`
+
+Full walkthrough: [docs/tutorials/hardware_validation_walkthrough.ipynb](docs/tutorials/hardware_validation_walkthrough.ipynb)
 
 ---
 
