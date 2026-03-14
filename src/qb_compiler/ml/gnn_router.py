@@ -38,7 +38,7 @@ _WEIGHTS_DIR = Path(__file__).parent / "_weights"
 
 # ── Feature dimensions ────────────────────────────────────────────────
 
-N_DEVICE_FEATURES = 9   # t1, t2, ro, asym, freq, connectivity, mean_gate_err, routing_headroom, neighborhood_error
+N_DEVICE_FEATURES = 9   # t1, t2, ro, asym, freq, connectivity, gate_err, headroom, nbr_err
 N_CIRCUIT_FEATURES = 3  # degree, total_weight, is_measurement_qubit
 GNN_HIDDEN_DIM = 32
 GNN_N_LAYERS = 3

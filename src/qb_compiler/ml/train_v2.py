@@ -85,7 +85,7 @@ def _build_training_circuits() -> list[tuple[str, Any]]:
 def _build_target_from_props(props: Any) -> Any:
     """Build a Qiskit Target from BackendProperties."""
     from qiskit.circuit import Measure, Parameter
-    from qiskit.circuit.library import CZGate, CXGate, HGate, RZGate, SXGate, XGate
+    from qiskit.circuit.library import CXGate, CZGate, HGate, RZGate, SXGate, XGate
     from qiskit.transpiler import InstructionProperties, Target
 
     n_q = props.n_qubits
@@ -212,11 +212,11 @@ def train_model_v2(
               f"min={targets_arr.min():.0f}, max={targets_arr.max():.0f}")
 
     # Train/val split
-    X = np.array(all_features, dtype=np.float32)
+    x_data = np.array(all_features, dtype=np.float32)
     y = np.array(all_targets, dtype=np.float32)
 
     x_train, x_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, random_state=seed,
+        x_data, y, test_size=0.2, random_state=seed,
     )
 
     # Train XGBoost regressor
@@ -236,7 +236,7 @@ def train_model_v2(
     }
 
     if verbose:
-        print(f"\nTraining XGBoost regressor...")
+        print("\nTraining XGBoost regressor...")
 
     evals_result: dict = {}
     model = xgb.train(

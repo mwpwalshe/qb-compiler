@@ -21,6 +21,7 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from dataclasses import dataclass, field
@@ -230,7 +231,6 @@ class BackendRecommender:
         RecommendationReport
             Ranked recommendation with per-backend analysis.
         """
-        from qb_compiler.viability import check_viability
 
         t0 = time.perf_counter()
         analyses: list[BackendAnalysis] = []
@@ -312,10 +312,8 @@ class BackendRecommender:
 
         # Get spec for median errors
         spec = None
-        try:
+        with contextlib.suppress(Exception):
             spec = get_backend_spec(entry.name)
-        except Exception:
-            pass
         median_2q = spec.median_cx_error if spec else 0.005
         median_ro = spec.median_readout_error if spec else 0.01
 
