@@ -297,9 +297,9 @@ class TrainingDataGeneratorV2:
         for q in neighborhood:
             for nb in self._adjacency[q]:
                 if nb in neighborhood and nb > q:
-                    err = self._gate_errors.get(frozenset({q, nb}), None)
-                    if err is not None:
-                        region_errors.append(err)
+                    region_err = self._gate_errors.get(frozenset({q, nb}), None)
+                    if region_err is not None:
+                        region_errors.append(region_err)
         feats.append(sum(region_errors) / len(region_errors) if region_errors else 0.02)
 
         return feats

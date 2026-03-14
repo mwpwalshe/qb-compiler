@@ -1002,7 +1002,7 @@ class QBCompiler:
 
         # Step 1: Transpile with N seeds, pick best by 2Q gate count
         best_tc = None
-        best_2q = float("inf")
+        best_2q: int | float = float("inf")
         best_seed = -1
 
         for seed in range(n_seeds):
@@ -1101,7 +1101,7 @@ class QBCompiler:
             enhanced_circuit=enhanced,
             n_seeds=n_seeds,
             best_seed=best_seed,
-            two_qubit_gate_count=best_2q,
+            two_qubit_gate_count=int(best_2q),
             two_qubit_gate_count_with_dd=enhanced_2q,
             dd_gates_inserted=dd_total,
             dd_type=actual_dd_type,

@@ -264,7 +264,7 @@ def check_viability(
 
     # Transpile with N seeds, pick best
     best_tc = None
-    best_2q = float("inf")
+    best_2q: int | float = float("inf")
     for seed in range(n_seeds):
         tc = transpile(
             circuit, target=qiskit_target,
@@ -274,6 +274,9 @@ def check_viability(
         if c2q < best_2q:
             best_2q = c2q
             best_tc = tc
+
+    if best_tc is None:
+        raise ValueError("Transpilation failed: no valid result from any seed")
 
     n_qubits = circuit.num_qubits
     depth = best_tc.depth()
@@ -322,7 +325,7 @@ def check_viability(
 
     # Build suggestions
     suggestions = _build_suggestions(
-        fidelity, snr, depth, viable_depth, best_2q, n_qubits, status,
+        fidelity, snr, depth, viable_depth, int(best_2q), n_qubits, status,
     )
 
     circuit_name = getattr(circuit, "name", None) or f"{n_qubits}q circuit"
@@ -335,7 +338,7 @@ def check_viability(
         estimated_fidelity=round(fidelity, 6),
         noise_floor=round(noise_floor, 6),
         signal_to_noise=round(snr, 2),
-        two_qubit_gate_count=best_2q,
+        two_qubit_gate_count=int(best_2q),
         depth=depth,
         viable_depth=viable_depth,
         reason=reason,
