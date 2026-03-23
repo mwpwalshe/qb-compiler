@@ -1,8 +1,6 @@
 name: Lock File Refresh
 
 on:
-  schedule:
-    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 env:
