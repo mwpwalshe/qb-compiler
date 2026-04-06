@@ -1,0 +1,13 @@
+[general]
+name = "qb-compiler"
+url = "https://github.com/mwpwalshe/qb-compiler"
+description = "Calibration-aware quantum circuit compiler with viability checking, cost estimation, and backend recommendation."
+labels = ["circuit manipulation", "error mitigation"]
+group = "Transpiler plugin"
+licence = "Apache-2.0"
+contact_info = "mike@qubitboost.io"
+alternatives = ""
+documentation = "https://mwpwalshe.github.io/qb-compiler/"
+
+[install]
+pip = "qb-compiler"
