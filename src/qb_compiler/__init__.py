@@ -46,6 +46,78 @@ from qb_compiler.exceptions import (
 from qb_compiler.recommender import BackendRecommender, RecommendationReport
 from qb_compiler.viability import ViabilityResult, check_viability
 
+
+def passmanager(backend: object = None, *, optimization_level: int = 2) -> object:
+    """Return a Qiskit ``PassManager`` configured for *backend*.
+
+    Convenience factory that builds a Qiskit ``StagedPassManager`` with
+    :class:`QBCalibrationPass` injected into the layout stage.  Accepts
+    a Qiskit ``Backend``, ``Target``, or qb-compiler backend name string.
+
+    Parameters
+    ----------
+    backend :
+        A Qiskit ``Backend`` instance, a Qiskit ``Target``, or a
+        qb-compiler backend name (e.g. ``"ibm_fez"``).
+    optimization_level :
+        Qiskit optimization level (0-3).  Default 2.
+
+    Returns
+    -------
+    PassManager
+        A Qiskit ``StagedPassManager`` ready to ``.run()`` circuits.
+
+    Examples
+    --------
+    >>> from qb_compiler import passmanager
+    >>> pm = passmanager(backend)
+    >>> compiled = pm.run(circuit)
+    """
+    from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+
+    from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
+
+    target = None
+    basis_gates = None
+
+    # Resolve input type
+    if isinstance(backend, str):
+        # qb-compiler backend name → use our config for basis gates
+        spec = BACKEND_CONFIGS.get(backend)
+        if spec is not None:
+            basis_gates = list(spec.basis_gates)
+        pm = generate_preset_pass_manager(
+            optimization_level=optimization_level,
+            basis_gates=basis_gates,
+        )
+        return pm
+
+    if hasattr(backend, "target"):
+        # Qiskit Backend
+        target = backend.target
+        pm = generate_preset_pass_manager(
+            optimization_level=optimization_level,
+            target=target,
+        )
+        cal_pass = QBCalibrationPass(backend=backend)
+        pm.layout.append(cal_pass)
+        return pm
+
+    if hasattr(backend, "num_qubits") and hasattr(backend, "operation_names"):
+        # Qiskit Target
+        target = backend
+        pm = generate_preset_pass_manager(
+            optimization_level=optimization_level,
+            target=target,
+        )
+        cal_pass = QBCalibrationPass(target=target)
+        pm.layout.append(cal_pass)
+        return pm
+
+    # Fallback — no backend
+    return generate_preset_pass_manager(optimization_level=optimization_level)
+
+
 __all__ = [
     "BACKEND_CONFIGS",
     "BackendNotSupportedError",
@@ -75,6 +147,7 @@ __all__ = [
     "ViabilityResult",
     "__version__",
     "check_viability",
+    "passmanager",
 ]
 
 

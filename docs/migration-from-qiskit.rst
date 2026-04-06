@@ -41,29 +41,55 @@ Replace ``transpile()`` with ``qb_transpile()``:
 The returned circuit is a standard Qiskit ``QuantumCircuit`` that you can
 submit to any Qiskit runtime as before.
 
-Option 2: Add as a Qiskit Pass
-------------------------------
+Option 2: ``passmanager()`` Factory
+------------------------------------
+
+One-liner that returns a ready ``StagedPassManager`` with calibration-aware
+layout injected:
+
+.. code-block:: python
+
+   from qb_compiler import passmanager
+
+   pm = passmanager(backend)          # accepts Backend, Target, or name string
+   compiled = pm.run(circuit)
+
+Option 3: ``QBCalibrationPass`` as a Qiskit TransformationPass
+---------------------------------------------------------------
+
+``QBCalibrationPass`` subclasses Qiskit's ``TransformationPass``, so it
+slots into any ``PassManager`` or ``StagedPassManager``:
+
+.. code-block:: python
+
+   from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+   from qb_compiler.qiskit_plugin import QBCalibrationPass
+
+   pm = generate_preset_pass_manager(optimization_level=3, target=backend.target)
+   pm.layout.append(QBCalibrationPass(backend=backend))
+
+   compiled = pm.run(circuit)
+
+The pass accepts a ``Backend`` or ``Target`` at init and uses live
+calibration data for layout selection and gate cancellation.
+
+Option 4: ``QBCalibrationLayout`` AnalysisPass
+------------------------------------------------
 
 Keep your existing pass manager and add qb-compiler's calibration-aware
-layout as an additional pass:
+layout as an analysis pass using a calibration JSON file:
 
 .. code-block:: python
 
    from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
    from qb_compiler.qiskit_plugin import QBCalibrationLayout
 
-   # Your existing pass manager
    pm = generate_preset_pass_manager(optimization_level=3, backend=backend)
-
-   # Add calibration-aware layout
    pm.layout.append(QBCalibrationLayout(calibration_data))
 
    compiled = pm.run(circuit)
 
-This approach lets you keep all your existing Qiskit passes and add
-calibration awareness on top.
-
-Option 3: Full QBCompiler API
+Option 5: Full QBCompiler API
 -----------------------------
 
 For maximum control, use the QBCompiler API directly and convert back

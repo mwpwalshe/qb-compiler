@@ -124,6 +124,28 @@ decoherence or satisfy hardware timing constraints.
    :undoc-members:
    :show-inheritance:
 
+Qiskit Plugin Passes
+--------------------
+
+These passes subclass Qiskit's native ``TransformationPass`` and
+``AnalysisPass`` base classes, making them directly composable with any
+Qiskit ``PassManager`` or ``StagedPassManager``.
+
+.. automodule:: qb_compiler.qiskit_plugin.calibration_pass
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: qb_compiler.qiskit_plugin.transformation_passes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: qb_compiler.qiskit_plugin.analysis_passes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 QEC Passes
 ----------
 

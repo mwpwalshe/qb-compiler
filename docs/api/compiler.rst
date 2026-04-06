@@ -64,6 +64,11 @@ Circuit Representation
    :members:
    :undoc-members:
 
+Convenience Factory
+-------------------
+
+.. autofunction:: qb_compiler.passmanager
+
 Protocols
 ---------
 
