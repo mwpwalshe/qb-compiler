@@ -1,0 +1,60 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-04-10T06:21:37.176318Z",
+    "component": {
+      "type": "application",
+      "name": "qb-compiler",
+      "version": "0.2.3"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "click",
+      "version": "8.1.7"
+    },
+    {
+      "type": "library",
+      "name": "httpx",
+      "version": "0.28.1"
+    },
+    {
+      "type": "library",
+      "name": "numpy",
+      "version": "1.26.4"
+    },
+    {
+      "type": "library",
+      "name": "pydantic",
+      "version": "2.12.5"
+    },
+    {
+      "type": "library",
+      "name": "qiskit",
+      "version": "1.4.5"
+    },
+    {
+      "type": "library",
+      "name": "rich",
+      "version": "14.2.0"
+    },
+    {
+      "type": "library",
+      "name": "rustworkx",
+      "version": "0.17.1"
+    },
+    {
+      "type": "library",
+      "name": "scikit-learn",
+      "version": "1.8.0"
+    },
+    {
+      "type": "library",
+      "name": "xgboost",
+      "version": "3.2.0"
+    }
+  ]
+}

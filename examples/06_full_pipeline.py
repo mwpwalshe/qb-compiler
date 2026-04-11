@@ -16,7 +16,8 @@ from qb_compiler.passes.mapping.calibration_mapper import CalibrationMapper
 from qb_compiler.passes.mapping.noise_aware_router import NoiseAwareRouter
 
 CAL_PATH = Path(__file__).resolve().parent.parent / (
-    "tests/fixtures/calibration_snapshots/ibm_fez_2026_02_15.json"
+    # Download sample calibration: https://github.com/mwpwalshe/qb-compiler/tree/main/tests/fixtures/calibration_snapshots
+    "tests/fixtures/calibration_snapshots/ibm_fez_2026_02_15.json"  # Or use your own: qb calibrate fetch ibm_fez
 )
 
 
