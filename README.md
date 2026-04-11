@@ -250,6 +250,8 @@ Calibration data can be loaded from local JSON files or fetched from vendor APIs
 
 ## Installation
 
+**Compatibility:** Qiskit 1.0-1.4 | Python 3.10-3.12 | Tested on IBM Fez, Torino, Marrakesh, Rigetti Ankaa-3
+
 ```bash
 # Core (IBM backends via Qiskit)
 pip install qb-compiler

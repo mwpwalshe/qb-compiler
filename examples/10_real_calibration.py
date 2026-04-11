@@ -16,6 +16,7 @@ from qb_compiler.passes.mapping.calibration_mapper import (
 )
 
 # Look for calibration data
+# Calibration data: fetch with `qb calibrate fetch ibm_fez` or download from GitHub
 CAL_DIR = Path(__file__).resolve().parent.parent / "tests/fixtures/calibration_snapshots"
 
 

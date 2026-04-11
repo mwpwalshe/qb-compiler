@@ -30,3 +30,4 @@ docs/_build/
 *.ipynb_checkpoints/
 *:Zone.Identifier
 *.parquet
+.claude/

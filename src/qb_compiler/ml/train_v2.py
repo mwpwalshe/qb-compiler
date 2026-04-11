@@ -144,14 +144,14 @@ def train_model_v2(
     try:
         import xgboost as xgb
     except ImportError:
-        print("ERROR: xgboost required. pip install xgboost")
+        logger.error(" xgboost required. pip install xgboost")
         sys.exit(1)
 
     try:
         from sklearn.metrics import mean_absolute_error
         from sklearn.model_selection import train_test_split
     except ImportError:
-        print("ERROR: scikit-learn required. pip install scikit-learn")
+        logger.error(" scikit-learn required. pip install scikit-learn")
         sys.exit(1)
 
     if output_path is None:
@@ -162,16 +162,16 @@ def train_model_v2(
     # Load calibration
     snapshots = _load_calibration_snapshots()
     if not snapshots:
-        print("ERROR: No calibration snapshots found.")
+        logger.error(" No calibration snapshots found.")
         sys.exit(1)
 
     if verbose:
-        print(f"Loaded {len(snapshots)} calibration snapshot(s)")
+        logger.info(f"Loaded {len(snapshots)} calibration snapshot(s)")
 
     # Build circuits
     circuits = _build_training_circuits()
     if verbose:
-        print(f"Built {len(circuits)} training circuits")
+        logger.info(f"Built {len(circuits)} training circuits")
 
     # Generate training data
     from qb_compiler.ml.data_generator_v2 import TrainingDataGeneratorV2, v2_feature_names
@@ -186,7 +186,7 @@ def train_model_v2(
     for snap_idx, props in enumerate(snapshots):
         target = _build_target_from_props(props)
         if verbose:
-            print(f"\nSnapshot {snap_idx + 1}/{len(snapshots)}: {props.n_qubits} qubits")
+            logger.info(f"Snapshot {snap_idx + 1}/{len(snapshots)}: {props.n_qubits} qubits")
 
         gen = TrainingDataGeneratorV2(
             props, qiskit_target=target,
@@ -200,14 +200,14 @@ def train_model_v2(
         all_targets_fid.extend(data.targets_fidelity)
 
         if verbose:
-            print(f"  Generated {data.n_samples} samples")
+            logger.info(f"  Generated {data.n_samples} samples")
 
     gen_time = time.perf_counter() - start
 
     if verbose:
-        print(f"\nTotal: {len(all_targets)} samples in {gen_time:.1f}s")
+        logger.info(f"Total: {len(all_targets)} samples in {gen_time:.1f}s")
         targets_arr = np.array(all_targets)
-        print(f"  2Q gates: mean={targets_arr.mean():.1f}, "
+        logger.info(f"  2Q gates: mean={targets_arr.mean():.1f}, "
               f"std={targets_arr.std():.1f}, "
               f"min={targets_arr.min():.0f}, max={targets_arr.max():.0f}")
 
@@ -236,7 +236,7 @@ def train_model_v2(
     }
 
     if verbose:
-        print("\nTraining XGBoost regressor...")
+        logger.info("Training XGBoost regressor...")
 
     evals_result: dict = {}
     model = xgb.train(
@@ -255,8 +255,8 @@ def train_model_v2(
     correlation = float(np.corrcoef(y_val, y_pred)[0, 1])
 
     if verbose:
-        print(f"\nValidation MAE: {mae:.3f}")
-        print(f"Correlation with actual: {correlation:.4f}")
+        logger.info(f"Validation MAE: {mae:.3f}")
+        logger.info(f"Correlation with actual: {correlation:.4f}")
 
         # Feature importance
         importance = model.get_score(importance_type="gain")
@@ -264,16 +264,16 @@ def train_model_v2(
             importance.items(),
             key=lambda x: -float(x[1]) if isinstance(x[1], (int, float)) else 0.0,
         )
-        print("\nTop features by gain:")
+        logger.info("Top features by gain:")
         for fname, gain in sorted_imp[:10]:
-            print(f"  {fname:>30s}: {gain:.2f}")
+            logger.info(f"  {fname:>30s}: {gain:.2f}")
 
     # Save model
     model.save_model(str(output_path))
     model_size = output_path.stat().st_size
 
     if verbose:
-        print(f"\nModel saved to {output_path} ({model_size / 1024:.1f} KB)")
+        logger.info(f"Model saved to {output_path} ({model_size / 1024:.1f} KB)")
 
     # Save metadata
     meta = {
@@ -300,7 +300,7 @@ def train_model_v2(
         json.dump(meta, f, indent=2)
 
     if verbose:
-        print(f"Metadata saved to {meta_path}")
+        logger.info(f"Metadata saved to {meta_path}")
 
     # Save training data as parquet if pyarrow available
     try:
@@ -316,10 +316,10 @@ def train_model_v2(
         parquet_path = output_path.with_suffix(".parquet")
         pq.write_table(table, parquet_path)
         if verbose:
-            print(f"Training data saved to {parquet_path}")
+            logger.info(f"Training data saved to {parquet_path}")
     except ImportError:
         if verbose:
-            print("pyarrow not available — skipping parquet export")
+            logger.info("pyarrow not available — skipping parquet export")
 
     return meta
 
