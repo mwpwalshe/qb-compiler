@@ -46,7 +46,7 @@ pygments==2.19.2
     # via rich
 python-dateutil==2.9.0.post0
     # via qiskit
-qiskit==1.4.5
+qiskit==2.3.1
     # via qb-compiler (pyproject.toml)
 rich==14.3.3
     # via qb-compiler (pyproject.toml)
