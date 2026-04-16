@@ -4,8 +4,6 @@ This verifies that qb-compiler can be discovered by Qiskit's plugin
 infrastructure without import errors or missing dependencies.
 """
 
-import pytest
-
 
 class TestQiskitEntryPoint:
     """Verify Qiskit ecosystem integration."""
@@ -17,8 +15,9 @@ class TestQiskitEntryPoint:
 
     def test_inherits_transformation_pass(self):
         """QBCalibrationPass is a proper Qiskit TransformationPass."""
-        from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
         from qiskit.transpiler.basepasses import TransformationPass
+
+        from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
         assert issubclass(QBCalibrationPass, TransformationPass)
 
     def test_passmanager_factory(self):
@@ -29,6 +28,16 @@ class TestQiskitEntryPoint:
     def test_import_public_api(self):
         """All public API symbols import without error."""
         from qb_compiler import (
+            BackendNotSupportedError,
+            BackendRecommender,
+            CompileResult,
+            CostEstimator,
+            QBCompiler,
+            QBCompilerError,
+            ViabilityResult,
+            check_viability,
+        )
+        for symbol in (
             QBCompiler,
             CompileResult,
             check_viability,
@@ -37,9 +46,8 @@ class TestQiskitEntryPoint:
             CostEstimator,
             QBCompilerError,
             BackendNotSupportedError,
-        )
-        assert QBCompiler is not None
-        assert check_viability is not None
+        ):
+            assert symbol is not None
 
     def test_qiskit_plugin_module(self):
         """Plugin module exists and has expected attributes."""
