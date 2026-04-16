@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Qiskit SDK 2.x compatibility: `qiskit` dependency widened to `>=1.0,<3.0`.
+- CI now runs the test suite against both Qiskit 1.4 and Qiskit 2.0 in matrix.
+- `QBCalibrationLayoutPlugin` — proper `qiskit.transpiler.layout` stage plugin.
+  Invoke via `generate_preset_pass_manager(layout_method="qb_calibration")`
+  with the `QB_CALIBRATION_PATH` env var set.  Plugin is now discoverable
+  through Qiskit's entry-point system.
+
+### Changed
+- `qb_transpile()` now injects `QBCalibrationLayout` into the pass manager's
+  `pre_layout` stage instead of `layout`.  On Qiskit 2.x the previous
+  approach triggered `ApplyLayout` `KeyError` and silently fell back to
+  stock `qiskit.transpile`, bypassing calibration-aware layout.  The
+  custom pipeline is now the primary code path on both Qiskit versions.
+- `QBTranspilerPlugin` entry-point group corrected from the non-existent
+  `qiskit.transpiler.stage` to `qiskit.transpiler.layout`, now pointing at
+  `QBCalibrationLayoutPlugin`.  The plugin was previously undiscoverable
+  via Qiskit's loader.
+
+### Deprecated
+- `QBTranspilerPlugin.get_pass_manager(calibration_data=...)` — emits a
+  `DeprecationWarning` and will be removed in 0.4.0.  Migrate to
+  `generate_preset_pass_manager(layout_method="qb_calibration")` with
+  `QB_CALIBRATION_PATH` set, or call `qb_transpile()` directly.
+
+### Fixed
+- `ci.yml` workflow now triggers on `master` as well as `main` (the repo's
+  default branch is `master`; the workflow had been dormant).
+- Removed the phantom `[qiskit]` optional-dependency extra from CI install
+  commands (it did not exist in `pyproject.toml` and was silently ignored).
+
 ## [0.1.0] - 2026-03-13
 
 ### Added

@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "numpy>=1.24,<3.0",
     "rustworkx>=0.14",
-    "qiskit>=1.0,<2.0",
+    "qiskit>=1.0,<3.0",
     "pydantic>=2.0",
     "click>=8.0",
     "rich>=13.0",
@@ -79,8 +79,8 @@ dev = [
 [project.scripts]
 qbc = "qb_compiler.cli.main:cli"
 
-[project.entry-points."qiskit.transpiler.stage"]
-qb_calibration = "qb_compiler.qiskit_plugin:QBTranspilerPlugin"
+[project.entry-points."qiskit.transpiler.layout"]
+qb_calibration = "qb_compiler.qiskit_plugin:QBCalibrationLayoutPlugin"
 
 [project.urls]
 Homepage = "https://qubitboost.io/compiler"
