@@ -188,15 +188,95 @@ class QBCalibrationLayout(AnalysisPass):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# QBTranspilerPlugin — Qiskit entry-point plugin
+# QBCalibrationLayoutPlugin — Qiskit transpiler-stage plugin
 # ═══════════════════════════════════════════════════════════════════════
 
 
-class QBTranspilerPlugin:
-    """Entry point for ``qiskit.transpiler.stage`` plugin discovery.
+class QBCalibrationLayoutPlugin:
+    """Qiskit transpiler stage plugin for calibration-aware layout.
 
     Registered in ``pyproject.toml`` under
-    ``[project.entry-points."qiskit.transpiler.stage"]``.
+    ``[project.entry-points."qiskit.transpiler.layout"]`` as
+    ``qb_calibration``.  Invoke via::
+
+        pm = generate_preset_pass_manager(
+            optimization_level=2,
+            backend=backend,
+            layout_method="qb_calibration",
+        )
+
+    At plugin-invoke time the calibration snapshot is loaded from the
+    ``QB_CALIBRATION_PATH`` environment variable.  If the variable is
+    unset, the plugin returns an empty ``PassManager`` (passthrough),
+    which lets the preset pass manager fall through to its default
+    layout finder.
+    """
+
+    def pass_manager(
+        self,
+        pass_manager_config: Any,  # qiskit.transpiler.PassManagerConfig
+        optimization_level: int | None = None,
+    ) -> Any:
+        """Return a ``PassManager`` implementing the full layout stage.
+
+        A layout-stage plugin must replace Qiskit's entire default layout
+        stage, which finds a layout AND dilates the circuit with ancillas
+        so that subsequent routing/translation passes have the correct
+        number of physical qubits.  This plugin runs, in order:
+
+        1. :class:`QBCalibrationLayout` — set ``property_set["layout"]``
+           from calibration-aware scoring.  Falls back to
+           :class:`~qiskit.transpiler.passes.TrivialLayout` if
+           ``QB_CALIBRATION_PATH`` is not set.
+        2. :class:`~qiskit.transpiler.passes.FullAncillaAllocation` —
+           reserve physical qubits not touched by the layout.
+        3. :class:`~qiskit.transpiler.passes.EnlargeWithAncilla` —
+           extend the circuit with those ancillas.
+        4. :class:`~qiskit.transpiler.passes.ApplyLayout` — rewrite
+           the DAG onto physical qubits.
+        """
+        import os
+
+        from qiskit.transpiler import PassManager as QiskitPM
+        from qiskit.transpiler.passes import (
+            ApplyLayout,
+            EnlargeWithAncilla,
+            FullAncillaAllocation,
+            TrivialLayout,
+        )
+
+        coupling_map = pass_manager_config.coupling_map
+        cal_path = os.environ.get("QB_CALIBRATION_PATH")
+
+        if cal_path:
+            layout_pass: Any = QBCalibrationLayout(cal_path)
+        else:
+            # Passthrough: behave like the default trivial layout so the
+            # stage still produces a valid ancilla-dilated circuit when
+            # no calibration is available.
+            layout_pass = TrivialLayout(coupling_map)
+
+        stage = [layout_pass]
+        if coupling_map is not None:
+            stage.extend(
+                [
+                    FullAncillaAllocation(coupling_map),
+                    EnlargeWithAncilla(),
+                    ApplyLayout(),
+                ]
+            )
+        return QiskitPM(stage)
+
+
+class QBTranspilerPlugin(QBCalibrationLayoutPlugin):
+    """Deprecated alias kept for backward compatibility.
+
+    .. deprecated:: 0.3.0
+        Use :class:`QBCalibrationLayoutPlugin` with
+        ``generate_preset_pass_manager(layout_method="qb_calibration")``
+        and ``QB_CALIBRATION_PATH`` env var, or call :func:`qb_transpile`
+        directly.  ``QBTranspilerPlugin.get_pass_manager()`` will be
+        removed in 0.4.0.
     """
 
     def get_pass_manager(
@@ -205,7 +285,14 @@ class QBTranspilerPlugin:
         calibration_data: dict | str | Path | None = None,
         **kwargs: Any,
     ) -> Any:
-        """Return a Qiskit ``PassManager`` with calibration-aware layout."""
+        """Return a ``PassManager`` with calibration-aware layout (legacy API)."""
+        warnings.warn(
+            "QBTranspilerPlugin.get_pass_manager() is deprecated; use "
+            "generate_preset_pass_manager(layout_method='qb_calibration') "
+            "with QB_CALIBRATION_PATH set, or call qb_transpile() directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         from qiskit.transpiler import PassManager as QiskitPM
 
         if calibration_data is not None:
@@ -281,10 +368,19 @@ def qb_transpile(
             coupling_map=coupling_map,
         )
 
-        # Inject calibration-aware layout if we have calibration data
+        # Inject calibration-aware layout if we have calibration data.
+        # The layout must be pre-set before Qiskit's own layout stage runs —
+        # appending to ``pm.layout`` after the preset stage already built a
+        # layout raises KeyError in Qiskit 2.x's ApplyLayout.  Using
+        # ``pre_layout`` lets QBCalibrationLayout seed ``property_set["layout"]``
+        # so the default layout stage skips its own finder.
         if cal_dict is not None:
+            from qiskit.transpiler import PassManager as _PassManager
+
             cal_layout = QBCalibrationLayout(cal_dict)
-            pm.layout.append(cal_layout)
+            if pm.pre_layout is None:
+                pm.pre_layout = _PassManager()
+            pm.pre_layout.append(cal_layout)
 
         result = pm.run(circuit)
         return result
