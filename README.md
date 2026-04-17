@@ -223,6 +223,37 @@ All transpilation uses Qiskit's routing engine internally. qb-compiler's value i
 
 ---
 
+## NVIDIA Ising Decoder Integration (v0.4.0+)
+
+qb-compiler ships the first Qiskit-side onramp to NVIDIA's
+`Ising-Decoder-SurfaceCode-1` model family (released 2026-04-14). Turn any
+rotated surface-code memory experiment into the exact 4-channel
+`(B, 4, T, D, D)` tensor the pretrained decoder consumes, run the
+PyMatching baseline bundled in the module, and plug in the NVIDIA
+pre-decoder when users supply their own gated-HF weights. Install:
+
+```bash
+pip install qb-compiler[ising]          # + stim + pymatching
+pip install qb-compiler[ising-nvidia]   # + torch + safetensors
+```
+
+```python
+from qb_compiler.ising import (
+    SurfaceCodePatchSpec, PyMatchingDecoder, evaluate_logical_error_rate,
+)
+
+spec = SurfaceCodePatchSpec(distance=7, rounds=7, basis="X", p_error=0.003)
+result = evaluate_logical_error_rate(
+    spec, PyMatchingDecoder(spec), shots=50_000, seed=42,
+)
+print(result.as_dict())
+```
+
+See [`src/qb_compiler/ising/README.md`](src/qb_compiler/ising/README.md)
+for the full API, licensing breakdown (Apache 2.0 integration code;
+NVIDIA Open Model License weights distributed separately by NVIDIA),
+and the [Notebook 17 walkthrough](notebooks/17_nvidia_ising_integration.ipynb).
+
 ## Optional QubitBoost SDK Integration
 
 qb-compiler works fully standalone. For supported workloads, it can optionally integrate with the QubitBoost SDK to surface compatible execution paths:

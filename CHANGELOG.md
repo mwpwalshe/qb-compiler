@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `qb_compiler.ising` — first Qiskit-side integration for NVIDIA's
+  `Ising-Decoder-SurfaceCode-1` model family (released 2026-04-14).
+  Converts rotated-surface-code memory experiments (Qiskit or stim)
+  into the 4-channel `(B, 4, T, D, D)` float32 tensor consumed by the
+  pretrained decoder.  Public API: `SurfaceCodePatchSpec`,
+  `build_ising_tensor`, `PyMatchingDecoder` (MWPM baseline),
+  `IsingDecoderWrapper` (pre-decoder + residual-MWPM chain; users
+  bring their own gated-HF weights + NVIDIA's Apache-2.0 model
+  definition — qb-compiler does not vendor NVIDIA code or weights),
+  `evaluate_logical_error_rate` harness.  Install via
+  `pip install qb-compiler[ising]` for the PyMatching baseline,
+  `qb-compiler[ising-nvidia]` to add torch + safetensors for the
+  NVIDIA pre-decoder.  See `src/qb_compiler/ising/README.md`.
+- Benchmark harness `benchmarks/ising/run_pymatching_sweep.py`
+  sweeping `(distance, rounds, p_error, basis)` to establish the
+  baseline any pre-decoder must beat.
+- New optional extras: `ising`, `ising-nvidia`.
+
+## [0.3.0] - 2026-04-16
+
+### Added
 - Qiskit SDK 2.x compatibility: `qiskit` dependency widened to `>=1.0,<3.0`.
 - CI now runs the test suite against both Qiskit 1.4 and Qiskit 2.0 in matrix.
 - `QBCalibrationLayoutPlugin` — proper `qiskit.transpiler.layout` stage plugin.
