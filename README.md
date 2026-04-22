@@ -109,7 +109,7 @@ $ qbc doctor
 
 qbc doctor
 
-✔  qb-compiler 0.2.0
+✔  qb-compiler 0.4.0b1
 ✔  Python 3.11.14
 ✔  Qiskit 1.4.5
 ✔  IBM credentials configured (2 account(s))
@@ -223,18 +223,20 @@ All transpilation uses Qiskit's routing engine internally. qb-compiler's value i
 
 ---
 
-## NVIDIA Ising Decoder Integration (v0.4.0+)
+## NVIDIA Ising Decoder Integration (v0.4.0b1, beta)
 
-qb-compiler ships the first Qiskit-side onramp to NVIDIA's
-`Ising-Decoder-SurfaceCode-1` model family (released 2026-04-14). Turn any
-rotated surface-code memory experiment into the exact 4-channel
-`(B, 4, T, D, D)` tensor the pretrained decoder consumes, run the
-PyMatching baseline bundled in the module, and plug in the NVIDIA
-pre-decoder when users supply their own gated-HF weights. Install:
+First Qiskit-side onramp to NVIDIA's `Ising-Decoder-SurfaceCode-1`
+(dropped 2026-04-14). Takes a rotated surface-code memory experiment,
+spits out the 4-channel `(B, 4, T, D, D)` tensor the pretrained decoder
+eats. A PyMatching MWPM baseline ships in the box so youve somethign to
+beat. Plug the NVIDIA pre-decoder in when youve got the gated-HF weights
+— qb-compiler doesnt vendor them.
+
+Stim only for now, no hw shots thru it yet. Install:
 
 ```bash
-pip install qb-compiler[ising]          # + stim + pymatching
-pip install qb-compiler[ising-nvidia]   # + torch + safetensors
+pip install --pre qb-compiler[ising]          # stim + pymatching
+pip install --pre qb-compiler[ising-nvidia]   # adds torch + safetensors
 ```
 
 ```python
