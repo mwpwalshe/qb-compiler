@@ -55,8 +55,17 @@ ml = [
 gnn = [
     "torch>=2.0",
 ]
+ising = [
+    "stim>=1.14",
+    "pymatching>=2.2",
+]
+ising-nvidia = [
+    "qb-compiler[ising]",
+    "torch>=2.0",
+    "safetensors>=0.4",
+]
 all = [
-    "qb-compiler[qubitboost,rigetti,ionq,iqm,ml,gnn]",
+    "qb-compiler[qubitboost,rigetti,ionq,iqm,ml,gnn,ising]",
 ]
 dev = [
     "pytest>=8.0",
