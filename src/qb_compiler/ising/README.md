@@ -1,5 +1,10 @@
 # qb-compiler → NVIDIA Ising integration
 
+> **Status: beta (`v0.4.0b1`).** Stim only for now, no hw shots thru it yet.
+> NVIDIA dropped the decoder on 2026-04-14 and this onramp went out a week
+> later so expect the API to wobble a bit as people hit corners — pin the
+> version if you're using it. Hw run on IBM Heron surface patches is up next.
+
 This package is the first Qiskit-side onramp to NVIDIA's
 `Ising-Decoder-SurfaceCode-1` model family (released 2026-04-14
 under Apache 2.0 code + NVIDIA Open Model License weights).

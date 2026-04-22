@@ -5,7 +5,9 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0b1] - 2026-04-22
+
+Beta release — Stim-validated only, no hardware runs yet. API may shift.
 
 ### Added
 - `qb_compiler.ising` — first Qiskit-side integration for NVIDIA's
