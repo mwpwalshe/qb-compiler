@@ -38,8 +38,8 @@ _WEIGHTS_DIR = Path(__file__).parent / "_weights"
 
 # ── Constants ─────────────────────────────────────────────────────────
 
-RL_STATE_DIM = 64      # state embedding dimension
-RL_HIDDEN_DIM = 128    # policy/value network hidden dim
+RL_STATE_DIM = 64  # state embedding dimension
+RL_HIDDEN_DIM = 128  # policy/value network hidden dim
 MAX_SWAPS_PER_LAYER = 10  # safety limit
 
 
@@ -48,8 +48,7 @@ def _check_torch() -> None:
         import torch  # noqa: F401
     except ImportError as exc:
         raise ImportError(
-            "PyTorch is required for RL routing. "
-            "Install with: pip install 'qb-compiler[gnn]'"
+            "PyTorch is required for RL routing. Install with: pip install 'qb-compiler[gnn]'"
         ) from exc
 
 
@@ -186,9 +185,7 @@ class RoutingEnvironment:
             edge_errors=dict(self._edge_errors),
         )
 
-    def step(
-        self, state: RoutingState, action: RoutingAction
-    ) -> tuple[RoutingState, float, bool]:
+    def step(self, state: RoutingState, action: RoutingAction) -> tuple[RoutingState, float, bool]:
         """Execute one action and return (new_state, reward, done).
 
         Reward is negative error (higher reward = less error).
@@ -201,9 +198,7 @@ class RoutingEnvironment:
             # Invalid action — small penalty
             return state, -0.01, False
 
-    def _advance(
-        self, state: RoutingState
-    ) -> tuple[RoutingState, float, bool]:
+    def _advance(self, state: RoutingState) -> tuple[RoutingState, float, bool]:
         """Execute the current layer and advance."""
         if not state.remaining_layers:
             return state, 0.0, True
@@ -355,18 +350,14 @@ def _build_ppo_model(
             self.policy_head = nn.Linear(hidden_dim, n_actions)
             self.value_head = nn.Linear(hidden_dim, 1)
 
-        def forward(
-            self, state: torch.Tensor
-        ) -> tuple[torch.Tensor, torch.Tensor]:
+        def forward(self, state: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
             """Return (action_logits, state_value)."""
             h = self.shared(state)
             logits = self.policy_head(h)
             value = self.value_head(h)
             return logits, value.squeeze(-1)
 
-        def get_action(
-            self, state: torch.Tensor
-        ) -> tuple[int, float, float]:
+        def get_action(self, state: torch.Tensor) -> tuple[int, float, float]:
             """Sample an action and return (action_idx, log_prob, value)."""
             logits, value = self(state)
             dist = torch.distributions.Categorical(logits=logits)
@@ -623,14 +614,16 @@ def train_rl_router(
             if action.action_type == "swap":
                 n_swaps_ep += 1
 
-            trajectory.append(RoutingStep(
-                state_features=features,
-                action_idx=action_idx,
-                reward=reward,
-                log_prob=log_prob,
-                value=value,
-                done=done,
-            ))
+            trajectory.append(
+                RoutingStep(
+                    state_features=features,
+                    action_idx=action_idx,
+                    reward=reward,
+                    log_prob=log_prob,
+                    value=value,
+                    done=done,
+                )
+            )
 
             if done:
                 break
@@ -641,8 +634,11 @@ def train_rl_router(
         # PPO update
         if trajectory:
             _ppo_update(
-                agent, optimizer, trajectory,
-                gamma=gamma, clip_eps=clip_eps,
+                agent,
+                optimizer,
+                trajectory,
+                gamma=gamma,
+                clip_eps=clip_eps,
                 entropy_coeff=entropy_coeff,
                 n_epochs=n_epochs_per_update,
             )
@@ -708,15 +704,9 @@ def _ppo_update(
         running_return = step.reward + gamma * running_return * (0.0 if step.done else 1.0)
         returns.insert(0, running_return)
 
-    states = torch.tensor(
-        [s.state_features for s in trajectory], dtype=torch.float32
-    )
-    actions = torch.tensor(
-        [s.action_idx for s in trajectory], dtype=torch.long
-    )
-    old_log_probs = torch.tensor(
-        [s.log_prob for s in trajectory], dtype=torch.float32
-    )
+    states = torch.tensor([s.state_features for s in trajectory], dtype=torch.float32)
+    actions = torch.tensor([s.action_idx for s in trajectory], dtype=torch.long)
+    old_log_probs = torch.tensor([s.log_prob for s in trajectory], dtype=torch.float32)
     returns_t = torch.tensor(returns, dtype=torch.float32)
 
     # Normalise returns

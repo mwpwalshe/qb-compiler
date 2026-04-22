@@ -105,7 +105,4 @@ class MLNoiseModel(NoiseModel):
         return self._profiler.model_version  # type: ignore[no-any-return]
 
     def __repr__(self) -> str:
-        return (
-            f"MLNoiseModel(backend={self._backend!r}, "
-            f"version={self.model_version!r})"
-        )
+        return f"MLNoiseModel(backend={self._backend!r}, version={self.model_version!r})"

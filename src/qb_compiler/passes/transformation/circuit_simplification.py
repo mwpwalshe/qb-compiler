@@ -91,9 +91,7 @@ class CircuitSimplifier(TransformationPass):
     # ── template matchers ─────────────────────────────────────────────
 
     @staticmethod
-    def _try_h_cx_h(
-        ops: list[Operation], i: int, skip: set[int]
-    ) -> QBGate | None:
+    def _try_h_cx_h(ops: list[Operation], i: int, skip: set[int]) -> QBGate | None:
         """Try to match H(t), CX(c, t), H(t) starting at index *i*.
 
         Returns a replacement CX(t, c) gate if matched, else None.
@@ -163,9 +161,7 @@ class CircuitSimplifier(TransformationPass):
         return QBGate(name="cx", qubits=(target, control))
 
     @staticmethod
-    def _try_cancel(
-        ops: list[Operation], i: int, skip: set[int]
-    ) -> bool:
+    def _try_cancel(ops: list[Operation], i: int, skip: set[int]) -> bool:
         """Try to cancel ops[i] with the next identical gate on the same qubits.
 
         Returns True if cancelled (marks both i and the match in *skip*).
@@ -201,6 +197,4 @@ class CircuitSimplifier(TransformationPass):
         return False
 
 
-_CANCEL_PAIRS: frozenset[str] = frozenset(
-    {"x", "y", "z", "h", "cx", "cz", "swap", "cy"}
-)
+_CANCEL_PAIRS: frozenset[str] = frozenset({"x", "y", "z", "h", "cx", "cz", "swap", "cy"})

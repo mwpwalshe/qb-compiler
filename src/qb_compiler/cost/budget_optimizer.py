@@ -144,7 +144,11 @@ class BudgetOptimizer:
 
         estimated_cost = cps * recommended_shots
         notes = self._build_notes(
-            backend, target_shots, recommended_shots, max_shots, cps,
+            backend,
+            target_shots,
+            recommended_shots,
+            max_shots,
+            cps,
         )
 
         return OptimizationResult(
@@ -190,13 +194,15 @@ class BudgetOptimizer:
             total = cps * target_shots
             if total <= budget_usd:
                 fidelity = self._estimate_fidelity(name, 50)
-                candidates.append(OptimizationResult(
-                    backend=name,
-                    recommended_shots=target_shots,
-                    estimated_fidelity=fidelity,
-                    estimated_cost_usd=total,
-                    strategy=self._recommend_strategy(cps),
-                ))
+                candidates.append(
+                    OptimizationResult(
+                        backend=name,
+                        recommended_shots=target_shots,
+                        estimated_fidelity=fidelity,
+                        estimated_cost_usd=total,
+                        strategy=self._recommend_strategy(cps),
+                    )
+                )
 
         if not candidates:
             return None
@@ -246,12 +252,8 @@ class BudgetOptimizer:
         parts: list[str] = []
         if target_shots is not None and recommended_shots < target_shots:
             parts.append(
-                f"Reduced shots from {target_shots} to {recommended_shots} "
-                f"to fit within budget"
+                f"Reduced shots from {target_shots} to {recommended_shots} to fit within budget"
             )
         if cps >= 0.10:
-            parts.append(
-                f"High per-shot cost (${cps:.2f}); "
-                f"fidelity_optimal strategy recommended"
-            )
+            parts.append(f"High per-shot cost (${cps:.2f}); fidelity_optimal strategy recommended")
         return "; ".join(parts) if parts else "Within budget"

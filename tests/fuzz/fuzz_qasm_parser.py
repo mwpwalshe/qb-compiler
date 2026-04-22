@@ -6,6 +6,7 @@ Targets ``qb_compiler.ir.converters.openqasm_converter.from_qasm`` with:
 - Extremely long circuits
 - Unicode / null bytes in gate names
 """
+
 from __future__ import annotations
 
 import sys
@@ -29,9 +30,7 @@ def _build_qasm_with_random_gates(fdp: atheris.FuzzedDataProvider) -> str:
     for _ in range(n_gates):
         gate_name = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(1, 30))
         n_args = fdp.ConsumeIntInRange(1, 4)
-        qubits = ",".join(
-            f"q[{fdp.ConsumeIntInRange(0, n_qubits - 1)}]" for _ in range(n_args)
-        )
+        qubits = ",".join(f"q[{fdp.ConsumeIntInRange(0, n_qubits - 1)}]" for _ in range(n_args))
         if fdp.ConsumeBool():
             param = fdp.ConsumeRegularFloat()
             lines.append(f"{gate_name}({param}) {qubits};")

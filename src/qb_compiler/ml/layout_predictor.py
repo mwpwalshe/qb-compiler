@@ -148,8 +148,7 @@ class MLLayoutPredictor:
         candidates = [qid for qid, _prob in scored[:top_k]]
 
         logger.debug(
-            "ML predictor: %d candidates from %d physical qubits "
-            "(top prob=%.3f, cutoff prob=%.3f)",
+            "ML predictor: %d candidates from %d physical qubits (top prob=%.3f, cutoff prob=%.3f)",
             len(candidates),
             len(qubit_ids),
             scored[0][1] if scored else 0,
@@ -159,9 +158,7 @@ class MLLayoutPredictor:
         return candidates
 
     @classmethod
-    def load_bundled(
-        cls, backend_family: str = "ibm_heron"
-    ) -> MLLayoutPredictor:
+    def load_bundled(cls, backend_family: str = "ibm_heron") -> MLLayoutPredictor:
         """Load pre-trained model for a backend family.
 
         Parameters
@@ -175,8 +172,7 @@ class MLLayoutPredictor:
         filename = model_map.get(backend_family)
         if filename is None:
             raise ValueError(
-                f"No bundled model for {backend_family!r}. "
-                f"Available: {list(model_map.keys())}"
+                f"No bundled model for {backend_family!r}. Available: {list(model_map.keys())}"
             )
         return cls(model_path=_WEIGHTS_DIR / filename)
 
@@ -251,6 +247,7 @@ class MLLayoutPredictorV2:
         self._feature_names = self._metadata.get("feature_names")
         if not self._feature_names:
             from qb_compiler.ml.data_generator_v2 import v2_feature_names
+
             self._feature_names = v2_feature_names()
 
         logger.info(
@@ -295,8 +292,7 @@ class MLLayoutPredictorV2:
             return []
 
         feature_matrix = [
-            self._extract_layout_features(circuit, layout, backend)
-            for layout in layouts
+            self._extract_layout_features(circuit, layout, backend) for layout in layouts
         ]
         dmatrix = xgb.DMatrix(
             np.array(feature_matrix, dtype=np.float32),
@@ -339,9 +335,7 @@ class MLLayoutPredictorV2:
         # Sample random connected layouts
         layouts: list[dict[int, int]] = []
         for _ in range(self._n_probe_layouts):
-            layout = self._random_connected_layout(
-                n_logical, all_qubits, adjacency, interactions
-            )
+            layout = self._random_connected_layout(n_logical, all_qubits, adjacency, interactions)
             if layout is not None:
                 layouts.append(layout)
 
@@ -437,7 +431,7 @@ class MLLayoutPredictorV2:
         # Gate errors on edges required by circuit interactions
         interactions = self._extract_interactions(circuit)
         required_errors = []
-        for (la, lb) in interactions:
+        for la, lb in interactions:
             pa, pb = layout.get(la, 0), layout.get(lb, 0)
             err = gate_errors.get(frozenset({pa, pb}), 0.02)
             required_errors.append(err)
@@ -570,9 +564,7 @@ class MLLayoutPredictorV2:
         return {lg: p for lg, p in zip(logical_order, physical_order, strict=False)}
 
     @classmethod
-    def load_bundled(
-        cls, backend_family: str = "ibm_heron"
-    ) -> MLLayoutPredictorV2:
+    def load_bundled(cls, backend_family: str = "ibm_heron") -> MLLayoutPredictorV2:
         """Load pre-trained v2 model for a backend family."""
         model_map = {
             "ibm_heron": "ibm_heron_v2.json",
@@ -580,8 +572,7 @@ class MLLayoutPredictorV2:
         filename = model_map.get(backend_family)
         if filename is None:
             raise ValueError(
-                f"No bundled v2 model for {backend_family!r}. "
-                f"Available: {list(model_map.keys())}"
+                f"No bundled v2 model for {backend_family!r}. Available: {list(model_map.keys())}"
             )
         return cls(model_path=_WEIGHTS_DIR / filename)
 

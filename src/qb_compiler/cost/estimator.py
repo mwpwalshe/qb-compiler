@@ -80,9 +80,7 @@ class CostEstimator:
         try:
             cps = cost_per_shot(backend)
         except KeyError:
-            raise BackendNotSupportedError(
-                backend, list(VENDOR_PRICING.keys())
-            ) from None
+            raise BackendNotSupportedError(backend, list(VENDOR_PRICING.keys())) from None
 
         total = cps * shots
         estimate = CostEstimate(
@@ -126,18 +124,14 @@ class CostEstimator:
         try:
             cps = cost_per_shot(backend)
         except KeyError:
-            raise BackendNotSupportedError(
-                backend, list(VENDOR_PRICING.keys())
-            ) from None
+            raise BackendNotSupportedError(backend, list(VENDOR_PRICING.keys())) from None
 
         if cps <= 0:
             # Free backend — effectively unlimited
             return 2**31 - 1
         return int(budget / cps)
 
-    def compare_backends(
-        self, shots: int, backends: list[str] | None = None
-    ) -> list[CostEstimate]:
+    def compare_backends(self, shots: int, backends: list[str] | None = None) -> list[CostEstimate]:
         """Estimate cost across multiple backends, sorted cheapest first.
 
         Parameters
@@ -163,12 +157,14 @@ class CostEstimator:
                 continue  # skip unknown backends silently
             except BudgetExceededError as exc:
                 # Still include in comparison, just mark the overage
-                estimates.append(CostEstimate(
-                    backend=b,
-                    shots=shots,
-                    cost_per_shot=exc.estimated_usd / shots if shots > 0 else 0,
-                    total_cost_usd=exc.estimated_usd,
-                ))
+                estimates.append(
+                    CostEstimate(
+                        backend=b,
+                        shots=shots,
+                        cost_per_shot=exc.estimated_usd / shots if shots > 0 else 0,
+                        total_cost_usd=exc.estimated_usd,
+                    )
+                )
 
         estimates.sort(key=lambda e: e.total_cost_usd)
         return estimates

@@ -41,53 +41,65 @@ class FidelityOptimalStrategy(CompilationStrategy):
         pm = PassManager()
 
         # ── 1. Analysis ──────────────────────────────────────────────
-        pm.append(PassConfig(
-            name="circuit_analysis",
-            pass_type="analysis",
-            options={"collect_gate_counts": True, "collect_depth": True},
-        ))
+        pm.append(
+            PassConfig(
+                name="circuit_analysis",
+                pass_type="analysis",
+                options={"collect_gate_counts": True, "collect_depth": True},
+            )
+        )
 
         # ── 2. High-level optimisation (before decomposition) ────────
         opt_level = config.optimization_level
         if opt_level >= 1:
-            pm.append(PassConfig(
-                name="gate_cancellation",
-                pass_type="optimization",
-                options={"max_iterations": 2 if opt_level < 3 else 5},
-            ))
-            pm.append(PassConfig(
-                name="commutation_analysis",
-                pass_type="optimization",
-                options={"enabled": opt_level >= 2},
-            ))
+            pm.append(
+                PassConfig(
+                    name="gate_cancellation",
+                    pass_type="optimization",
+                    options={"max_iterations": 2 if opt_level < 3 else 5},
+                )
+            )
+            pm.append(
+                PassConfig(
+                    name="commutation_analysis",
+                    pass_type="optimization",
+                    options={"enabled": opt_level >= 2},
+                )
+            )
 
         # ── 3. Basis decomposition ───────────────────────────────────
         basis = config.effective_basis_gates
         if basis:
-            pm.append(PassConfig(
-                name="basis_translation",
-                pass_type="decomposition",
-                options={"target_basis": list(basis)},
-            ))
+            pm.append(
+                PassConfig(
+                    name="basis_translation",
+                    pass_type="decomposition",
+                    options={"target_basis": list(basis)},
+                )
+            )
 
         # ── 4. Layout ────────────────────────────────────────────────
         if calibration is not None and noise_model is not None:
             # Calibration-aware: rank physical qubits by combined error
             qubit_errors = _rank_qubits_by_error(calibration, noise_model)
-            pm.append(PassConfig(
-                name="noise_aware_layout",
-                pass_type="routing",
-                options={
-                    "qubit_ranking": qubit_errors,
-                    "method": "vf2" if opt_level >= 2 else "trivial",
-                },
-            ))
+            pm.append(
+                PassConfig(
+                    name="noise_aware_layout",
+                    pass_type="routing",
+                    options={
+                        "qubit_ranking": qubit_errors,
+                        "method": "vf2" if opt_level >= 2 else "trivial",
+                    },
+                )
+            )
         else:
-            pm.append(PassConfig(
-                name="trivial_layout",
-                pass_type="routing",
-                options={},
-            ))
+            pm.append(
+                PassConfig(
+                    name="trivial_layout",
+                    pass_type="routing",
+                    options={},
+                )
+            )
 
         # ── 5. Routing ───────────────────────────────────────────────
         coupling = config.coupling_map
@@ -105,47 +117,59 @@ class FidelityOptimalStrategy(CompilationStrategy):
             if config.seed is not None:
                 routing_opts["seed"] = config.seed
 
-            pm.append(PassConfig(
-                name="swap_routing",
-                pass_type="routing",
-                options=routing_opts,
-            ))
+            pm.append(
+                PassConfig(
+                    name="swap_routing",
+                    pass_type="routing",
+                    options=routing_opts,
+                )
+            )
 
         # ── 6. Post-routing optimisation ─────────────────────────────
         if opt_level >= 2:
-            pm.append(PassConfig(
-                name="post_route_cancellation",
-                pass_type="optimization",
-                options={"max_iterations": 3},
-            ))
+            pm.append(
+                PassConfig(
+                    name="post_route_cancellation",
+                    pass_type="optimization",
+                    options={"max_iterations": 3},
+                )
+            )
 
         if opt_level >= 3:
-            pm.append(PassConfig(
-                name="peephole_optimization",
-                pass_type="optimization",
-                options={"window_size": 6},
-            ))
+            pm.append(
+                PassConfig(
+                    name="peephole_optimization",
+                    pass_type="optimization",
+                    options={"window_size": 6},
+                )
+            )
 
         # ── 7. Scheduling ────────────────────────────────────────────
         if config.enable_noise_aware_scheduling and noise_model is not None:
-            pm.append(PassConfig(
-                name="t2_aware_scheduling",
-                pass_type="scheduling",
-                options={"strategy": "alap_noise_aware"},
-            ))
+            pm.append(
+                PassConfig(
+                    name="t2_aware_scheduling",
+                    pass_type="scheduling",
+                    options={"strategy": "alap_noise_aware"},
+                )
+            )
         else:
-            pm.append(PassConfig(
-                name="alap_scheduling",
-                pass_type="scheduling",
-                options={"strategy": "alap"},
-            ))
+            pm.append(
+                PassConfig(
+                    name="alap_scheduling",
+                    pass_type="scheduling",
+                    options={"strategy": "alap"},
+                )
+            )
 
         # ── 8. Final analysis ────────────────────────────────────────
-        pm.append(PassConfig(
-            name="fidelity_estimation",
-            pass_type="analysis",
-            options={"estimate_fidelity": True},
-        ))
+        pm.append(
+            PassConfig(
+                name="fidelity_estimation",
+                pass_type="analysis",
+                options={"estimate_fidelity": True},
+            )
+        )
 
         return pm
 

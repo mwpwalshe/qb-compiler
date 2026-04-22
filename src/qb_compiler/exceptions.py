@@ -17,6 +17,7 @@ class QBCompilerError(Exception):
 
 # ── compilation ──────────────────────────────────────────────────────
 
+
 class CompilationError(QBCompilerError):
     """Raised when circuit compilation fails."""
 
@@ -31,6 +32,7 @@ class InvalidCircuitError(CompilationError):
 
 # ── calibration ──────────────────────────────────────────────────────
 
+
 class CalibrationError(QBCompilerError):
     """Base class for calibration-related errors."""
 
@@ -43,8 +45,7 @@ class CalibrationStaleError(CalibrationError):
         self.age_hours = age_hours
         self.max_hours = max_hours
         super().__init__(
-            f"Calibration for {backend} is {age_hours:.1f}h old "
-            f"(max allowed: {max_hours:.1f}h)",
+            f"Calibration for {backend} is {age_hours:.1f}h old (max allowed: {max_hours:.1f}h)",
         )
 
 
@@ -58,6 +59,7 @@ class CalibrationNotFoundError(CalibrationError):
 
 # ── backend / budget ─────────────────────────────────────────────────
 
+
 class BackendNotSupportedError(QBCompilerError):
     """Raised when a requested backend is not in the known configuration."""
 
@@ -65,9 +67,7 @@ class BackendNotSupportedError(QBCompilerError):
         self.backend = backend
         self.available = available or []
         avail_str = ", ".join(self.available) if self.available else "none"
-        super().__init__(
-            f"Backend '{backend}' is not supported. Available: {avail_str}"
-        )
+        super().__init__(f"Backend '{backend}' is not supported. Available: {avail_str}")
 
 
 class BudgetExceededError(QBCompilerError):
@@ -85,6 +85,5 @@ class BudgetExceededError(QBCompilerError):
         self.shots = shots
         super().__init__(
             f"Estimated cost ${estimated_usd:.4f} exceeds budget "
-            f"${budget_usd:.4f}"
-            + (f" ({shots} shots)" if shots else ""),
+            f"${budget_usd:.4f}" + (f" ({shots} shots)" if shots else ""),
         )

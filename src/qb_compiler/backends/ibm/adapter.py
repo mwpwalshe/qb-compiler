@@ -12,19 +12,23 @@ from qb_compiler.backends.ibm.native_gates import (
 )
 
 # Well-known IBM backend names and their processor families
-_IBM_HERON_BACKENDS = frozenset({
-    "ibm_fez",
-    "ibm_torino",
-    "ibm_marrakesh",
-    "ibm_brisbane",
-    "ibm_kyoto",
-})
+_IBM_HERON_BACKENDS = frozenset(
+    {
+        "ibm_fez",
+        "ibm_torino",
+        "ibm_marrakesh",
+        "ibm_brisbane",
+        "ibm_kyoto",
+    }
+)
 
-_IBM_EAGLE_BACKENDS = frozenset({
-    "ibm_sherbrooke",
-    "ibm_nazca",
-    "ibm_cusco",
-})
+_IBM_EAGLE_BACKENDS = frozenset(
+    {
+        "ibm_sherbrooke",
+        "ibm_nazca",
+        "ibm_cusco",
+    }
+)
 
 
 def ibm_backend_target(

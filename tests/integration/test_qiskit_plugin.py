@@ -92,8 +92,7 @@ class TestQBCalibrationLayout:
         layout = cal_pass.property_set["layout"]
         assigned = {layout[vq] for vq in qc.qubits}
         assert 4 in assigned, (
-            f"Qubit 4 should be assigned for a 2-qubit circuit, "
-            f"but got physical qubits {assigned}"
+            f"Qubit 4 should be assigned for a 2-qubit circuit, but got physical qubits {assigned}"
         )
 
 

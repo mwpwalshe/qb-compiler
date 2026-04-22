@@ -97,13 +97,15 @@ def insert_dd(
         _ensure_delay_supported(target)
 
         # Schedule the circuit first (required for DD)
-        dd_pm = QiskitPM([
-            ALAPScheduleAnalysis(target=target),
-            PadDynamicalDecoupling(
-                target=target,
-                dd_sequence=dd_sequence,
-            ),
-        ])
+        dd_pm = QiskitPM(
+            [
+                ALAPScheduleAnalysis(target=target),
+                PadDynamicalDecoupling(
+                    target=target,
+                    dd_sequence=dd_sequence,
+                ),
+            ]
+        )
         result = dd_pm.run(circuit)
 
         # Count how many DD gates were inserted
@@ -115,7 +117,10 @@ def insert_dd(
 
         logger.info(
             "DD insertion: added %d gates (%d X, %d Y) using %s sequence",
-            total_dd, dd_x_added, dd_y_added, dd_type,
+            total_dd,
+            dd_x_added,
+            dd_y_added,
+            dd_type,
         )
 
         return result
@@ -161,7 +166,8 @@ def insert_dd_calibration_aware(
         dd_type = "XY4" if median_t2 < t2_threshold_us else "XX"
         logger.info(
             "Calibration-aware DD: median T2=%.1f µs → using %s",
-            median_t2, dd_type,
+            median_t2,
+            dd_type,
         )
     else:
         dd_type = "XX"

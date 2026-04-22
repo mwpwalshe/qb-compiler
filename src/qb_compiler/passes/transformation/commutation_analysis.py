@@ -69,9 +69,7 @@ class CommutationOptimizer(TransformationPass):
                     if isinstance(next_op, (QBBarrier, QBMeasure)):
                         break
 
-                    if isinstance(next_op, QBGate) and set(next_op.qubits) & set(
-                        op.qubits
-                    ):
+                    if isinstance(next_op, QBGate) and set(next_op.qubits) & set(op.qubits):
                         if (
                             next_op.name == op.name
                             and next_op.qubits == op.qubits
@@ -80,8 +78,7 @@ class CommutationOptimizer(TransformationPass):
                         ):
                             # Merge: sum all parameters
                             merged_params = tuple(
-                                a + b
-                                for a, b in zip(op.params, next_op.params, strict=True)
+                                a + b for a, b in zip(op.params, next_op.params, strict=True)
                             )
 
                             # Keep any ops between i and j

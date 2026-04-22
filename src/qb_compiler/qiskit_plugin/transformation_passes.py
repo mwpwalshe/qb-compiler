@@ -55,10 +55,7 @@ class QBGateCancellation(TransformationPass):
                 for successor in dag.successors(node):
                     if not hasattr(successor, "op"):
                         continue
-                    if (
-                        successor.op.name == node.op.name
-                        and successor.qargs == node.qargs
-                    ):
+                    if successor.op.name == node.op.name and successor.qargs == node.qargs:
                         nodes_to_remove.extend([node, successor])
                         cancelled = True
                         break

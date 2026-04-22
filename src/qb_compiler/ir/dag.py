@@ -168,9 +168,7 @@ class QBDag:
                 depth_of[sid] = max(depth_of.get(sid, 0), new_d)
                 if sid not in visited:
                     # Check if all predecessors visited
-                    all_pred_done = all(
-                        p in visited for p in self._dag.predecessor_indices(sid)
-                    )
+                    all_pred_done = all(p in visited for p in self._dag.predecessor_indices(sid))
                     if all_pred_done:
                         visited.add(sid)
                         queue.append(sid)
@@ -217,10 +215,7 @@ class QBDag:
     # ── dunder ────────────────────────────────────────────────────────
 
     def __repr__(self) -> str:
-        return (
-            f"QBDag(qubits={self._n_qubits}, nodes={self.node_count}, "
-            f"edges={self.edge_count})"
-        )
+        return f"QBDag(qubits={self._n_qubits}, nodes={self.node_count}, edges={self.edge_count})"
 
 
 # ── module-level helpers ──────────────────────────────────────────────

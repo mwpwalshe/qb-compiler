@@ -70,9 +70,7 @@ class CorrelatedErrorRouter(TransformationPass):
             self._adjacency.setdefault(q0, set()).add(q1)
             self._adjacency.setdefault(q1, set()).add(q0)
 
-        self._graph, self._node_to_qubit, self._qubit_to_node = (
-            self._build_weighted_graph()
-        )
+        self._graph, self._node_to_qubit, self._qubit_to_node = self._build_weighted_graph()
 
     @property
     def name(self) -> str:
@@ -231,14 +229,11 @@ class CorrelatedErrorRouter(TransformationPass):
         src_node = self._qubit_to_node[source]
         tgt_node = self._qubit_to_node[target]
 
-        paths = rx.dijkstra_shortest_paths(
-            self._graph, src_node, target=tgt_node, weight_fn=float
-        )
+        paths = rx.dijkstra_shortest_paths(self._graph, src_node, target=tgt_node, weight_fn=float)
 
         if tgt_node not in paths:
             raise ValueError(
-                f"No path between physical qubit {source} and {target} "
-                f"in the coupling graph"
+                f"No path between physical qubit {source} and {target} in the coupling graph"
             )
 
         node_path = paths[tgt_node]

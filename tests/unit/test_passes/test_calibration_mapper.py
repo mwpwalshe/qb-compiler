@@ -58,12 +58,18 @@ def _make_backend(
         ]
     if coupling_map is None:
         coupling_map = [
-            (0, 1), (1, 0),
-            (1, 2), (2, 1),
-            (2, 3), (3, 2),
-            (3, 4), (4, 3),
-            (4, 5), (5, 4),
-            (0, 4), (4, 0),
+            (0, 1),
+            (1, 0),
+            (1, 2),
+            (2, 1),
+            (2, 3),
+            (3, 2),
+            (3, 4),
+            (4, 3),
+            (4, 5),
+            (5, 4),
+            (0, 4),
+            (4, 0),
         ]
     return BackendProperties(
         backend="test_backend",
@@ -376,13 +382,18 @@ class TestCalibrationMapperEdgeCases:
 
     def test_all_qubits_used_exactly(self):
         """When n_logical == n_physical, all physical qubits are used."""
-        backend = _make_backend(n_qubits=2, qubit_props=[
-            QubitProperties(qubit_id=0, t1_us=200.0, t2_us=180.0, readout_error=0.01),
-            QubitProperties(qubit_id=1, t1_us=150.0, t2_us=120.0, readout_error=0.02),
-        ], gate_props=[
-            GateProperties(gate_type="cx", qubits=(0, 1), error_rate=0.005),
-            GateProperties(gate_type="cx", qubits=(1, 0), error_rate=0.005),
-        ], coupling_map=[(0, 1), (1, 0)])
+        backend = _make_backend(
+            n_qubits=2,
+            qubit_props=[
+                QubitProperties(qubit_id=0, t1_us=200.0, t2_us=180.0, readout_error=0.01),
+                QubitProperties(qubit_id=1, t1_us=150.0, t2_us=120.0, readout_error=0.02),
+            ],
+            gate_props=[
+                GateProperties(gate_type="cx", qubits=(0, 1), error_rate=0.005),
+                GateProperties(gate_type="cx", qubits=(1, 0), error_rate=0.005),
+            ],
+            coupling_map=[(0, 1), (1, 0)],
+        )
 
         mapper = CalibrationMapper(backend)
         circuit = QBCircuit(n_qubits=2, name="exact_fit")
@@ -532,19 +543,34 @@ def _make_large_backend(n_qubits: int = 30) -> BackendProperties:
     for q in range(n_qubits):
         if 10 <= q < 20:
             # Good region
-            qubit_props.append(QubitProperties(
-                qubit_id=q, t1_us=300.0, t2_us=250.0, readout_error=0.005,
-            ))
+            qubit_props.append(
+                QubitProperties(
+                    qubit_id=q,
+                    t1_us=300.0,
+                    t2_us=250.0,
+                    readout_error=0.005,
+                )
+            )
         elif q < 10:
             # Mediocre region
-            qubit_props.append(QubitProperties(
-                qubit_id=q, t1_us=150.0, t2_us=120.0, readout_error=0.020,
-            ))
+            qubit_props.append(
+                QubitProperties(
+                    qubit_id=q,
+                    t1_us=150.0,
+                    t2_us=120.0,
+                    readout_error=0.020,
+                )
+            )
         else:
             # Bad region
-            qubit_props.append(QubitProperties(
-                qubit_id=q, t1_us=80.0, t2_us=60.0, readout_error=0.050,
-            ))
+            qubit_props.append(
+                QubitProperties(
+                    qubit_id=q,
+                    t1_us=80.0,
+                    t2_us=60.0,
+                    readout_error=0.050,
+                )
+            )
 
     gate_props = []
     coupling_map = []
@@ -556,23 +582,43 @@ def _make_large_backend(n_qubits: int = 30) -> BackendProperties:
             err = 0.008
         else:
             err = 0.015
-        gate_props.append(GateProperties(
-            gate_type="cx", qubits=(q, q + 1), error_rate=err, gate_time_ns=300.0,
-        ))
-        gate_props.append(GateProperties(
-            gate_type="cx", qubits=(q + 1, q), error_rate=err, gate_time_ns=300.0,
-        ))
+        gate_props.append(
+            GateProperties(
+                gate_type="cx",
+                qubits=(q, q + 1),
+                error_rate=err,
+                gate_time_ns=300.0,
+            )
+        )
+        gate_props.append(
+            GateProperties(
+                gate_type="cx",
+                qubits=(q + 1, q),
+                error_rate=err,
+                gate_time_ns=300.0,
+            )
+        )
         coupling_map.append((q, q + 1))
         coupling_map.append((q + 1, q))
 
     # Add a few cross-region links
     for q0, q1, err in [(5, 15, 0.010), (9, 10, 0.005), (19, 20, 0.012)]:
-        gate_props.append(GateProperties(
-            gate_type="cx", qubits=(q0, q1), error_rate=err, gate_time_ns=400.0,
-        ))
-        gate_props.append(GateProperties(
-            gate_type="cx", qubits=(q1, q0), error_rate=err, gate_time_ns=400.0,
-        ))
+        gate_props.append(
+            GateProperties(
+                gate_type="cx",
+                qubits=(q0, q1),
+                error_rate=err,
+                gate_time_ns=400.0,
+            )
+        )
+        gate_props.append(
+            GateProperties(
+                gate_type="cx",
+                qubits=(q1, q0),
+                error_rate=err,
+                gate_time_ns=400.0,
+            )
+        )
         coupling_map.append((q0, q1))
         coupling_map.append((q1, q0))
 
@@ -643,9 +689,7 @@ class TestTopKLayouts:
 
         candidates = mapper._find_top_k_layouts(circuit, interactions)
 
-        scores = [
-            mapper._score_layout(c, interactions, circuit) for c in candidates
-        ]
+        scores = [mapper._score_layout(c, interactions, circuit) for c in candidates]
         assert scores == sorted(scores), "Candidates should be sorted best-first"
 
     def test_top_k_1_matches_find_best(self):
@@ -672,7 +716,9 @@ class TestDiversifyCandidates:
         mapper = CalibrationMapper(
             backend,
             config=CalibrationMapperConfig(
-                top_k=20, max_candidates=5000, max_per_region=2,
+                top_k=20,
+                max_candidates=5000,
+                max_per_region=2,
             ),
         )
         circuit = _make_ghz_circuit(3)
@@ -701,7 +747,9 @@ class TestDiversifyCandidates:
         mapper = CalibrationMapper(
             backend,
             config=CalibrationMapperConfig(
-                top_k=20, max_candidates=10000, max_per_region=2,
+                top_k=20,
+                max_candidates=10000,
+                max_per_region=2,
             ),
         )
 
@@ -711,8 +759,8 @@ class TestDiversifyCandidates:
             {0: 11, 1: 12, 2: 13},  # region 1 (centroid ~12)
             {0: 12, 1: 13, 2: 14},  # region 1 (centroid ~13)
             {0: 13, 1: 14, 2: 15},  # region 1 (centroid ~14)
-            {0: 0, 1: 1, 2: 2},     # region 0 (centroid ~1)
-            {0: 1, 1: 2, 2: 3},     # region 0 (centroid ~2)
+            {0: 0, 1: 1, 2: 2},  # region 0 (centroid ~1)
+            {0: 1, 1: 2, 2: 3},  # region 0 (centroid ~2)
             {0: 20, 1: 21, 2: 22},  # region 2 (centroid ~21)
         ]
 
@@ -767,16 +815,12 @@ class TestPostRoutingRescore:
         target.add_instruction(XGate(), {(q,): None for q in range(30)})
         target.add_instruction(HGate(), {(q,): None for q in range(30)})
 
-        result = mapper._post_routing_rescore(
-            [bad_layout, good_layout], circuit, target
-        )
+        result = mapper._post_routing_rescore([bad_layout, good_layout], circuit, target)
 
         # The linear layout should win (fewer 2Q gates after routing)
         result_phys = set(result.values())
         good_phys = set(good_layout.values())
-        assert result_phys == good_phys, (
-            f"Expected linear layout {good_phys}, got {result_phys}"
-        )
+        assert result_phys == good_phys, f"Expected linear layout {good_phys}, got {result_phys}"
 
     def test_fallback_without_qiskit_target(self):
         """Without qiskit_target, transform() should use pre-routing best."""
@@ -826,6 +870,7 @@ class TestIRToQiskitCircuit:
     def test_returns_none_without_qiskit(self, monkeypatch):
         """If Qiskit import fails, should return None."""
         import builtins
+
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):

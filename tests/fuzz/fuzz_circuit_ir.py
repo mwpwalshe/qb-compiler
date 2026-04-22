@@ -6,6 +6,7 @@ Targets:
 - ``to_dag()`` / ``from_dag()`` round-trip
 - Extremely deep circuits
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -39,8 +40,7 @@ def test_one_input(data: bytes) -> None:
                 gate_name = fdp.PickValueInList(_GATE_NAMES)
                 n_gate_qubits = fdp.ConsumeIntInRange(1, 4)
                 qubits = tuple(
-                    fdp.ConsumeIntInRange(-10, n_qubits + 10)
-                    for _ in range(n_gate_qubits)
+                    fdp.ConsumeIntInRange(-10, n_qubits + 10) for _ in range(n_gate_qubits)
                 )
                 params = tuple(
                     fdp.PickValueInList(_SPECIAL_FLOATS)
@@ -54,8 +54,7 @@ def test_one_input(data: bytes) -> None:
         elif choice == 1:
             # GateOp with NaN/Inf params — test inverse, repr
             params = tuple(
-                fdp.PickValueInList(_SPECIAL_FLOATS)
-                for _ in range(fdp.ConsumeIntInRange(0, 5))
+                fdp.PickValueInList(_SPECIAL_FLOATS) for _ in range(fdp.ConsumeIntInRange(0, 5))
             )
             gate = QBGate(
                 name=fdp.PickValueInList(_GATE_NAMES),
@@ -80,8 +79,7 @@ def test_one_input(data: bytes) -> None:
                     gate_name = fdp.PickValueInList(_GATE_NAMES)
                     n_gate_qubits = fdp.ConsumeIntInRange(1, min(3, n_qubits))
                     qubits = tuple(
-                        fdp.ConsumeIntInRange(0, n_qubits - 1)
-                        for _ in range(n_gate_qubits)
+                        fdp.ConsumeIntInRange(0, n_qubits - 1) for _ in range(n_gate_qubits)
                     )
                     circ.add_gate(QBGate(name=gate_name, qubits=qubits))
                 elif op_type == 1 and n_clbits > 0:
@@ -91,8 +89,7 @@ def test_one_input(data: bytes) -> None:
                 elif op_type == 2:
                     n_barrier = fdp.ConsumeIntInRange(1, n_qubits)
                     barrier_qubits = tuple(
-                        fdp.ConsumeIntInRange(0, n_qubits - 1)
-                        for _ in range(n_barrier)
+                        fdp.ConsumeIntInRange(0, n_qubits - 1) for _ in range(n_barrier)
                     )
                     circ.add_barrier(barrier_qubits)
 
