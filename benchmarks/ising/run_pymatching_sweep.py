@@ -48,9 +48,7 @@ def run_sweep(
         rounds = d if rounds_mode == "distance" else int(rounds_mode)
         for basis in bases:
             for p in p_errors:
-                spec = SurfaceCodePatchSpec(
-                    distance=d, rounds=rounds, basis=basis, p_error=p
-                )
+                spec = SurfaceCodePatchSpec(distance=d, rounds=rounds, basis=basis, p_error=p)
                 t0 = time.time()
                 decoder = PyMatchingDecoder(spec)
                 record = evaluate_logical_error_rate(
@@ -76,9 +74,7 @@ def run_sweep(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--shots", type=int, default=20_000)
-    parser.add_argument(
-        "--distances", type=int, nargs="+", default=[3, 5, 7, 9]
-    )
+    parser.add_argument("--distances", type=int, nargs="+", default=[3, 5, 7, 9])
     parser.add_argument(
         "--rounds-mode",
         default="distance",

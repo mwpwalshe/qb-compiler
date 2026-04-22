@@ -149,9 +149,7 @@ class TestTensorBuild:
 
         slot_counts = Counter(tuple(int(x) for x in r) for r in assignments)
         unique_dets = [
-            d
-            for d, row in enumerate(assignments)
-            if slot_counts[tuple(int(x) for x in row)] == 1
+            d for d, row in enumerate(assignments) if slot_counts[tuple(int(x) for x in row)] == 1
         ]
         assert unique_dets, "expected unique-slot detectors"
 

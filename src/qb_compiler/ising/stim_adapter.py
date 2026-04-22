@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Literal, cast
 
 import numpy as np
 import stim
@@ -79,13 +80,11 @@ class SurfaceCodeTensorLayout:
 def _resolve_layout(
     distance: int,
     rounds: int,
-    basis: str,
+    basis: Literal["X", "Z"],
     p_error: float,
 ) -> SurfaceCodeTensorLayout:
     """Inspect a stim circuit and build the detector → grid-cell map."""
-    spec = SurfaceCodePatchSpec(
-        distance=distance, rounds=rounds, basis=basis, p_error=p_error
-    )
+    spec = SurfaceCodePatchSpec(distance=distance, rounds=rounds, basis=basis, p_error=p_error)
     circuit = stim.Circuit.generated(
         spec.stim_task_name,
         distance=distance,
@@ -132,9 +131,7 @@ def _resolve_layout(
     # in-bounds (row, col) neighbour.  A bulk stabiliser has four
     # in-bounds neighbours (weight 1.0); a boundary stabiliser has two
     # (weight 0.5).
-    def _ancilla_to_cell_and_weight(
-        ax: float, ay: float
-    ) -> tuple[tuple[int, int], float]:
+    def _ancilla_to_cell_and_weight(ax: float, ay: float) -> tuple[tuple[int, int], float]:
         neighbours: list[tuple[int, int]] = []
         for dx in (-1, +1):
             for dy in (-1, +1):
@@ -194,9 +191,7 @@ def _resolve_layout(
             row, col = z_cells[idx]
             assignments[det_idx] = (1, rnd, row, col)
         else:
-            raise RuntimeError(
-                f"Detector {det_idx} at {pos} was not classified as X or Z"
-            )
+            raise RuntimeError(f"Detector {det_idx} at {pos} was not classified as X or Z")
 
     # Fingerprint: short digest of ancilla cell arrays so users can
     # detect orientation drift against a reference layout.
@@ -260,7 +255,7 @@ def _presence_mask_for_channel(
         mask[0] = 0.0
         if rounds > 1:
             mask[-1] = 0.0
-    return mask
+    return cast("np.ndarray", mask)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -301,8 +296,7 @@ def build_ising_tensor(
     """
     if detector_events.ndim != 2:
         raise ValueError(
-            f"detector_events must be 2-D (batch, num_detectors); "
-            f"got shape {detector_events.shape}"
+            f"detector_events must be 2-D (batch, num_detectors); got shape {detector_events.shape}"
         )
 
     layout = resolve_layout(spec)
@@ -338,9 +332,7 @@ def build_ising_tensor(
     for det in range(expected_dets):
         if rows_idx[det] < 0:
             continue
-        scratch[
-            :, rows_idx[det], rnd_idx[det], r_idx[det], c_idx[det]
-        ] ^= events[:, det]
+        scratch[:, rows_idx[det], rnd_idx[det], r_idx[det], c_idx[det]] ^= events[:, det]
 
     out = np.zeros(
         (batch, 4, spec.rounds, spec.distance, spec.distance),

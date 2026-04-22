@@ -59,9 +59,7 @@ class TestPyMatchingBaseline:
     def test_evaluate_returns_record(self) -> None:
         spec = SurfaceCodePatchSpec(distance=3, rounds=3, basis="X")
         decoder = PyMatchingDecoder(spec)
-        r = evaluate_logical_error_rate(
-            spec, decoder, shots=1_000, seed=0, decoder_name="test"
-        )
+        r = evaluate_logical_error_rate(spec, decoder, shots=1_000, seed=0, decoder_name="test")
         assert r.shots == 1_000
         assert r.decoder_name == "test"
         assert 0.0 <= r.rate <= 1.0

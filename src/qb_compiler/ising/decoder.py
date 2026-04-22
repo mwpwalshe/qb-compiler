@@ -24,12 +24,14 @@ dtype) so they can be compared head-to-head by
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 import stim
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from qb_compiler.ising.patch_spec import SurfaceCodePatchSpec
 
 
@@ -79,19 +81,15 @@ class PyMatchingDecoder:
 
         self.spec = spec
         circuit = _build_stim_circuit(spec)
-        dem = circuit.detector_error_model(
-            decompose_errors=True, approximate_disjoint_errors=True
-        )
+        dem = circuit.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
         self._matching = pymatching.Matching.from_detector_error_model(dem)
 
     def decode(self, detector_events: np.ndarray) -> np.ndarray:
         if detector_events.ndim != 2:
-            raise ValueError(
-                f"detector_events must be 2-D, got shape {detector_events.shape}"
-            )
+            raise ValueError(f"detector_events must be 2-D, got shape {detector_events.shape}")
         preds = self._matching.decode_batch(detector_events.astype(np.uint8))
         # pymatching returns (batch, num_observables) uint8 0/1
-        return preds.astype(bool)
+        return cast("np.ndarray", preds.astype(bool))
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -125,7 +123,7 @@ class IsingDecoderConfig:
 
     weights_path: str
     device: str = "cpu"
-    build_model: object = None
+    build_model: Callable[..., Any] | None = None
 
 
 class IsingDecoderWrapper:
