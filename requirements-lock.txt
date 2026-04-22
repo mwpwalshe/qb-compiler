@@ -60,7 +60,7 @@ six==1.17.0
     # via python-dateutil
 stevedore==5.7.0
     # via qiskit
-symengine==0.13.0
+symengine==0.14.1
     # via qiskit
 sympy==1.14.0
     # via qiskit
