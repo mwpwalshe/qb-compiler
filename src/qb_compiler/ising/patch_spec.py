@@ -65,9 +65,7 @@ class SurfaceCodePatchSpec:
 
     def __post_init__(self) -> None:
         if self.distance < 3 or self.distance % 2 == 0:
-            raise ValueError(
-                f"distance must be an odd integer >= 3, got {self.distance}"
-            )
+            raise ValueError(f"distance must be an odd integer >= 3, got {self.distance}")
         if self.rounds < 1:
             raise ValueError(f"rounds must be >= 1, got {self.rounds}")
         if self.basis not in ("X", "Z"):

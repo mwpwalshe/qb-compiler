@@ -20,7 +20,7 @@ into the layout stage — see :mod:`qb_compiler.qiskit_plugin`).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import stim
 
@@ -41,7 +41,7 @@ def stim_circuit_for(spec: SurfaceCodePatchSpec) -> stim.Circuit:
     )
 
 
-def qiskit_circuit_for(spec: SurfaceCodePatchSpec):
+def qiskit_circuit_for(spec: SurfaceCodePatchSpec) -> Any:
     """Return a Qiskit ``QuantumCircuit`` implementing the same experiment.
 
     Qiskit is imported lazily — ``qb_compiler.ising`` can be used with
