@@ -53,6 +53,7 @@ N_FEATURES = len(_CIRCUIT_FEATURE_NAMES) + len(_QUBIT_FEATURE_NAMES)
 
 # ── circuit features ─────────────────────────────────────────────────
 
+
 @dataclass(frozen=True, slots=True)
 class CircuitFeatures:
     """Numeric features describing circuit structure."""
@@ -109,6 +110,7 @@ class QubitFeatures:
 
 # ── extraction functions ──────────────────────────────────────────────
 
+
 def extract_circuit_features(circuit: QBCircuit) -> CircuitFeatures:
     """Extract circuit-level features from a QBCircuit (IR level)."""
     from collections import defaultdict
@@ -133,7 +135,7 @@ def extract_circuit_features(circuit: QBCircuit) -> CircuitFeatures:
 
     # Degree of each qubit in the interaction graph
     degree: dict[int, int] = defaultdict(int)
-    for (a, b) in interactions:
+    for a, b in interactions:
         degree[a] += 1
         degree[b] += 1
     max_degree = max(degree.values()) if degree else 0
@@ -226,9 +228,7 @@ def build_feature_matrix(
     """
     circ_feats = extract_circuit_features(circuit)
 
-    qubit_ids: list[int] = sorted(
-        {qp.qubit_id for qp in backend.qubit_properties}
-    )
+    qubit_ids: list[int] = sorted({qp.qubit_id for qp in backend.qubit_properties})
 
     matrix: list[list[float]] = []
     for qid in qubit_ids:

@@ -20,15 +20,13 @@ _HEADER_RE = re.compile(r"^OPENQASM\s+2\.0\s*;")
 _INCLUDE_RE = re.compile(r'^include\s+"[^"]+"\s*;')
 _QREG_RE = re.compile(r"^qreg\s+(\w+)\s*\[\s*(\d+)\s*\]\s*;")
 _CREG_RE = re.compile(r"^creg\s+(\w+)\s*\[\s*(\d+)\s*\]\s*;")
-_MEASURE_RE = re.compile(
-    r"^measure\s+(\w+)\s*\[\s*(\d+)\s*\]\s*->\s*(\w+)\s*\[\s*(\d+)\s*\]\s*;"
-)
+_MEASURE_RE = re.compile(r"^measure\s+(\w+)\s*\[\s*(\d+)\s*\]\s*->\s*(\w+)\s*\[\s*(\d+)\s*\]\s*;")
 _BARRIER_RE = re.compile(r"^barrier\s+(.*?)\s*;")
 _IF_RE = re.compile(r"^if\s*\(\s*(\w+)\s*==\s*(\d+)\s*\)\s+(.*)")
 _GATE_RE = re.compile(
-    r"^(\w+)"                          # gate name
-    r"(?:\s*\(([^)]*)\))?"             # optional params
-    r"\s+([\w\[\],\s]+)\s*;"           # qubit args
+    r"^(\w+)"  # gate name
+    r"(?:\s*\(([^)]*)\))?"  # optional params
+    r"\s+([\w\[\],\s]+)\s*;"  # qubit args
 )
 _ARG_RE = re.compile(r"(\w+)\s*\[\s*(\d+)\s*\]")
 
@@ -128,7 +126,7 @@ def from_qasm(qasm_str: str) -> QBCircuit:
     """
     lines = _strip_comments(qasm_str)
 
-    qubit_regs: dict[str, int] = {}   # reg_name -> size
+    qubit_regs: dict[str, int] = {}  # reg_name -> size
     clbit_regs: dict[str, int] = {}
     qubit_offsets: dict[str, int] = {}  # reg_name -> global offset
     clbit_offsets: dict[str, int] = {}

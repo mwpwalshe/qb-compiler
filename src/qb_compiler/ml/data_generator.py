@@ -155,9 +155,7 @@ class TrainingDataGenerator:
 
             # Also add the greedy layout as a sample
             greedy_layout = mapper._greedy_layout(circuit, interactions)
-            greedy_score = mapper._score_layout(
-                greedy_layout, interactions, circuit
-            )
+            greedy_score = mapper._score_layout(greedy_layout, interactions, circuit)
             samples.append(
                 LayoutSample(
                     layout=greedy_layout,
@@ -189,8 +187,7 @@ class TrainingDataGenerator:
         n_neg = len(all_labels) - n_pos
 
         logger.info(
-            "Generated %d samples (%d positive, %d negative) from %d circuits, "
-            "%d trials",
+            "Generated %d samples (%d positive, %d negative) from %d circuits, %d trials",
             len(all_labels),
             n_pos,
             n_neg,

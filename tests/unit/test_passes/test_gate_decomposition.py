@@ -118,8 +118,7 @@ class TestGateDecomposition:
         gates = result.circuit.gates
         # All output gates should be in the target basis
         for g in gates:
-            assert g.name in ("cx", "rz", "sx", "x", "id"), \
-                f"Gate '{g.name}' not in target basis"
+            assert g.name in ("cx", "rz", "sx", "x", "id"), f"Gate '{g.name}' not in target basis"
         assert context["decomposed_gates"] == 1
         # Toffoli should produce multiple gates
         assert len(gates) > 1

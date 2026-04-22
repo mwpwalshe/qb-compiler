@@ -189,8 +189,10 @@ def train_model_v2(
             logger.info(f"Snapshot {snap_idx + 1}/{len(snapshots)}: {props.n_qubits} qubits")
 
         gen = TrainingDataGeneratorV2(
-            props, qiskit_target=target,
-            n_trials=n_trials, seed=seed + snap_idx,
+            props,
+            qiskit_target=target,
+            n_trials=n_trials,
+            seed=seed + snap_idx,
         )
 
         data = gen.generate(circuits)
@@ -207,16 +209,21 @@ def train_model_v2(
     if verbose:
         logger.info(f"Total: {len(all_targets)} samples in {gen_time:.1f}s")
         targets_arr = np.array(all_targets)
-        logger.info(f"  2Q gates: mean={targets_arr.mean():.1f}, "
-              f"std={targets_arr.std():.1f}, "
-              f"min={targets_arr.min():.0f}, max={targets_arr.max():.0f}")
+        logger.info(
+            f"  2Q gates: mean={targets_arr.mean():.1f}, "
+            f"std={targets_arr.std():.1f}, "
+            f"min={targets_arr.min():.0f}, max={targets_arr.max():.0f}"
+        )
 
     # Train/val split
     x_data = np.array(all_features, dtype=np.float32)
     y = np.array(all_targets, dtype=np.float32)
 
     x_train, x_val, y_train, y_val = train_test_split(
-        x_data, y, test_size=0.2, random_state=seed,
+        x_data,
+        y,
+        test_size=0.2,
+        random_state=seed,
     )
 
     # Train XGBoost regressor

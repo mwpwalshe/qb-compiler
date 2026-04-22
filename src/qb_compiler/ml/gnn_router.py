@@ -38,7 +38,7 @@ _WEIGHTS_DIR = Path(__file__).parent / "_weights"
 
 # ── Feature dimensions ────────────────────────────────────────────────
 
-N_DEVICE_FEATURES = 9   # t1, t2, ro, asym, freq, connectivity, gate_err, headroom, nbr_err
+N_DEVICE_FEATURES = 9  # t1, t2, ro, asym, freq, connectivity, gate_err, headroom, nbr_err
 N_CIRCUIT_FEATURES = 3  # degree, total_weight, is_measurement_qubit
 GNN_HIDDEN_DIM = 32
 GNN_N_LAYERS = 3
@@ -62,17 +62,17 @@ def _check_torch() -> None:
 class DeviceGraphData:
     """Device coupling graph in tensor form."""
 
-    node_features: list[list[float]]   # [n_qubits, N_DEVICE_FEATURES]
-    edge_index: list[list[int]]        # [2, n_edges] (COO format)
-    qubit_ids: list[int]               # physical qubit IDs in order
+    node_features: list[list[float]]  # [n_qubits, N_DEVICE_FEATURES]
+    edge_index: list[list[int]]  # [2, n_edges] (COO format)
+    qubit_ids: list[int]  # physical qubit IDs in order
 
 
 @dataclass(frozen=True, slots=True)
 class CircuitGraphData:
     """Circuit interaction graph in tensor form."""
 
-    node_features: list[list[float]]   # [n_logical, N_CIRCUIT_FEATURES]
-    edge_index: list[list[int]]        # [2, n_edges] (COO format)
+    node_features: list[list[float]]  # [n_logical, N_CIRCUIT_FEATURES]
+    edge_index: list[list[int]]  # [2, n_edges] (COO format)
 
 
 def extract_device_graph(backend: BackendProperties) -> DeviceGraphData:
@@ -141,17 +141,19 @@ def extract_device_graph(backend: BackendProperties) -> DeviceGraphData:
                         nb_errors.append(err)
         neighborhood_error = sum(nb_errors) / len(nb_errors) if nb_errors else 0.02
 
-        node_features.append([
-            qf.t1_us / 300.0,
-            qf.t2_us / 300.0,
-            qf.readout_error * 10.0,
-            qf.t1_asymmetry_penalty * 100.0,
-            qf.frequency_ghz / 5.5,
-            qf.connectivity_degree / 4.0,
-            qf.mean_adjacent_gate_error * 100.0,
-            routing_headroom / 5.0,              # normalise
-            neighborhood_error * 100.0,          # scale up
-        ])
+        node_features.append(
+            [
+                qf.t1_us / 300.0,
+                qf.t2_us / 300.0,
+                qf.readout_error * 10.0,
+                qf.t1_asymmetry_penalty * 100.0,
+                qf.frequency_ghz / 5.5,
+                qf.connectivity_degree / 4.0,
+                qf.mean_adjacent_gate_error * 100.0,
+                routing_headroom / 5.0,  # normalise
+                neighborhood_error * 100.0,  # scale up
+            ]
+        )
 
     # Build edge_index (COO format, undirected → add both directions)
     src_list: list[int] = []
@@ -200,19 +202,19 @@ def extract_circuit_graph(circuit: QBCircuit) -> CircuitGraphData:
     for q in range(n):
         d = degree.get(q, 0)
         # Total interaction weight for this qubit
-        total_w = sum(
-            c for (a, b), c in interactions.items() if a == q or b == q
+        total_w = sum(c for (a, b), c in interactions.items() if a == q or b == q)
+        node_features.append(
+            [
+                d / max(max_degree, 1),
+                total_w / max(sum(interactions.values()), 1) if interactions else 0.0,
+                1.0 if q in meas_qubits else 0.0,
+            ]
         )
-        node_features.append([
-            d / max(max_degree, 1),
-            total_w / max(sum(interactions.values()), 1) if interactions else 0.0,
-            1.0 if q in meas_qubits else 0.0,
-        ])
 
     # Edge index
     src_list: list[int] = []
     dst_list: list[int] = []
-    for (a, b) in interactions:
+    for a, b in interactions:
         src_list.extend([a, b])
         dst_list.extend([b, a])
 
@@ -238,9 +240,7 @@ def _build_model() -> Any:
             super().__init__()
             self.linear = nn.Linear(in_dim, out_dim)
 
-        def forward(
-            self, x: torch.Tensor, edge_index: torch.Tensor
-        ) -> torch.Tensor:
+        def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
             n = x.size(0)
             device = x.device
 
@@ -342,7 +342,7 @@ def _build_model() -> Any:
 
             # Cross-attention: how relevant is each device qubit to this circuit?
             query = self.query_proj(circuit_global)  # [1, hidden]
-            keys = self.key_proj(h_dev)              # [n_phys, hidden]
+            keys = self.key_proj(h_dev)  # [n_phys, hidden]
             attn_scores = (keys @ query.T) / (keys.size(-1) ** 0.5)  # [n_phys, 1]
             attn_weights = torch.softmax(attn_scores, dim=0)
 
@@ -483,9 +483,7 @@ class GNNLayoutPredictor:
         return candidates
 
     @classmethod
-    def load_bundled(
-        cls, backend_family: str = "ibm_heron"
-    ) -> GNNLayoutPredictor:
+    def load_bundled(cls, backend_family: str = "ibm_heron") -> GNNLayoutPredictor:
         """Load pre-trained GNN model for a backend family."""
         model_map = {
             "ibm_heron": "gnn_heron_v1.pt",
@@ -493,8 +491,7 @@ class GNNLayoutPredictor:
         filename = model_map.get(backend_family)
         if filename is None:
             raise ValueError(
-                f"No bundled GNN model for {backend_family!r}. "
-                f"Available: {list(model_map.keys())}"
+                f"No bundled GNN model for {backend_family!r}. Available: {list(model_map.keys())}"
             )
         return cls(model_path=_WEIGHTS_DIR / filename)
 

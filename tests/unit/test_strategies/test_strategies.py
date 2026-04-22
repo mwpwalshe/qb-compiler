@@ -19,6 +19,7 @@ from qb_compiler.strategies import (
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
+
 def _default_config(**overrides: object) -> CompilerConfig:
     """Create a CompilerConfig with sensible defaults for testing."""
     defaults: dict = {
@@ -30,6 +31,7 @@ def _default_config(**overrides: object) -> CompilerConfig:
 
 
 # ── SpeedOptimalStrategy ──────────────────────────────────────────────
+
 
 class TestSpeedOptimalStrategy:
     def test_name(self) -> None:
@@ -67,6 +69,7 @@ class TestSpeedOptimalStrategy:
 
 # ── FidelityOptimalStrategy ───────────────────────────────────────────
 
+
 class TestFidelityOptimalStrategy:
     def test_name(self) -> None:
         strategy = FidelityOptimalStrategy()
@@ -90,6 +93,7 @@ class TestFidelityOptimalStrategy:
 
 # ── DepthOptimalStrategy ─────────────────────────────────────────────
 
+
 class TestDepthOptimalStrategy:
     def test_name(self) -> None:
         strategy = DepthOptimalStrategy()
@@ -100,10 +104,7 @@ class TestDepthOptimalStrategy:
         strategy = DepthOptimalStrategy()
         config = _default_config()
         pm = strategy.build_pass_manager(config)
-        cancel_passes = [
-            p for p in pm
-            if p.name == "gate_cancellation"
-        ]
+        cancel_passes = [p for p in pm if p.name == "gate_cancellation"]
         assert len(cancel_passes) >= 1
         # Should have high max_iterations
         assert cancel_passes[0].options.get("max_iterations", 0) >= 5
@@ -126,6 +127,7 @@ class TestDepthOptimalStrategy:
 
 
 # ── CostOptimalStrategy ──────────────────────────────────────────────
+
 
 class TestCostOptimalStrategy:
     def test_name(self) -> None:
@@ -150,6 +152,7 @@ class TestCostOptimalStrategy:
 
 
 # ── BudgetAwareStrategy ──────────────────────────────────────────────
+
 
 class TestBudgetAwareStrategy:
     def test_name(self) -> None:
@@ -199,6 +202,7 @@ class TestBudgetAwareStrategy:
 
 
 # ── get_strategy factory ─────────────────────────────────────────────
+
 
 class TestGetStrategy:
     def test_speed_by_name(self) -> None:

@@ -125,9 +125,7 @@ class LiveCalibrationProvider(CalibrationProvider):
         """Return calibration data for *qubit* from the latest snapshot."""
         return self._snapshot.get_qubit_properties(qubit)  # type: ignore[no-any-return]
 
-    def get_gate_properties(
-        self, gate: str, qubits: tuple[int, ...]
-    ) -> GateProperties | None:
+    def get_gate_properties(self, gate: str, qubits: tuple[int, ...]) -> GateProperties | None:
         """Return gate calibration data from the latest snapshot."""
         return self._snapshot.get_gate_properties(gate, qubits)  # type: ignore[no-any-return]
 

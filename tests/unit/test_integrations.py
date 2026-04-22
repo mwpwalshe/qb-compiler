@@ -1,4 +1,5 @@
 """Tests for QubitBoost SDK integration layer."""
+
 from __future__ import annotations
 
 import pytest
@@ -165,8 +166,13 @@ class TestRecommendGates:
 class TestGateRegistry:
     def test_all_seven_gates_present(self) -> None:
         expected = {
-            "OptGate", "ChemGate", "TomoGate", "LiveGate",
-            "SafetyGate", "GuardGate", "ShotValidator",
+            "OptGate",
+            "ChemGate",
+            "TomoGate",
+            "LiveGate",
+            "SafetyGate",
+            "GuardGate",
+            "ShotValidator",
         }
         assert set(GATE_REGISTRY.keys()) == expected
 

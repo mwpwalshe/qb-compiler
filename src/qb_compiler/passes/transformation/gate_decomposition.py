@@ -50,8 +50,7 @@ class GateDecompositionPass(TransformationPass):
                 QBGate(name="rx", qubits=(q,), params=(math.pi / 2,)),
             ]
         raise ValueError(
-            f"Cannot decompose 'h' into basis {set(self._target_basis)}: "
-            "need (sx, rz) or (rx, rz)"
+            f"Cannot decompose 'h' into basis {set(self._target_basis)}: need (sx, rz) or (rx, rz)"
         )
 
     def _decompose_cx(self, qubits: tuple[int, ...]) -> list[QBGate]:
@@ -66,8 +65,7 @@ class GateDecompositionPass(TransformationPass):
                 QBGate(name="sx", qubits=(ctrl,), params=()),
             ]
         raise ValueError(
-            f"Cannot decompose 'cx' into basis {set(self._target_basis)}: "
-            "need 'ecr' in basis"
+            f"Cannot decompose 'cx' into basis {set(self._target_basis)}: need 'ecr' in basis"
         )
 
     def _decompose_swap(self, qubits: tuple[int, ...]) -> list[QBGate]:
@@ -76,8 +74,7 @@ class GateDecompositionPass(TransformationPass):
         cx_name = "cx" if "cx" in self._target_basis else None
         if cx_name is None:
             raise ValueError(
-                f"Cannot decompose 'swap' into basis {set(self._target_basis)}: "
-                "need 'cx'"
+                f"Cannot decompose 'swap' into basis {set(self._target_basis)}: need 'cx'"
             )
         return [
             QBGate(name="cx", qubits=(a, b), params=()),
@@ -95,8 +92,7 @@ class GateDecompositionPass(TransformationPass):
 
         if "cx" not in self._target_basis:
             raise ValueError(
-                f"Cannot decompose 'ccx' into basis {set(self._target_basis)}: "
-                "need 'cx'"
+                f"Cannot decompose 'ccx' into basis {set(self._target_basis)}: need 'cx'"
             )
 
         # Standard Toffoli decomposition: H, CX, T, Tdg gates
@@ -152,8 +148,7 @@ class GateDecompositionPass(TransformationPass):
         decomposer = decomposers.get(gate.name)
         if decomposer is None:
             raise ValueError(
-                f"No decomposition rule for gate '{gate.name}' into "
-                f"basis {set(self._target_basis)}"
+                f"No decomposition rule for gate '{gate.name}' into basis {set(self._target_basis)}"
             )
 
         result = decomposer(gate.qubits)

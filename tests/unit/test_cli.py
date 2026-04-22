@@ -1,4 +1,5 @@
 """Tests for CLI commands."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -47,9 +48,7 @@ class TestPreflight:
         assert "fidelity" in result.output.lower()
 
     def test_multi_backend_rejected(self, runner: CliRunner) -> None:
-        result = runner.invoke(
-            cli, ["preflight", BELL, "-b", "ibm_fez", "-b", "ibm_torino"]
-        )
+        result = runner.invoke(cli, ["preflight", BELL, "-b", "ibm_fez", "-b", "ibm_torino"])
         assert result.exit_code != 0
         assert "qubitboost.io" in result.output
 

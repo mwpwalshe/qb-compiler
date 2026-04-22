@@ -73,9 +73,7 @@ class NoiseAwareScheduler(TransformationPass):
             return 0.0
         return max(self._urgency(q) for q in qubits)
 
-    def _estimate_idle_decoherence(
-        self, circuit: QBCircuit
-    ) -> float:
+    def _estimate_idle_decoherence(self, circuit: QBCircuit) -> float:
         """Rough estimate of total decoherence factor for a circuit.
 
         For each qubit, estimate idle time as (depth - gates_on_qubit) *

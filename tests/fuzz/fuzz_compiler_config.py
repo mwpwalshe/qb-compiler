@@ -5,6 +5,7 @@ Targets ``CompilerConfig`` with:
 - Invalid optimization levels
 - Random field values
 """
+
 from __future__ import annotations
 
 import sys
@@ -55,7 +56,7 @@ def test_one_input(data: bytes) -> None:
             # Random combination of all fields
             backend = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 50)) or None
             opt_level = fdp.ConsumeIntInRange(-10, 10)
-            seed = fdp.ConsumeIntInRange(-2**31, 2**31) if fdp.ConsumeBool() else None
+            seed = fdp.ConsumeIntInRange(-(2**31), 2**31) if fdp.ConsumeBool() else None
             cal_age = fdp.ConsumeRegularFloat()
             CompilerConfig(
                 backend=backend,

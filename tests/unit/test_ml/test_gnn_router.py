@@ -209,12 +209,14 @@ class TestGNNModel:
 
         with torch.no_grad():
             scores1 = model(
-                dev_x, dev_edge,
+                dev_x,
+                dev_edge,
                 torch.tensor(circ1.node_features, dtype=torch.float32),
                 torch.tensor(circ1.edge_index, dtype=torch.long),
             )
             scores2 = model(
-                dev_x, dev_edge,
+                dev_x,
+                dev_edge,
                 torch.tensor(circ2.node_features, dtype=torch.float32),
                 torch.tensor(circ2.edge_index, dtype=torch.long),
             )

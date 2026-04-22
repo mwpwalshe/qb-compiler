@@ -80,9 +80,7 @@ class BackendTarget:
                     visited.add(neighbour)
                     queue.append((neighbour, dist + 1))
 
-        raise ValueError(
-            f"No path between qubit {q1} and qubit {q2} in coupling graph"
-        )
+        raise ValueError(f"No path between qubit {q1} and qubit {q2} in coupling graph")
 
     def neighbours(self, qubit: int) -> frozenset[int]:
         """Return the set of qubits directly coupled to *qubit*."""

@@ -119,7 +119,7 @@ def _estimate_viable_depth(
     if median_2q_error <= 0 or median_2q_error >= 1:
         return 1000  # can't estimate, be optimistic
 
-    noise_floor = 1.0 / (2 ** n_qubits)
+    noise_floor = 1.0 / (2**n_qubits)
     target_fidelity = max(2.0 * noise_floor, 0.01)  # at least 1%
 
     readout_fidelity = (1.0 - median_readout_error) ** n_qubits
@@ -137,9 +137,9 @@ def _estimate_viable_depth(
 def _count_2q(tc: Any) -> int:
     """Count two-qubit gates in a Qiskit QuantumCircuit."""
     return sum(
-        1 for inst in tc.data
-        if len(inst.qubits) == 2
-        and inst.operation.name not in ("barrier", "measure", "reset")
+        1
+        for inst in tc.data
+        if len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset")
     )
 
 
@@ -167,26 +167,25 @@ def _estimate_routed_fidelity(
                 continue
             if inst.operation.name == "measure":
                 q = tc.find_bit(inst.qubits[0]).index
-                fidelity *= (1.0 - qubit_ro.get(q, median_readout_error))
+                fidelity *= 1.0 - qubit_ro.get(q, median_readout_error)
             elif len(inst.qubits) == 2 and inst.operation.name not in (
-                "barrier", "measure", "reset",
+                "barrier",
+                "measure",
+                "reset",
             ):
                 q0 = tc.find_bit(inst.qubits[0]).index
                 q1 = tc.find_bit(inst.qubits[1]).index
                 err = gate_map.get(frozenset({q0, q1}), median_2q_error)
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
         return max(0.0, fidelity)
 
     # Fallback: use median errors
     fidelity = 1.0
     for inst in tc.data:
         if inst.operation.name == "measure":
-            fidelity *= (1.0 - median_readout_error)
-        elif (
-            len(inst.qubits) == 2
-            and inst.operation.name not in ("barrier", "measure", "reset")
-        ):
-            fidelity *= (1.0 - median_2q_error)
+            fidelity *= 1.0 - median_readout_error
+        elif len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset"):
+            fidelity *= 1.0 - median_2q_error
     return max(0.0, fidelity)
 
 
@@ -250,6 +249,7 @@ def check_viability(
     if qiskit_target is None and spec is not None:
         # Load calibration fixture if available
         from qb_compiler.compiler import _load_calibration_fixture
+
         loaded_props = _load_calibration_fixture(backend or "")
         if loaded_props is not None:
             backend_props = loaded_props
@@ -258,8 +258,12 @@ def check_viability(
     if qiskit_target is None:
         # Can't transpile — estimate from circuit structure alone
         return _estimate_without_transpile(
-            circuit, backend or "unknown", median_2q_error, median_ro_error,
-            viability_threshold, shots,
+            circuit,
+            backend or "unknown",
+            median_2q_error,
+            median_ro_error,
+            viability_threshold,
+            shots,
         )
 
     # Transpile with N seeds, pick best
@@ -267,8 +271,10 @@ def check_viability(
     best_2q: int | float = float("inf")
     for seed in range(n_seeds):
         tc = transpile(
-            circuit, target=qiskit_target,
-            optimization_level=3, seed_transpiler=seed,
+            circuit,
+            target=qiskit_target,
+            optimization_level=3,
+            seed_transpiler=seed,
         )
         c2q = _count_2q(tc)
         if c2q < best_2q:
@@ -283,14 +289,19 @@ def check_viability(
 
     # Estimate fidelity
     fidelity = _estimate_routed_fidelity(
-        best_tc, backend_props, median_2q_error, median_ro_error,
+        best_tc,
+        backend_props,
+        median_2q_error,
+        median_ro_error,
     )
 
     # Noise floor and viable depth
-    noise_floor = 1.0 / (2 ** n_qubits)
+    noise_floor = 1.0 / (2**n_qubits)
     snr = fidelity / noise_floor if noise_floor > 0 else float("inf")
     viable_depth = _estimate_viable_depth(
-        median_2q_error, median_ro_error, n_qubits,
+        median_2q_error,
+        median_ro_error,
+        n_qubits,
     )
 
     # Cost
@@ -325,7 +336,13 @@ def check_viability(
 
     # Build suggestions
     suggestions = _build_suggestions(
-        fidelity, snr, depth, viable_depth, int(best_2q), n_qubits, status,
+        fidelity,
+        snr,
+        depth,
+        viable_depth,
+        int(best_2q),
+        n_qubits,
+        status,
     )
 
     circuit_name = getattr(circuit, "name", None) or f"{n_qubits}q circuit"
@@ -364,15 +381,15 @@ def _estimate_without_transpile(
     # Routing typically adds 30-100% more 2Q gates
     estimated_2q = int(cx_count * 1.5)
 
-    fidelity = ((1.0 - median_2q_error) ** estimated_2q
-                * (1.0 - median_ro_error) ** n_qubits)
+    fidelity = (1.0 - median_2q_error) ** estimated_2q * (1.0 - median_ro_error) ** n_qubits
     fidelity = max(0.0, fidelity)
 
-    noise_floor = 1.0 / (2 ** n_qubits)
+    noise_floor = 1.0 / (2**n_qubits)
     snr = fidelity / noise_floor if noise_floor > 0 else float("inf")
     viable_depth = _estimate_viable_depth(median_2q_error, median_ro_error, n_qubits)
 
     from qb_compiler.cost.pricing import get_pricing
+
     pricing = get_pricing(backend)
     cost = pricing.cost_per_shot_usd * shots if pricing else None
 
@@ -438,9 +455,7 @@ def _build_suggestions(
                 f"circuit cutting or reducing problem size."
             )
         if n_qubits > 10:
-            suggestions.append(
-                "For >10 qubits at this depth, consider a simulator instead."
-            )
+            suggestions.append("For >10 qubits at this depth, consider a simulator instead.")
 
     if status == "MARGINAL":
         suggestions.append(
@@ -453,9 +468,7 @@ def _build_suggestions(
             )
 
     if status == "VIABLE" and fidelity < 0.5:
-        suggestions.append(
-            "Good candidate for error mitigation to further improve results."
-        )
+        suggestions.append("Good candidate for error mitigation to further improve results.")
 
     if not suggestions:
         suggestions.append("Circuit looks good — proceed with execution.")
@@ -480,9 +493,7 @@ def _build_target_from_props(props: Any) -> Any:
     target = Target(num_qubits=n_q, dt=2.2222222222222221e-10)
 
     # 2Q gates
-    gate_types = {
-        gp.gate_type for gp in props.gate_properties if len(gp.qubits) == 2
-    }
+    gate_types = {gp.gate_type for gp in props.gate_properties if len(gp.qubits) == 2}
     gate_cls = CZGate if "cz" in gate_types else CXGate
 
     twoq_props = {}
@@ -490,7 +501,8 @@ def _build_target_from_props(props: Any) -> Any:
         if len(gp.qubits) == 2:
             dur = gp.gate_time_ns * 1e-9 if gp.gate_time_ns else 68e-9
             twoq_props[gp.qubits] = InstructionProperties(
-                error=gp.error_rate, duration=dur,
+                error=gp.error_rate,
+                duration=dur,
             )
     target.add_instruction(gate_cls(), twoq_props)
 
@@ -511,7 +523,9 @@ def _build_target_from_props(props: Any) -> Any:
     target.add_instruction(Measure(), meas)
     delay_p = Parameter("t")
     target.add_instruction(
-        Delay(delay_p), {(q,): None for q in range(n_q)}, name="delay",
+        Delay(delay_p),
+        {(q,): None for q in range(n_q)},
+        name="delay",
     )
 
     return target

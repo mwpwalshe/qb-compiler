@@ -8,8 +8,8 @@ RIGETTI_ANKAA_BASIS: tuple[str, ...] = ("cz", "rx", "rz", "id")
 RIGETTI_TYPICAL_GATE_TIMES_NS: dict[str, float] = {
     "id": 20.0,
     "rx": 40.0,
-    "rz": 0.0,      # virtual gate, zero duration
-    "cz": 200.0,     # native 2q gate
+    "rz": 0.0,  # virtual gate, zero duration
+    "cz": 200.0,  # native 2q gate
     "reset": 2000.0,
     "measure": 1500.0,
 }

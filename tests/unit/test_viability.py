@@ -1,4 +1,5 @@
 """Tests for circuit viability checking."""
+
 from __future__ import annotations
 
 from qiskit import QuantumCircuit
@@ -72,6 +73,7 @@ class TestCheckViability:
 
     def test_deep_circuit_not_viable(self):
         import random
+
         random.seed(99)
         qc = QuantumCircuit(15, 15, name="Deep-15q")
         for _ in range(500):
