@@ -10,10 +10,7 @@ from qb_compiler.passes.scheduling.noise_aware_scheduler import NoiseAwareSchedu
 
 def _make_props(*t2_values: float) -> list[QubitProperties]:
     """Create QubitProperties with given T2 values (index = qubit_id)."""
-    return [
-        QubitProperties(qubit_id=i, t1_us=100.0, t2_us=t2)
-        for i, t2 in enumerate(t2_values)
-    ]
+    return [QubitProperties(qubit_id=i, t1_us=100.0, t2_us=t2) for i, t2 in enumerate(t2_values)]
 
 
 class TestNoiseAwareScheduler:

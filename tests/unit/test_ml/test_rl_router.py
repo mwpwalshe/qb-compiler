@@ -261,9 +261,7 @@ class TestPPOUpdate:
         optimizer = torch.optim.Adam(agent.parameters(), lr=1e-2)
 
         # Record initial parameters
-        initial_params = {
-            n: p.data.clone() for n, p in agent.named_parameters()
-        }
+        initial_params = {n: p.data.clone() for n, p in agent.named_parameters()}
 
         trajectory = [
             RoutingStep(

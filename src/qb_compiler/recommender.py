@@ -186,21 +186,27 @@ class BackendRecommender:
             from qb_compiler.calibration.models.backend_properties import (
                 BackendProperties,
             )
+
             props = BackendProperties.from_qubitboost_json(calibration)
         elif calibration is not None:
             props = calibration
 
         if props is None:
             from qb_compiler.compiler import _load_calibration_fixture
+
             props = _load_calibration_fixture(name)
 
         self._backends[name] = _BackendEntry(
-            name=name, props=props, qiskit_target=qiskit_target,
+            name=name,
+            props=props,
+            qiskit_target=qiskit_target,
         )
         return self
 
     def add_backend_live(
-        self, name: str, qiskit_backend: Any,
+        self,
+        name: str,
+        qiskit_backend: Any,
     ) -> BackendRecommender:
         """Register a live IBM backend (uses ``backend.target`` directly).
 
@@ -255,8 +261,10 @@ class BackendRecommender:
         viable_with_cost = [a for a in viable if a.fidelity_per_dollar is not None]
         best_value = None
         if viable_with_cost:
+
             def _fpd(a: BackendAnalysis) -> float:
                 return a.fidelity_per_dollar if a.fidelity_per_dollar is not None else float("-inf")
+
             best_value = max(viable_with_cost, key=_fpd).backend
 
         if not viable:
@@ -288,7 +296,9 @@ class BackendRecommender:
         )
 
     def _analyze_one(
-        self, circuit: Any, entry: _BackendEntry,
+        self,
+        circuit: Any,
+        entry: _BackendEntry,
     ) -> BackendAnalysis:
         """Analyze circuit on a single backend."""
         from qiskit import transpile
@@ -326,8 +336,10 @@ class BackendRecommender:
 
         for seed in range(self._n_seeds):
             tc = transpile(
-                circuit, target=target,
-                optimization_level=3, seed_transpiler=seed,
+                circuit,
+                target=target,
+                optimization_level=3,
+                seed_transpiler=seed,
             )
             c2q = _count_2q(tc)
             if c2q < best_2q:
@@ -343,11 +355,14 @@ class BackendRecommender:
 
         # Fidelity
         fidelity = _estimate_routed_fidelity(
-            best_tc, entry.props, median_2q, median_ro,
+            best_tc,
+            entry.props,
+            median_2q,
+            median_ro,
         )
 
         # Viability
-        noise_floor = 1.0 / (2 ** n_qubits)
+        noise_floor = 1.0 / (2**n_qubits)
         snr = fidelity / noise_floor if noise_floor > 0 else float("inf")
         viable_depth = _estimate_viable_depth(median_2q, median_ro, n_qubits)
 
@@ -366,10 +381,7 @@ class BackendRecommender:
         # Physical qubits
         ql = best_tc.layout
         if ql and ql.initial_layout:
-            phys = [
-                ql.initial_layout[circuit.qubits[i]]
-                for i in range(n_qubits)
-            ]
+            phys = [ql.initial_layout[circuit.qubits[i]] for i in range(n_qubits)]
         else:
             phys = list(range(n_qubits))
 

@@ -11,12 +11,14 @@ if TYPE_CHECKING:
     from qb_compiler.calibration.models.coupling_properties import GateProperties
     from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
-ALLOWED_CALIBRATION_HOSTS = frozenset({
-    "api.quantum-computing.ibm.com",
-    "quantum.ibm.com",
-    "api.qubitboost.io",
-    "calibration.qubitboost.io",
-})
+ALLOWED_CALIBRATION_HOSTS = frozenset(
+    {
+        "api.quantum-computing.ibm.com",
+        "quantum.ibm.com",
+        "api.qubitboost.io",
+        "calibration.qubitboost.io",
+    }
+)
 
 
 def validate_calibration_url(url: str) -> None:
@@ -41,9 +43,7 @@ def validate_calibration_url(url: str) -> None:
             f"Allowed hosts: {', '.join(sorted(ALLOWED_CALIBRATION_HOSTS))}"
         )
     if parsed.scheme != "https":
-        raise CalibrationError(
-            f"Calibration endpoints must use HTTPS, got: {parsed.scheme}"
-        )
+        raise CalibrationError(f"Calibration endpoints must use HTTPS, got: {parsed.scheme}")
 
 
 class CalibrationProvider(abc.ABC):
@@ -60,9 +60,7 @@ class CalibrationProvider(abc.ABC):
         """Return calibration data for *qubit*, or *None* if unknown."""
 
     @abc.abstractmethod
-    def get_gate_properties(
-        self, gate: str, qubits: tuple[int, ...]
-    ) -> GateProperties | None:
+    def get_gate_properties(self, gate: str, qubits: tuple[int, ...]) -> GateProperties | None:
         """Return calibration data for *gate* on *qubits*, or *None*."""
 
     # ── bulk access ──────────────────────────────────────────────────

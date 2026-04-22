@@ -113,8 +113,8 @@ STANDARD_GATES: dict[str, int] = {
     "rx": 1,
     "ry": 1,
     "rz": 1,
-    "p": 1,     # phase gate
-    "u": 1,     # U3
+    "p": 1,  # phase gate
+    "u": 1,  # U3
     "u1": 1,
     "u2": 1,
     "u3": 1,
@@ -133,8 +133,8 @@ STANDARD_GATES: dict[str, int] = {
     "rzz": 2,
     "rxx": 2,
     "ryy": 2,
-    "ms": 2,    # IonQ Mølmer-Sørensen
-    "cp": 2,    # controlled-phase
+    "ms": 2,  # IonQ Mølmer-Sørensen
+    "cp": 2,  # controlled-phase
     "crx": 2,
     "cry": 2,
     "crz": 2,

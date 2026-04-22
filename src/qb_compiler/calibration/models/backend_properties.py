@@ -63,17 +63,9 @@ class BackendProperties:
     @classmethod
     def from_qubitboost_dict(cls, data: dict) -> BackendProperties:
         """Build from an already-parsed QubitBoost calibration dict."""
-        qprops = [
-            QubitProperties.from_qubitboost_dict(q)
-            for q in data.get("qubit_properties", [])
-        ]
-        gprops = [
-            GateProperties.from_qubitboost_dict(g)
-            for g in data.get("gate_properties", [])
-        ]
-        coupling = [
-            (int(e[0]), int(e[1])) for e in data.get("coupling_map", [])
-        ]
+        qprops = [QubitProperties.from_qubitboost_dict(q) for q in data.get("qubit_properties", [])]
+        gprops = [GateProperties.from_qubitboost_dict(g) for g in data.get("gate_properties", [])]
+        coupling = [(int(e[0]), int(e[1])) for e in data.get("coupling_map", [])]
         basis = tuple(data.get("basis_gates", []))
 
         # Infer provider from backend name if not explicitly present

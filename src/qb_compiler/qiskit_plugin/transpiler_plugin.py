@@ -69,12 +69,7 @@ def _score_qubit(qubit_data: dict[str, Any]) -> float:
     t1_contribution = 1.0 / max(t1, 1.0)
     t2_contribution = 1.0 / max(t2, 1.0)
 
-    return (
-        w_ro * readout_err
-        + w_t1 * t1_contribution
-        + w_t2 * t2_contribution
-        + w_gate * gate_err
-    )
+    return w_ro * readout_err + w_t1 * t1_contribution + w_t2 * t2_contribution + w_gate * gate_err
 
 
 def _load_calibration_dict(source: dict | str | Path) -> dict:
@@ -113,12 +108,14 @@ def _build_qubit_scores(cal_data: dict) -> dict[int, float]:
         if gate_errors.get(qid):
             avg_gate = sum(gate_errors[qid]) / len(gate_errors[qid])
 
-        scores[qid] = _score_qubit({
-            "t1_us": qp.get("T1"),
-            "t2_us": qp.get("T2"),
-            "readout_error": ro_err,
-            "gate_error": avg_gate,
-        })
+        scores[qid] = _score_qubit(
+            {
+                "t1_us": qp.get("T1"),
+                "t2_us": qp.get("T2"),
+                "readout_error": ro_err,
+                "gate_error": avg_gate,
+            }
+        )
     return scores
 
 
@@ -151,9 +148,7 @@ class QBCalibrationLayout(AnalysisPass):
         n_virtual = dag.num_qubits()
 
         if not self._scores:
-            logger.warning(
-                "QBCalibrationLayout: no qubit scores available, skipping layout"
-            )
+            logger.warning("QBCalibrationLayout: no qubit scores available, skipping layout")
             return
 
         # Rank physical qubits by score (best first)

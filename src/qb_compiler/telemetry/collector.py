@@ -82,7 +82,4 @@ class TelemetryCollector:
         return evts
 
     def __repr__(self) -> str:
-        return (
-            f"TelemetryCollector(enabled={self._enabled}, "
-            f"buffered={len(self._events)})"
-        )
+        return f"TelemetryCollector(enabled={self._enabled}, buffered={len(self._events)})"

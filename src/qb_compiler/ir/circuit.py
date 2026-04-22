@@ -55,17 +55,13 @@ class QBCircuit:
         """Append a gate.  Validates qubit indices against the register."""
         for q in gate.qubits:
             if q < 0 or q >= self.n_qubits:
-                raise IndexError(
-                    f"Qubit index {q} out of range for {self.n_qubits}-qubit circuit"
-                )
+                raise IndexError(f"Qubit index {q} out of range for {self.n_qubits}-qubit circuit")
         self._ops.append(gate)
 
     def add_measurement(self, qubit: int, clbit: int) -> None:
         """Append a measurement operation."""
         if qubit < 0 or qubit >= self.n_qubits:
-            raise IndexError(
-                f"Qubit index {qubit} out of range for {self.n_qubits}-qubit circuit"
-            )
+            raise IndexError(f"Qubit index {qubit} out of range for {self.n_qubits}-qubit circuit")
         if clbit < 0 or clbit >= self.n_clbits:
             raise IndexError(
                 f"Classical bit {clbit} out of range for {self.n_clbits}-clbit circuit"
@@ -77,9 +73,7 @@ class QBCircuit:
         qubits = tuple(range(self.n_qubits)) if qubits is None else tuple(qubits)
         for q in qubits:
             if q < 0 or q >= self.n_qubits:
-                raise IndexError(
-                    f"Qubit index {q} out of range for {self.n_qubits}-qubit circuit"
-                )
+                raise IndexError(f"Qubit index {q} out of range for {self.n_qubits}-qubit circuit")
         self._ops.append(QBBarrier(qubits=qubits))
 
     # ── read-only views ───────────────────────────────────────────────
@@ -111,9 +105,7 @@ class QBCircuit:
 
     @property
     def two_qubit_gate_count(self) -> int:
-        return sum(
-            1 for op in self._ops if isinstance(op, QBGate) and op.num_qubits >= 2
-        )
+        return sum(1 for op in self._ops if isinstance(op, QBGate) and op.num_qubits >= 2)
 
     @property
     def gate_counts(self) -> Counter[str]:

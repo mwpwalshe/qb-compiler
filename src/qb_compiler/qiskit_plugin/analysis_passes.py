@@ -97,9 +97,9 @@ class QBErrorBudgetAnalysis(AnalysisPass):
             if node.op.name == "measure":
                 n_measurements += 1
             elif n_qubits >= 2:
-                p_ok *= (1.0 - self._tq_error)
+                p_ok *= 1.0 - self._tq_error
             else:
-                p_ok *= (1.0 - self._sq_error)
+                p_ok *= 1.0 - self._sq_error
 
         # Readout error
         p_ok *= (1.0 - self._ro_error) ** n_measurements

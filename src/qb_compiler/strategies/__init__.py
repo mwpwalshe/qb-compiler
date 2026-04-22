@@ -70,7 +70,5 @@ def get_strategy(name: str, **kwargs: object) -> CompilationStrategy:
     cls = _STRATEGY_REGISTRY.get(name)
     if cls is None:
         available = sorted({*_STRATEGY_REGISTRY, "budget_aware", "budget"})
-        raise ValueError(
-            f"Unknown strategy {name!r}. Available: {available}"
-        )
+        raise ValueError(f"Unknown strategy {name!r}. Available: {available}")
     return cls()

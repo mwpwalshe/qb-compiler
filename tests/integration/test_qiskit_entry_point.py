@@ -11,6 +11,7 @@ class TestQiskitEntryPoint:
     def test_import_calibration_pass(self):
         """QBCalibrationPass imports without error."""
         from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
+
         assert QBCalibrationPass is not None
 
     def test_inherits_transformation_pass(self):
@@ -18,11 +19,13 @@ class TestQiskitEntryPoint:
         from qiskit.transpiler.basepasses import TransformationPass
 
         from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
+
         assert issubclass(QBCalibrationPass, TransformationPass)
 
     def test_passmanager_factory(self):
         """passmanager() factory returns a StagedPassManager."""
         from qb_compiler import passmanager
+
         assert callable(passmanager)
 
     def test_import_public_api(self):
@@ -37,6 +40,7 @@ class TestQiskitEntryPoint:
             ViabilityResult,
             check_viability,
         )
+
         for symbol in (
             QBCompiler,
             CompileResult,
@@ -52,16 +56,19 @@ class TestQiskitEntryPoint:
     def test_qiskit_plugin_module(self):
         """Plugin module exists and has expected attributes."""
         from qb_compiler import qiskit_plugin
-        assert hasattr(qiskit_plugin, 'QBCalibrationPass')
+
+        assert hasattr(qiskit_plugin, "QBCalibrationPass")
 
     def test_calibration_pass_has_run_method(self):
         """QBCalibrationPass.run() exists (Qiskit protocol)."""
         from qb_compiler.qiskit_plugin.calibration_pass import QBCalibrationPass
-        assert hasattr(QBCalibrationPass, 'run')
+
+        assert hasattr(QBCalibrationPass, "run")
 
     def test_no_side_effects_on_import(self):
         """Importing qb_compiler does not trigger network calls or file I/O."""
         import importlib
+
         # Re-import should be fast and side-effect free
-        mod = importlib.import_module('qb_compiler')
-        assert mod.__name__ == 'qb_compiler'
+        mod = importlib.import_module("qb_compiler")
+        assert mod.__name__ == "qb_compiler"

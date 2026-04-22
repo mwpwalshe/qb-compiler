@@ -62,9 +62,7 @@ class QBPassManager:
         if coupling_map is not None and not isinstance(coupling_map, CouplingMap):
             coupling_map = CouplingMap(couplinglist=coupling_map)
         elif (
-            coupling_map is None
-            and self._cal_dict is not None
-            and "coupling_map" in self._cal_dict
+            coupling_map is None and self._cal_dict is not None and "coupling_map" in self._cal_dict
         ):
             coupling_map = CouplingMap(couplinglist=self._cal_dict["coupling_map"])
 

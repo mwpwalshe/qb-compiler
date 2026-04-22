@@ -86,53 +86,65 @@ class BudgetAwareStrategy(CompilationStrategy):
         opt_level = config.optimization_level
 
         # Analysis
-        pm.append(PassConfig(
-            name="circuit_analysis",
-            pass_type="analysis",
-            options={"collect_gate_counts": True, "collect_depth": True},
-        ))
+        pm.append(
+            PassConfig(
+                name="circuit_analysis",
+                pass_type="analysis",
+                options={"collect_gate_counts": True, "collect_depth": True},
+            )
+        )
 
         # Budget constraint pass
-        pm.append(PassConfig(
-            name="budget_constraint",
-            pass_type="analysis",
-            options={
-                "budget_usd": self._budget_usd,
-                "effective_shots": self._effective_shots,
-                "backend": config.backend,
-            },
-        ))
+        pm.append(
+            PassConfig(
+                name="budget_constraint",
+                pass_type="analysis",
+                options={
+                    "budget_usd": self._budget_usd,
+                    "effective_shots": self._effective_shots,
+                    "backend": config.backend,
+                },
+            )
+        )
 
         # Pre-routing optimisation
         if opt_level >= 1:
-            pm.append(PassConfig(
-                name="gate_cancellation",
-                pass_type="optimization",
-                options={"max_iterations": 2 if opt_level < 3 else 5},
-            ))
+            pm.append(
+                PassConfig(
+                    name="gate_cancellation",
+                    pass_type="optimization",
+                    options={"max_iterations": 2 if opt_level < 3 else 5},
+                )
+            )
 
         # Basis decomposition
         basis = config.effective_basis_gates
         if basis:
-            pm.append(PassConfig(
-                name="basis_translation",
-                pass_type="decomposition",
-                options={"target_basis": list(basis)},
-            ))
+            pm.append(
+                PassConfig(
+                    name="basis_translation",
+                    pass_type="decomposition",
+                    options={"target_basis": list(basis)},
+                )
+            )
 
         # Layout
         if calibration is not None and noise_model is not None:
-            pm.append(PassConfig(
-                name="noise_aware_layout",
-                pass_type="routing",
-                options={"method": "vf2" if opt_level >= 2 else "trivial"},
-            ))
+            pm.append(
+                PassConfig(
+                    name="noise_aware_layout",
+                    pass_type="routing",
+                    options={"method": "vf2" if opt_level >= 2 else "trivial"},
+                )
+            )
         else:
-            pm.append(PassConfig(
-                name="trivial_layout",
-                pass_type="routing",
-                options={},
-            ))
+            pm.append(
+                PassConfig(
+                    name="trivial_layout",
+                    pass_type="routing",
+                    options={},
+                )
+            )
 
         # Routing
         coupling = config.coupling_map
@@ -143,26 +155,32 @@ class BudgetAwareStrategy(CompilationStrategy):
             }
             if config.seed is not None:
                 routing_opts["seed"] = config.seed
-            pm.append(PassConfig(
-                name="swap_routing",
-                pass_type="routing",
-                options=routing_opts,
-            ))
+            pm.append(
+                PassConfig(
+                    name="swap_routing",
+                    pass_type="routing",
+                    options=routing_opts,
+                )
+            )
 
         # Post-routing optimisation
         if opt_level >= 2:
-            pm.append(PassConfig(
-                name="post_route_cancellation",
-                pass_type="optimization",
-                options={"max_iterations": 3},
-            ))
+            pm.append(
+                PassConfig(
+                    name="post_route_cancellation",
+                    pass_type="optimization",
+                    options={"max_iterations": 3},
+                )
+            )
 
         # Scheduling
-        pm.append(PassConfig(
-            name="alap_scheduling",
-            pass_type="scheduling",
-            options={"strategy": "alap"},
-        ))
+        pm.append(
+            PassConfig(
+                name="alap_scheduling",
+                pass_type="scheduling",
+                options={"strategy": "alap"},
+            )
+        )
 
         return pm
 

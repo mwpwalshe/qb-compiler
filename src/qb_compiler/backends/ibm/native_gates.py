@@ -16,10 +16,10 @@ IBM_EAGLE_BASIS: tuple[str, ...] = ("ecr", "rz", "sx", "x", "id")
 # calibration data is unavailable.
 IBM_TYPICAL_GATE_TIMES_NS: dict[str, float] = {
     "id": 24.0,
-    "rz": 0.0,    # virtual gate, zero duration
+    "rz": 0.0,  # virtual gate, zero duration
     "sx": 24.0,
     "x": 24.0,
-    "cz": 68.0,   # Heron native 2q gate
+    "cz": 68.0,  # Heron native 2q gate
     "ecr": 660.0,  # Eagle native 2q gate
     "reset": 1000.0,
     "measure": 1200.0,

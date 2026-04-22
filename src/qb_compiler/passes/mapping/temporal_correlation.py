@@ -95,9 +95,7 @@ class TemporalCorrelationAnalyzer:
         self._result: CorrelationResult | None = None
 
     @classmethod
-    def from_snapshots(
-        cls, snapshots: list[BackendProperties]
-    ) -> TemporalCorrelationAnalyzer:
+    def from_snapshots(cls, snapshots: list[BackendProperties]) -> TemporalCorrelationAnalyzer:
         """Convenience constructor."""
         return cls(snapshots)
 

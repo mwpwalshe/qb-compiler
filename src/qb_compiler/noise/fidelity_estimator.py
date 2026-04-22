@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 # FidelityEstimator operates on the minimal contract below so it can be
 # used as soon as the IR is ready.
 
+
 @dataclass(frozen=True, slots=True)
 class QBCircuit:
     """Minimal circuit descriptor for fidelity estimation.
@@ -80,7 +81,7 @@ class FidelityEstimator:
 
         for gate_name, qubits in circuit.gates:
             err = noise_model.gate_error(gate_name, qubits)
-            fidelity *= (1.0 - err)
+            fidelity *= 1.0 - err
 
             # Accumulate gate time for decoherence calculation
             gate_time = self._gate_time(gate_name, qubits, noise_model)
@@ -96,7 +97,7 @@ class FidelityEstimator:
             active_time = qubit_time_ns.get(qubit, 0.0)
             if active_time > 0.0:
                 dec_err = noise_model.decoherence_factor(qubit, active_time)
-                fidelity *= (1.0 - dec_err)
+                fidelity *= 1.0 - dec_err
 
         # ── 3. Readout penalty ───────────────────────────────────────
         measured = (
@@ -104,7 +105,7 @@ class FidelityEstimator:
         )
         for qubit in measured:
             ro_err = noise_model.readout_error(qubit)
-            fidelity *= (1.0 - ro_err)
+            fidelity *= 1.0 - ro_err
 
         return max(0.0, fidelity)
 

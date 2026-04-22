@@ -74,9 +74,7 @@ class ALAPScheduler(TransformationPass):
                 new_d = dist_to_sink[nid] + 1
                 dist_to_sink[pid] = max(dist_to_sink.get(pid, 0), new_d)
                 if pid not in visited:
-                    all_succ_done = all(
-                        s in visited for s in inner_dag.successor_indices(pid)
-                    )
+                    all_succ_done = all(s in visited for s in inner_dag.successor_indices(pid))
                     if all_succ_done:
                         visited.add(pid)
                         queue.append(pid)

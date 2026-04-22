@@ -51,10 +51,7 @@ class EmpiricalNoiseModel(NoiseModel):
     def from_calibration(cls, provider: CalibrationProvider) -> EmpiricalNoiseModel:
         """Build an :class:`EmpiricalNoiseModel` from a calibration provider."""
         qubit_props = {qp.qubit_id: qp for qp in provider.get_all_qubit_properties()}
-        gate_props = {
-            (gp.gate_type, gp.qubits): gp
-            for gp in provider.get_all_gate_properties()
-        }
+        gate_props = {(gp.gate_type, gp.qubits): gp for gp in provider.get_all_gate_properties()}
         return cls(qubit_props=qubit_props, gate_props=gate_props)
 
     # ── NoiseModel interface ─────────────────────────────────────────
@@ -103,8 +100,8 @@ class EmpiricalNoiseModel(NoiseModel):
             p_err = 1 - (1 - p_decay) * (1 - p_dephase)
         """
         qp = self._qubits.get(qubit)
-        t1_us = (qp.t1_us if qp and qp.t1_us else _DEFAULT_T1_US)
-        t2_us = (qp.t2_us if qp and qp.t2_us else _DEFAULT_T2_US)
+        t1_us = qp.t1_us if qp and qp.t1_us else _DEFAULT_T1_US
+        t2_us = qp.t2_us if qp and qp.t2_us else _DEFAULT_T2_US
 
         # Convert gate time from ns to us
         t_us = gate_time_ns / 1000.0
@@ -140,7 +137,4 @@ class EmpiricalNoiseModel(NoiseModel):
         return len(self._qubits)
 
     def __repr__(self) -> str:
-        return (
-            f"EmpiricalNoiseModel(n_qubits={len(self._qubits)}, "
-            f"n_gates={len(self._gates)})"
-        )
+        return f"EmpiricalNoiseModel(n_qubits={len(self._qubits)}, n_gates={len(self._gates)})"

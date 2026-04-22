@@ -78,9 +78,7 @@ def parse_ionq_calibration(data: dict) -> BackendProperties:
             )
         )
 
-    coupling = [
-        (int(e[0]), int(e[1])) for e in data.get("coupling_map", [])
-    ]
+    coupling = [(int(e[0]), int(e[1])) for e in data.get("coupling_map", [])]
     basis = tuple(data.get("basis_gates", []))
 
     return BackendProperties(

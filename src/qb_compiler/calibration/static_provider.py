@@ -45,9 +45,7 @@ class StaticCalibrationProvider(CalibrationProvider):
     def get_qubit_properties(self, qubit: int) -> QubitProperties | None:
         return self._qubit_map.get(qubit)
 
-    def get_gate_properties(
-        self, gate: str, qubits: tuple[int, ...]
-    ) -> GateProperties | None:
+    def get_gate_properties(self, gate: str, qubits: tuple[int, ...]) -> GateProperties | None:
         return self._gate_map.get((gate, qubits))
 
     def get_all_qubit_properties(self) -> list[QubitProperties]:

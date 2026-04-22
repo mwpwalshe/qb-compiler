@@ -75,9 +75,7 @@ class TestFidelityOptimalStrategy:
     def test_swap_routing_with_coupling_map(self) -> None:
         """When coupling_map is given, swap routing should be present."""
         strategy = FidelityOptimalStrategy()
-        pm = strategy.build_pass_manager(
-            _config(coupling_map=[(0, 1), (1, 2)])
-        )
+        pm = strategy.build_pass_manager(_config(coupling_map=[(0, 1), (1, 2)]))
         pass_names = [p.name for p in pm]
         assert "swap_routing" in pass_names
 
@@ -112,8 +110,7 @@ class TestFidelityOptimalStrategy:
         pm = strategy.build_pass_manager(_config())
         pass_names = [p.name for p in pm]
         has_scheduling = any(
-            name in pass_names
-            for name in ("alap_scheduling", "t2_aware_scheduling")
+            name in pass_names for name in ("alap_scheduling", "t2_aware_scheduling")
         )
         assert has_scheduling
 

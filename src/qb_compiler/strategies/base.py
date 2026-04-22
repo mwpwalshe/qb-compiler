@@ -63,7 +63,7 @@ class PassManager:
         lines = [f"PassManager ({len(self.passes)} passes):"]
         for i, p in enumerate(self.passes):
             opts = f" {p.options}" if p.options else ""
-            lines.append(f"  {i+1}. [{p.pass_type}] {p.name}{opts}")
+            lines.append(f"  {i + 1}. [{p.pass_type}] {p.name}{opts}")
         return "\n".join(lines)
 
 

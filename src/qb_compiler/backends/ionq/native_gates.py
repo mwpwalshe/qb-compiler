@@ -12,10 +12,10 @@ IONQ_ARIA_BASIS: tuple[str, ...] = ("gpi", "gpi2", "ms", "id")
 """
 
 IONQ_TYPICAL_GATE_TIMES_NS: dict[str, float] = {
-    "id": 10_000.0,      # ~10 us
-    "gpi": 10_000.0,     # ~10 us single-qubit gate
-    "gpi2": 10_000.0,    # ~10 us single-qubit gate
-    "ms": 600_000.0,     # ~600 us Molmer-Sorensen gate
+    "id": 10_000.0,  # ~10 us
+    "gpi": 10_000.0,  # ~10 us single-qubit gate
+    "gpi2": 10_000.0,  # ~10 us single-qubit gate
+    "ms": 600_000.0,  # ~600 us Molmer-Sorensen gate
     "reset": 100_000.0,
     "measure": 300_000.0,
 }

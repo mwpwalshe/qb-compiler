@@ -185,9 +185,7 @@ class PassManager:
                 **result.metadata,
             }
             all_metadata["passes"].append(pass_meta)
-            logger.debug(
-                "pass %-30s  modified=%-5s  %.4fs", p.name, result.modified, elapsed
-            )
+            logger.debug("pass %-30s  modified=%-5s  %.4fs", p.name, result.modified, elapsed)
 
         return PassResult(
             circuit=current,

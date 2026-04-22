@@ -106,9 +106,7 @@ class TestQBCompiler:
         compiler = QBCompiler(backend="ibm_fez")
         assert compiler.qiskit_target is None
 
-    def test_qiskit_target_flows_to_calibration_pipeline(
-        self, sample_circuit: QBCircuit
-    ) -> None:
+    def test_qiskit_target_flows_to_calibration_pipeline(self, sample_circuit: QBCircuit) -> None:
         """qiskit_target should be passed through compile() to the calibration pipeline."""
         # We can't easily test the full flow without a real Qiskit target,
         # but we can verify that passing None doesn't break anything and
