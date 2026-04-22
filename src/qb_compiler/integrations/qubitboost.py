@@ -36,10 +36,12 @@ logger = logging.getLogger(__name__)
 
 # ── SDK availability ────────────────────────────────────────────────
 
+
 def is_sdk_available() -> bool:
     """Return ``True`` if the QubitBoost SDK is importable."""
     try:
         import qubitboost  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -53,6 +55,7 @@ SDK_INSTALL_HINT = (
 
 # ── Confidence levels ───────────────────────────────────────────────
 
+
 class Confidence(str, Enum):
     """Confidence in circuit type detection."""
 
@@ -62,6 +65,7 @@ class Confidence(str, Enum):
 
 
 # ── Gate metadata ───────────────────────────────────────────────────
+
 
 @dataclass(frozen=True, slots=True)
 class GateInfo:
@@ -145,6 +149,7 @@ GATE_REGISTRY: dict[str, GateInfo] = {
 
 # ── Circuit type detection ──────────────────────────────────────────
 
+
 def detect_circuit_type(circuit: Any) -> tuple[str, Confidence]:
     """Detect whether a circuit is QAOA, VQE, QEC, or general.
 
@@ -185,11 +190,13 @@ def detect_circuit_type(circuit: Any) -> tuple[str, Confidence]:
 
     # QAOA signature: entangling + Rz cost layer + Rx mixer layer
     # Both Rx and CX must be significant, and CX should dominate or co-dominate
-    if (cx_count > 0
+    if (
+        cx_count > 0
         and rz_count > 0
         and rx_count > 0
         and cx_count / total > 0.15
-        and rx_count / total > 0.08):
+        and rx_count / total > 0.08
+    ):
         return "qaoa", Confidence.MEDIUM
 
     # VQE signature: parameterised Ry/Rz rotations dominate, fewer entangling
@@ -209,6 +216,7 @@ def detect_circuit_type(circuit: Any) -> tuple[str, Confidence]:
 
 
 # ── Gate recommendations ────────────────────────────────────────────
+
 
 @dataclass(frozen=True, slots=True)
 class GateRecommendation:
@@ -283,20 +291,23 @@ def recommend_gates(
             claim = None
             qual = None
 
-        recs.append(GateRecommendation(
-            gate=gname,
-            status=status,
-            headline=info.headline,
-            validated_claim=claim,
-            qualifier=qual,
-            phase=info.phase,
-        ))
+        recs.append(
+            GateRecommendation(
+                gate=gname,
+                status=status,
+                headline=info.headline,
+                validated_claim=claim,
+                qualifier=qual,
+                phase=info.phase,
+            )
+        )
 
     recs.sort(key=lambda r: phase_order.get(r.phase, 9))
     return recs
 
 
 # ── Executor (requires SDK) ────────────────────────────────────────
+
 
 class QubitBoostExecutor:
     """Execute compiled circuits through QubitBoost gates.
@@ -359,7 +370,10 @@ class QubitBoostExecutor:
         )
 
     def execute_safetygate(
-        self, syndrome_history: Any, distance: int = 5, **kwargs: Any,
+        self,
+        syndrome_history: Any,
+        distance: int = 5,
+        **kwargs: Any,
     ) -> Any:
         """QEC trust scoring via SafetyGate (hardware-validated at d=7)."""
         return self._qb.safety_gate.check(

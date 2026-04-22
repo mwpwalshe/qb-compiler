@@ -78,9 +78,7 @@ class NoiseAwareRouter(TransformationPass):
             self._adjacency.setdefault(q1, set()).add(q0)
 
         # Build rustworkx weighted graph.
-        self._graph, self._node_to_qubit, self._qubit_to_node = (
-            self._build_weighted_graph()
-        )
+        self._graph, self._node_to_qubit, self._qubit_to_node = self._build_weighted_graph()
 
     # ── BasePass interface ────────────────────────────────────────────
 
@@ -259,14 +257,11 @@ class NoiseAwareRouter(TransformationPass):
         tgt_node = self._qubit_to_node[target]
 
         # rx.dijkstra_shortest_paths returns {target_node: [node_path]}
-        paths = rx.dijkstra_shortest_paths(
-            self._graph, src_node, target=tgt_node, weight_fn=float
-        )
+        paths = rx.dijkstra_shortest_paths(self._graph, src_node, target=tgt_node, weight_fn=float)
 
         if tgt_node not in paths:
             raise ValueError(
-                f"No path between physical qubit {source} and {target} "
-                f"in the coupling graph"
+                f"No path between physical qubit {source} and {target} in the coupling graph"
             )
 
         node_path = paths[tgt_node]

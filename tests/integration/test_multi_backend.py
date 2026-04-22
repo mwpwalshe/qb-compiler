@@ -74,9 +74,14 @@ class TestMultiBackendCompilation:
         assert result.compiled_circuit.gate_count > 0
         assert result.compiled_depth >= 1
 
-    @pytest.mark.parametrize("backend", [
-        "ibm_fez", "ibm_torino", "rigetti_ankaa",
-    ])
+    @pytest.mark.parametrize(
+        "backend",
+        [
+            "ibm_fez",
+            "ibm_torino",
+            "rigetti_ankaa",
+        ],
+    )
     def test_basis_translation_applied(self, backend: str) -> None:
         """Compiled circuit should contain only native gates for the backend.
 
@@ -93,9 +98,7 @@ class TestMultiBackendCompilation:
 
         # After basis translation, all gates should be native
         for op in result.compiled_circuit.ops:
-            assert op.name in native, (
-                f"Gate '{op.name}' not in native set {native} for {backend}"
-            )
+            assert op.name in native, f"Gate '{op.name}' not in native set {native} for {backend}"
 
     @pytest.mark.parametrize("backend", MULTI_VENDOR_BACKENDS)
     def test_cost_estimation(self, backend: str) -> None:
@@ -151,9 +154,7 @@ class TestCrossBackendComparison:
     def test_all_backends_in_config(self) -> None:
         """Every backend in MULTI_VENDOR_BACKENDS should be in BACKEND_CONFIGS."""
         for backend in MULTI_VENDOR_BACKENDS:
-            assert backend in BACKEND_CONFIGS, (
-                f"Backend '{backend}' not found in BACKEND_CONFIGS"
-            )
+            assert backend in BACKEND_CONFIGS, f"Backend '{backend}' not found in BACKEND_CONFIGS"
 
     def test_compiled_depth_positive(self) -> None:
         """Compiled depth should be positive for all backends."""
@@ -161,6 +162,4 @@ class TestCrossBackendComparison:
         for backend in MULTI_VENDOR_BACKENDS:
             compiler = QBCompiler.from_backend(backend)
             result = compiler.compile(circ)
-            assert result.compiled_depth > 0, (
-                f"Compiled depth is 0 for {backend}"
-            )
+            assert result.compiled_depth > 0, f"Compiled depth is 0 for {backend}"

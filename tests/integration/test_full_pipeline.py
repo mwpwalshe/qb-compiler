@@ -44,9 +44,7 @@ def fez_backend() -> BackendProperties:
     return BackendProperties.from_qubitboost_json(CALIBRATION_FIXTURE)
 
 
-def _run_qb_pipeline(
-    circuit: QBCircuit, backend: BackendProperties
-) -> tuple[QBCircuit, dict]:
+def _run_qb_pipeline(circuit: QBCircuit, backend: BackendProperties) -> tuple[QBCircuit, dict]:
     """Run the full qb-compiler pipeline and return (compiled_circuit, context)."""
     # Build gate error lookup for the router
     gate_errors: dict[tuple[int, int], float] = {}
@@ -55,8 +53,11 @@ def _run_qb_pipeline(
             gate_errors[gp.qubits] = gp.error_rate
 
     # Average 2Q gate error for the error budget estimator
-    cx_errors = [gp.error_rate for gp in backend.gate_properties
-                 if gp.error_rate is not None and len(gp.qubits) == 2]
+    cx_errors = [
+        gp.error_rate
+        for gp in backend.gate_properties
+        if gp.error_rate is not None and len(gp.qubits) == 2
+    ]
     avg_cx_error = sum(cx_errors) / len(cx_errors) if cx_errors else 0.005
 
     # Average 1Q gate error (approximate)
@@ -71,28 +72,28 @@ def _run_qb_pipeline(
         "h": avg_1q_error,
     }
 
-    pm = PassManager([
-        CalibrationMapper(backend),
-        NoiseAwareRouter(
-            coupling_map=backend.coupling_map,
-            gate_errors=gate_errors,
-        ),
-        NoiseAwareScheduler(qubit_properties=backend.qubit_properties),
-        GateDecompositionPass(target_basis=("cx", "rz", "sx", "x", "id")),
-        ErrorBudgetEstimator(
-            qubit_properties=backend.qubit_properties,
-            gate_error_rates=gate_error_rates,
-        ),
-    ])
+    pm = PassManager(
+        [
+            CalibrationMapper(backend),
+            NoiseAwareRouter(
+                coupling_map=backend.coupling_map,
+                gate_errors=gate_errors,
+            ),
+            NoiseAwareScheduler(qubit_properties=backend.qubit_properties),
+            GateDecompositionPass(target_basis=("cx", "rz", "sx", "x", "id")),
+            ErrorBudgetEstimator(
+                qubit_properties=backend.qubit_properties,
+                gate_error_rates=gate_error_rates,
+            ),
+        ]
+    )
 
     context: dict = {}
     result = pm.run_all(circuit, context)
     return result.circuit, context
 
 
-def _run_qiskit_level3(
-    circuit: QBCircuit, backend: BackendProperties
-) -> tuple[int, int, float]:
+def _run_qiskit_level3(circuit: QBCircuit, backend: BackendProperties) -> tuple[int, int, float]:
     """Transpile an equivalent Qiskit circuit with Level 3 and return
     (two_qubit_gate_count, depth, estimated_fidelity).
 
@@ -153,8 +154,11 @@ def _run_qiskit_level3(
     depth = transpiled.depth()
 
     # Estimate fidelity using the same error model
-    cx_errors = [gp.error_rate for gp in backend.gate_properties
-                 if gp.error_rate is not None and len(gp.qubits) == 2]
+    cx_errors = [
+        gp.error_rate
+        for gp in backend.gate_properties
+        if gp.error_rate is not None and len(gp.qubits) == 2
+    ]
     avg_cx_error = sum(cx_errors) / len(cx_errors) if cx_errors else 0.005
     avg_1q_error = avg_cx_error / 10.0
 
@@ -195,8 +199,7 @@ def _build_qft_like_circuit() -> QBCircuit:
         circ.add_gate(QBGate(name="h", qubits=(i,)))
         for j in range(i + 1, 4):
             circ.add_gate(QBGate(name="cx", qubits=(i, j)))
-            circ.add_gate(QBGate(name="rz", qubits=(j,),
-                                  params=(math.pi / (2 ** (j - i)),)))
+            circ.add_gate(QBGate(name="rz", qubits=(j,), params=(math.pi / (2 ** (j - i)),)))
     for i in range(4):
         circ.add_measurement(i, i)
     return circ
@@ -259,8 +262,9 @@ CIRCUIT_BUILDERS = [
 class TestFullPipeline:
     """Test the full qb-compiler pipeline on various circuit types."""
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_pipeline_produces_valid_circuit(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -273,8 +277,9 @@ class TestFullPipeline:
         assert compiled.n_qubits >= circuit.n_qubits
         assert compiled.gate_count > 0
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_pipeline_populates_context(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -302,8 +307,9 @@ class TestFullPipeline:
         assert "decoherence" in budget
         assert "readout" in budget
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_estimated_fidelity_is_positive(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -316,8 +322,9 @@ class TestFullPipeline:
             f"Estimated fidelity {fidelity} out of valid range for {circuit_name}"
         )
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_gate_decomposition_to_basis(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -334,8 +341,9 @@ class TestFullPipeline:
                 )
 
     @requires_qiskit
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_compare_with_qiskit_level3(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -353,9 +361,7 @@ class TestFullPipeline:
         qb_2q_count = compiled.two_qubit_gate_count
         qb_depth = compiled.depth
 
-        qiskit_2q_count, qiskit_depth, qiskit_fidelity = _run_qiskit_level3(
-            circuit, fez_backend
-        )
+        qiskit_2q_count, qiskit_depth, qiskit_fidelity = _run_qiskit_level3(circuit, fez_backend)
 
         # Both must produce valid outputs
         assert qb_2q_count >= 0
@@ -366,16 +372,18 @@ class TestFullPipeline:
         assert 0.0 < qiskit_fidelity <= 1.0
 
         # Log comparison for diagnostic purposes (not a hard pass/fail)
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Circuit: {circuit_name}")
-        print(f"  qb-compiler: 2Q={qb_2q_count}, depth={qb_depth}, "
-              f"fidelity={qb_fidelity:.6f}")
-        print(f"  Qiskit L3:   2Q={qiskit_2q_count}, depth={qiskit_depth}, "
-              f"fidelity={qiskit_fidelity:.6f}")
-        print(f"{'='*60}")
+        print(f"  qb-compiler: 2Q={qb_2q_count}, depth={qb_depth}, fidelity={qb_fidelity:.6f}")
+        print(
+            f"  Qiskit L3:   2Q={qiskit_2q_count}, depth={qiskit_depth}, "
+            f"fidelity={qiskit_fidelity:.6f}"
+        )
+        print(f"{'=' * 60}")
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_measurements_preserved(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -390,8 +398,9 @@ class TestFullPipeline:
             f"{compiled_meas_count} for {circuit_name}"
         )
 
-    @pytest.mark.parametrize("circuit_name,builder", CIRCUIT_BUILDERS,
-                             ids=[c[0] for c in CIRCUIT_BUILDERS])
+    @pytest.mark.parametrize(
+        "circuit_name,builder", CIRCUIT_BUILDERS, ids=[c[0] for c in CIRCUIT_BUILDERS]
+    )
     def test_error_budget_breakdown_sums_correctly(
         self, fez_backend: BackendProperties, circuit_name: str, builder
     ):
@@ -417,19 +426,21 @@ class TestFullPipelinePassManagerMetadata:
             if len(gp.qubits) == 2 and gp.error_rate is not None:
                 gate_errors[gp.qubits] = gp.error_rate
 
-        pm = PassManager([
-            CalibrationMapper(fez_backend),
-            NoiseAwareRouter(
-                coupling_map=fez_backend.coupling_map,
-                gate_errors=gate_errors,
-            ),
-            NoiseAwareScheduler(qubit_properties=fez_backend.qubit_properties),
-            GateDecompositionPass(target_basis=("cx", "rz", "sx", "x", "id")),
-            ErrorBudgetEstimator(
-                qubit_properties=fez_backend.qubit_properties,
-                gate_error_rates={"cx": 0.006},
-            ),
-        ])
+        pm = PassManager(
+            [
+                CalibrationMapper(fez_backend),
+                NoiseAwareRouter(
+                    coupling_map=fez_backend.coupling_map,
+                    gate_errors=gate_errors,
+                ),
+                NoiseAwareScheduler(qubit_properties=fez_backend.qubit_properties),
+                GateDecompositionPass(target_basis=("cx", "rz", "sx", "x", "id")),
+                ErrorBudgetEstimator(
+                    qubit_properties=fez_backend.qubit_properties,
+                    gate_error_rates={"cx": 0.006},
+                ),
+            ]
+        )
 
         context: dict = {}
         result = pm.run_all(circuit, context)

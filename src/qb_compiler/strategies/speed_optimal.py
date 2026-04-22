@@ -41,11 +41,13 @@ class SpeedOptimalStrategy(CompilationStrategy):
         pm = PassManager()
 
         # ── 1. Trivial layout (no calibration scoring) ────────────────
-        pm.append(PassConfig(
-            name="trivial_layout",
-            pass_type="routing",
-            options={},
-        ))
+        pm.append(
+            PassConfig(
+                name="trivial_layout",
+                pass_type="routing",
+                options={},
+            )
+        )
 
         # ── 2. Basic routing if coupling map exists ───────────────────
         coupling = config.coupling_map
@@ -56,19 +58,23 @@ class SpeedOptimalStrategy(CompilationStrategy):
             }
             if config.seed is not None:
                 routing_opts["seed"] = config.seed
-            pm.append(PassConfig(
-                name="swap_routing",
-                pass_type="routing",
-                options=routing_opts,
-            ))
+            pm.append(
+                PassConfig(
+                    name="swap_routing",
+                    pass_type="routing",
+                    options=routing_opts,
+                )
+            )
 
         # ── 3. Basis decomposition ────────────────────────────────────
         basis = config.effective_basis_gates
         if basis:
-            pm.append(PassConfig(
-                name="basis_translation",
-                pass_type="decomposition",
-                options={"target_basis": list(basis)},
-            ))
+            pm.append(
+                PassConfig(
+                    name="basis_translation",
+                    pass_type="decomposition",
+                    options={"target_basis": list(basis)},
+                )
+            )
 
         return pm

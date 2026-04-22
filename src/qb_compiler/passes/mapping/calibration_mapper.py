@@ -171,9 +171,7 @@ class CalibrationMapper(TransformationPass):
             all_qubits = calibration.get_all_qubit_properties()
             all_gates = calibration.get_all_gate_properties()
             self._qubit_map = {qp.qubit_id: qp for qp in all_qubits}
-            self._gate_map = {
-                (gp.gate_type, gp.qubits): gp for gp in all_gates
-            }
+            self._gate_map = {(gp.gate_type, gp.qubits): gp for gp in all_gates}
             # Derive coupling map from 2Q gates
             coupling_set: set[tuple[int, int]] = set()
             for gp in all_gates:
@@ -233,7 +231,8 @@ class CalibrationMapper(TransformationPass):
             qiskit_injected = 0
             if self._qiskit_target is not None:
                 qiskit_layouts = self._get_qiskit_seed_layouts(
-                    circuit, self._qiskit_target,
+                    circuit,
+                    self._qiskit_target,
                 )
                 for ql in qiskit_layouts:
                     if not self._layout_already_in(ql, candidates):
@@ -329,8 +328,7 @@ class CalibrationMapper(TransformationPass):
         coherence_term = (1.0 / t1 + 1.0 / t2) * 10.0  # scale factor
 
         score = (
-            self._config.coherence_weight * coherence_term
-            + self._config.readout_weight * readout
+            self._config.coherence_weight * coherence_term + self._config.readout_weight * readout
         )
 
         # T1 asymmetry penalty
@@ -338,10 +336,7 @@ class CalibrationMapper(TransformationPass):
             score += self._config.t1_asymmetry_weight * qp.t1_asymmetry_penalty
 
         # Temporal volatility penalty (if available)
-        if (
-            self._config.correlation_weight > 0
-            and self._correlation is not None
-        ):
+        if self._config.correlation_weight > 0 and self._correlation is not None:
             vol = self._correlation.qubit_volatility(physical_qubit)
             # Volatility is in readout error units (e.g. 0.01 = 1% swing)
             # Scale up to be comparable with other terms
@@ -349,19 +344,14 @@ class CalibrationMapper(TransformationPass):
 
         return score
 
-    def _edge_score(
-        self, phys_a: int, phys_b: int, interaction_count: int
-    ) -> float:
+    def _edge_score(self, phys_a: int, phys_b: int, interaction_count: int) -> float:
         """Score for mapping a logical 2Q interaction to a physical edge."""
         # Look up the gate error for this physical edge
         error = self._get_two_qubit_error(phys_a, phys_b)
         score = self._config.gate_error_weight * error * interaction_count
 
         # Temporal correlation penalty
-        if (
-            self._config.correlation_weight > 0
-            and self._correlation is not None
-        ):
+        if self._config.correlation_weight > 0 and self._correlation is not None:
             corr = self._correlation.edge_correlation(phys_a, phys_b)
             # Positive correlation = errors move together = bad for QEC
             # Scale by interaction count: more interactions on a correlated
@@ -455,10 +445,7 @@ class CalibrationMapper(TransformationPass):
             if self._config.correlation_weight > 0 and self._correlation is not None:
                 corr = self._correlation.edge_correlation(phys_a, phys_b)
                 if corr > 0:
-                    correlation += (
-                        self._config.correlation_weight
-                        * corr * count * 0.01
-                    )
+                    correlation += self._config.correlation_weight * corr * count * 0.01
 
         return {
             "gate_error": gate_err,
@@ -515,11 +502,7 @@ class CalibrationMapper(TransformationPass):
             if edge_key in seen:
                 continue
             seen.add(edge_key)
-            score = (
-                self._edge_score(q1, q2, count)
-                + self._qubit_score(q1)
-                + self._qubit_score(q2)
-            )
+            score = self._edge_score(q1, q2, count) + self._qubit_score(q1) + self._qubit_score(q2)
             if score < best_score:
                 best_score = score
                 best_pa, best_pb = q1, q2
@@ -563,7 +546,7 @@ class CalibrationMapper(TransformationPass):
         # Build logical interaction graph
         logical_graph = rx.PyGraph()
         logical_nodes: dict[int, int] = {}
-        for (log_a, log_b) in interactions:
+        for log_a, log_b in interactions:
             for q in (log_a, log_b):
                 if q not in logical_nodes:
                     logical_nodes[q] = logical_graph.add_node(q)
@@ -620,8 +603,7 @@ class CalibrationMapper(TransformationPass):
         for window_qubits in windows:
             # Build physical subgraph for this window
             window_edges = [
-                (q1, q2) for q1, q2 in coupling_edges
-                if q1 in window_qubits and q2 in window_qubits
+                (q1, q2) for q1, q2 in coupling_edges if q1 in window_qubits and q2 in window_qubits
             ]
             if not window_edges:
                 continue
@@ -629,15 +611,13 @@ class CalibrationMapper(TransformationPass):
             physical_graph = rx.PyGraph()
             physical_nodes: dict[int, int] = {}
             seen_edges: set[tuple[int, int]] = set()
-            for (q1, q2) in window_edges:
+            for q1, q2 in window_edges:
                 for q in (q1, q2):
                     if q not in physical_nodes:
                         physical_nodes[q] = physical_graph.add_node(q)
                 edge_key = (min(q1, q2), max(q1, q2))
                 if edge_key not in seen_edges:
-                    physical_graph.add_edge(
-                        physical_nodes[q1], physical_nodes[q2], None
-                    )
+                    physical_graph.add_edge(physical_nodes[q1], physical_nodes[q2], None)
                     seen_edges.add(edge_key)
 
             # Need enough nodes in this window for the logical circuit
@@ -686,18 +666,13 @@ class CalibrationMapper(TransformationPass):
             return self._find_top_k_layouts_full(circuit, interactions)
 
         if not heap:
-            logger.warning(
-                "CalibrationMapper: VF2 found no mapping, falling back to greedy"
-            )
+            logger.warning("CalibrationMapper: VF2 found no mapping, falling back to greedy")
             greedy = self._greedy_layout(circuit, interactions)
             return [greedy]
 
         # Sort results best-first (lowest score) and complete layouts
         results = sorted(heap, key=lambda x: -x[0])
-        completed = [
-            self._complete_layout(circuit, layout)
-            for _, _, layout in results
-        ]
+        completed = [self._complete_layout(circuit, layout) for _, _, layout in results]
 
         logger.debug(
             "CalibrationMapper: evaluated %d candidates across %d windows, "
@@ -784,9 +759,7 @@ class CalibrationMapper(TransformationPass):
         finally:
             self._layout_predictor = predictor
 
-    def _complete_layout(
-        self, circuit: QBCircuit, partial: dict[int, int]
-    ) -> dict[int, int]:
+    def _complete_layout(self, circuit: QBCircuit, partial: dict[int, int]) -> dict[int, int]:
         """Fill in any unmapped logical qubits with the best available physical qubits."""
         used_physical = set(partial.values())
         layout = dict(partial)
@@ -827,7 +800,7 @@ class CalibrationMapper(TransformationPass):
         # Score all physical edges
         edge_scores: list[tuple[float, int, int]] = []
         seen = set()
-        for (q1, q2) in self._coupling_map:
+        for q1, q2 in self._coupling_map:
             edge_key = (min(q1, q2), max(q1, q2))
             if edge_key not in seen:
                 seen.add(edge_key)
@@ -1041,15 +1014,12 @@ class CalibrationMapper(TransformationPass):
         """
         fidelity = 1.0
         for inst in tc.data:
-            if (
-                len(inst.qubits) == 2
-                and inst.operation.name not in ("barrier", "measure", "reset")
-            ):
+            if len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset"):
                 # inst.qubits are Qubit objects; get their physical indices
                 q0 = tc.find_bit(inst.qubits[0]).index
                 q1 = tc.find_bit(inst.qubits[1]).index
                 err = self._get_two_qubit_error(q0, q1)
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
 
         # Also include readout errors for measured qubits
         for inst in tc.data:
@@ -1057,7 +1027,7 @@ class CalibrationMapper(TransformationPass):
                 q = tc.find_bit(inst.qubits[0]).index
                 qp = self._qubit_map.get(q)
                 if qp is not None and qp.readout_error is not None:
-                    fidelity *= (1.0 - qp.readout_error)
+                    fidelity *= 1.0 - qp.readout_error
 
         return fidelity
 
@@ -1113,7 +1083,8 @@ class CalibrationMapper(TransformationPass):
 
                 # Count 2Q gates in transpiled circuit
                 count_2q = sum(
-                    1 for inst in tc.data
+                    1
+                    for inst in tc.data
                     if len(inst.qubits) == 2
                     and inst.operation.name not in ("barrier", "measure", "reset")
                 )
@@ -1124,16 +1095,18 @@ class CalibrationMapper(TransformationPass):
                 cal_score = self._score_layout(layout, interactions, circuit)
                 phys = [layout[q] for q in range(n_logical)]
                 centroid = sum(phys) / len(phys)
-                rescore_details.append({
-                    "index": i,
-                    "physical_qubits": phys,
-                    "centroid": centroid,
-                    "region": f"{min(phys)}-{max(phys)}",
-                    "post_routing_2q": count_2q,
-                    "routed_fidelity": routed_fid,
-                    "cal_score": cal_score,
-                    "depth": tc.depth(),
-                })
+                rescore_details.append(
+                    {
+                        "index": i,
+                        "physical_qubits": phys,
+                        "centroid": centroid,
+                        "region": f"{min(phys)}-{max(phys)}",
+                        "post_routing_2q": count_2q,
+                        "routed_fidelity": routed_fid,
+                        "cal_score": cal_score,
+                        "depth": tc.depth(),
+                    }
+                )
 
                 # Lower 2Q count wins; ties broken by higher routed fidelity
                 # (negate fidelity so lower tuple = better)
@@ -1143,9 +1116,7 @@ class CalibrationMapper(TransformationPass):
                     best_layout = layout
 
             except Exception:
-                logger.debug(
-                    "Trial transpile failed for layout %s", layout, exc_info=True
-                )
+                logger.debug("Trial transpile failed for layout %s", layout, exc_info=True)
                 continue
 
         # Store rescore details for external diagnostic access

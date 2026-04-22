@@ -67,7 +67,7 @@ class ErrorBudgetEstimator(AnalysisPass):
         for op in circuit.iter_ops():
             if isinstance(op, QBGate):
                 err = self._gate_errors.get(op.name, 0.0)
-                gate_fidelity *= (1.0 - err)
+                gate_fidelity *= 1.0 - err
                 gate_infidelity_total += err
 
         # --- Decoherence (idle time) ---
@@ -94,7 +94,7 @@ class ErrorBudgetEstimator(AnalysisPass):
             if qp.t1_us is not None and qp.t1_us > 0:
                 t1_survival = math.exp(-idle_time / qp.t1_us)
                 decoherence_fidelity *= t1_survival
-                decoherence_infidelity_total += (1.0 - t1_survival)
+                decoherence_infidelity_total += 1.0 - t1_survival
 
         # --- Readout errors ---
         readout_infidelity_total = 0.0
@@ -108,7 +108,7 @@ class ErrorBudgetEstimator(AnalysisPass):
             if qp is None:
                 continue
             ro_err = qp.readout_error or 0.0
-            readout_fidelity *= (1.0 - ro_err)
+            readout_fidelity *= 1.0 - ro_err
             readout_infidelity_total += ro_err
 
         # --- Total fidelity ---

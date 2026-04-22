@@ -6,6 +6,7 @@ Targets ``BackendProperties.from_qubitboost_dict`` with:
 - Extremely large qubit counts
 - Duplicate entries
 """
+
 from __future__ import annotations
 
 import math
@@ -29,29 +30,21 @@ def _make_qubit_dict(fdp: atheris.FuzzedDataProvider) -> dict:
         d["qubit"] = fdp.ConsumeIntInRange(-100, 10000)
     if fdp.ConsumeBool():
         d["T1"] = (
-            fdp.PickValueInList(_SPECIAL_FLOATS)
-            if fdp.ConsumeBool()
-            else fdp.ConsumeRegularFloat()
+            fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
         )
     if fdp.ConsumeBool():
         d["T2"] = (
-            fdp.PickValueInList(_SPECIAL_FLOATS)
-            if fdp.ConsumeBool()
-            else fdp.ConsumeRegularFloat()
+            fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
         )
     if fdp.ConsumeBool():
         d["frequency"] = fdp.ConsumeRegularFloat()
     if fdp.ConsumeBool():
         d["readout_error_0to1"] = (
-            fdp.PickValueInList(_SPECIAL_FLOATS)
-            if fdp.ConsumeBool()
-            else fdp.ConsumeRegularFloat()
+            fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
         )
     if fdp.ConsumeBool():
         d["readout_error_1to0"] = (
-            fdp.PickValueInList(_SPECIAL_FLOATS)
-            if fdp.ConsumeBool()
-            else fdp.ConsumeRegularFloat()
+            fdp.PickValueInList(_SPECIAL_FLOATS) if fdp.ConsumeBool() else fdp.ConsumeRegularFloat()
         )
     return d
 
@@ -101,18 +94,14 @@ def test_one_input(data: bytes) -> None:
             if fdp.ConsumeBool():
                 cal_dict["n_qubits"] = fdp.ConsumeIntInRange(-10, 10000)
             if fdp.ConsumeBool():
-                cal_dict["timestamp"] = fdp.ConsumeUnicodeNoSurrogates(
-                    fdp.ConsumeIntInRange(0, 30)
-                )
+                cal_dict["timestamp"] = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 30))
             if fdp.ConsumeBool():
                 cal_dict["basis_gates"] = [
                     fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 10))
                     for _ in range(fdp.ConsumeIntInRange(0, 10))
                 ]
             if fdp.ConsumeBool():
-                cal_dict["provider"] = fdp.ConsumeUnicodeNoSurrogates(
-                    fdp.ConsumeIntInRange(0, 20)
-                )
+                cal_dict["provider"] = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 20))
 
             # Qubit properties — may have missing "qubit" key
             qprops = []
@@ -158,11 +147,13 @@ def test_one_input(data: bytes) -> None:
             n_dupes = fdp.ConsumeIntInRange(2, 10)
             qprops = []
             for _ in range(n_dupes):
-                qprops.append({
-                    "qubit": qubit_id,
-                    "T1": fdp.ConsumeRegularFloat(),
-                    "T2": fdp.ConsumeRegularFloat(),
-                })
+                qprops.append(
+                    {
+                        "qubit": qubit_id,
+                        "T1": fdp.ConsumeRegularFloat(),
+                        "T2": fdp.ConsumeRegularFloat(),
+                    }
+                )
             cal_dict = {
                 "backend_name": "test",
                 "n_qubits": 20,

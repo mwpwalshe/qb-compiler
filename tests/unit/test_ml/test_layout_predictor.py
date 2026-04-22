@@ -27,8 +27,7 @@ def _make_backend(n: int = 10) -> BackendProperties:
     ]
     coupling = [(i, i + 1) for i in range(n - 1)] + [(i + 1, i) for i in range(n - 1)]
     gates = [
-        GateProperties(gate_type="cx", qubits=(q0, q1), error_rate=0.005)
-        for q0, q1 in coupling
+        GateProperties(gate_type="cx", qubits=(q0, q1), error_rate=0.005) for q0, q1 in coupling
     ]
     return BackendProperties(
         backend="test",

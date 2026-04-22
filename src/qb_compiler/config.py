@@ -14,6 +14,7 @@ from qb_compiler.exceptions import BackendNotSupportedError
 
 # ── per-backend hardware metadata ────────────────────────────────────
 
+
 @dataclass(frozen=True, slots=True)
 class BackendSpec:
     """Immutable hardware specification for a supported backend."""
@@ -97,7 +98,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         median_readout_error=0.003,
         t1_us=1_000_000.0,  # effectively infinite for trapped-ion
         t2_us=500_000.0,
-        ),
+    ),
     "ionq_forte": BackendSpec(
         provider="ionq",
         n_qubits=36,

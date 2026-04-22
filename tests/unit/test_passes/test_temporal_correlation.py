@@ -33,9 +33,7 @@ def _make_snapshot(
     ge = gate_errors or {}
     for q0, q1 in coupling:
         err = ge.get((q0, q1), 0.005)
-        gates.append(
-            GateProperties(gate_type="cx", qubits=(q0, q1), error_rate=err)
-        )
+        gates.append(GateProperties(gate_type="cx", qubits=(q0, q1), error_rate=err))
 
     return BackendProperties(
         backend="test",
@@ -81,8 +79,8 @@ class TestTemporalCorrelationAnalyzer:
         snap2 = _make_snapshot({0: 0.03, 1: 0.02}, timestamp="2026-01-02")
 
         analyzer = TemporalCorrelationAnalyzer.from_snapshots([snap1, snap2])
-        assert analyzer.qubit_drift(0) > 0   # got worse
-        assert analyzer.qubit_drift(1) < 0   # got better
+        assert analyzer.qubit_drift(0) > 0  # got worse
+        assert analyzer.qubit_drift(1) < 0  # got better
 
     def test_edge_correlation_co_moving(self):
         """Qubits whose errors move together should have positive correlation."""

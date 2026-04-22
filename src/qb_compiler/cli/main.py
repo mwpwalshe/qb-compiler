@@ -38,10 +38,14 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
-@click.option("--backend", "-b", multiple=True, required=True,
-              help="Target backend (e.g. ibm_fez). One backend only in open-source tier.")
-@click.option("--seeds", "-n", default=2, type=int,
-              help="Number of transpiler seeds.")
+@click.option(
+    "--backend",
+    "-b",
+    multiple=True,
+    required=True,
+    help="Target backend (e.g. ibm_fez). One backend only in open-source tier.",
+)
+@click.option("--seeds", "-n", default=2, type=int, help="Number of transpiler seeds.")
 def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
     """Quick viability check: VIABLE / CAUTION / DO NOT RUN."""
     if len(backend) > 1:
@@ -96,10 +100,8 @@ def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
 
 @cli.command()
 @click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
-@click.option("--backend", "-b", required=True,
-              help="Target backend (e.g. ibm_fez).")
-@click.option("--seeds", "-n", default=2, type=int,
-              help="Number of transpiler seeds.")
+@click.option("--backend", "-b", required=True, help="Target backend (e.g. ibm_fez).")
+@click.option("--seeds", "-n", default=2, type=int, help="Number of transpiler seeds.")
 def analyze(circuit: str, backend: str, seeds: int) -> None:
     """Analyze circuit viability with suggestions for a single backend."""
     qc = _load_qasm(circuit)
@@ -133,9 +135,7 @@ def analyze(circuit: str, backend: str, seeds: int) -> None:
     click.echo(f"  Circuit type: {circuit_type_label}")
     click.echo(f"  Qubits: {n_qubits}  Gates: {total_gates}  Depth: {qc.depth()}")
     if ops:
-        ops_str = ", ".join(
-            f"{k}:{v}" for k, v in sorted(ops.items(), key=lambda x: -x[1])[:8]
-        )
+        ops_str = ", ".join(f"{k}:{v}" for k, v in sorted(ops.items(), key=lambda x: -x[1])[:8])
         click.echo(f"  Gate breakdown: {ops_str}")
     click.echo()
     click.echo(f"  Backend: {backend}" + (f" ({spec.n_qubits}q)" if spec else ""))
@@ -221,11 +221,15 @@ def diff(circuit: str, backend: str, vs: str, seeds: int) -> None:
 
     # Winner
     if r1.estimated_fidelity > r2.estimated_fidelity:
-        click.echo(f"  Recommendation: {backend} "
-                   f"(+{r1.estimated_fidelity - r2.estimated_fidelity:.4f} fidelity)")
+        click.echo(
+            f"  Recommendation: {backend} "
+            f"(+{r1.estimated_fidelity - r2.estimated_fidelity:.4f} fidelity)"
+        )
     elif r2.estimated_fidelity > r1.estimated_fidelity:
-        click.echo(f"  Recommendation: {vs} "
-                   f"(+{r2.estimated_fidelity - r1.estimated_fidelity:.4f} fidelity)")
+        click.echo(
+            f"  Recommendation: {vs} "
+            f"(+{r2.estimated_fidelity - r1.estimated_fidelity:.4f} fidelity)"
+        )
     else:
         click.echo("  Backends are equivalent for this circuit.")
 
@@ -263,6 +267,7 @@ def doctor() -> None:
     # 3. Qiskit
     try:
         import qiskit
+
         qver = qiskit.__version__
         if tuple(int(x) for x in qver.split(".")[:2]) >= (1, 0):
             console.print(f"[green]\u2714[/green]  Qiskit {qver}")
@@ -276,11 +281,11 @@ def doctor() -> None:
     # 4. IBM credentials
     try:
         from qiskit_ibm_runtime import QiskitRuntimeService
+
         instances = QiskitRuntimeService.saved_accounts()
         if instances:
             console.print(
-                f"[green]\u2714[/green]  IBM credentials configured "
-                f"({len(instances)} account(s))"
+                f"[green]\u2714[/green]  IBM credentials configured ({len(instances)} account(s))"
             )
         else:
             console.print(
@@ -290,8 +295,7 @@ def doctor() -> None:
             )
     except ImportError:
         console.print(
-            "[yellow]![/yellow]  qiskit-ibm-runtime not installed "
-            "(needed for IBM backends)"
+            "[yellow]![/yellow]  qiskit-ibm-runtime not installed (needed for IBM backends)"
         )
     except Exception as e:
         console.print(f"[yellow]![/yellow]  IBM credentials check failed: {e}")
@@ -302,17 +306,15 @@ def doctor() -> None:
 
     # 6. Calibration fixtures
     from pathlib import Path as _Path
+
     fixture_dir = (
-        _Path(__file__).resolve().parents[3]
-        / "tests" / "fixtures" / "calibration_snapshots"
+        _Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "calibration_snapshots"
     )
     if not fixture_dir.exists():
         fixture_dir = _Path(__file__).resolve().parents[1] / "calibration" / "fixtures"
     fixtures = list(fixture_dir.glob("*.json")) if fixture_dir.exists() else []
     if fixtures:
-        console.print(
-            f"[green]\u2714[/green]  {len(fixtures)} calibration snapshot(s) available"
-        )
+        console.print(f"[green]\u2714[/green]  {len(fixtures)} calibration snapshot(s) available")
         for f in sorted(fixtures):
             console.print(f"         {f.name}")
     else:
@@ -321,6 +323,7 @@ def doctor() -> None:
     # 7. Optional: ML models
     try:
         from qb_compiler.ml import is_available
+
         if is_available():
             console.print("[green]\u2714[/green]  ML layout predictor available")
         else:
@@ -330,17 +333,18 @@ def doctor() -> None:
 
     # 8. QubitBoost SDK
     from qb_compiler.integrations.qubitboost import is_sdk_available
+
     if is_sdk_available():
         try:
             import qubitboost  # type: ignore[import-untyped]
+
             qb_ver = getattr(qubitboost, "__version__", "?")
             console.print(f"[green]\u2714[/green]  QubitBoost SDK {qb_ver}")
         except Exception:
             console.print("[green]\u2714[/green]  QubitBoost SDK available")
     else:
         console.print(
-            "[dim]-[/dim]  QubitBoost SDK not installed (optional) "
-            "— pip install qubitboost-sdk"
+            "[dim]-[/dim]  QubitBoost SDK not installed (optional) — pip install qubitboost-sdk"
         )
 
     # 9. Core dependencies
@@ -425,6 +429,7 @@ def compile(
         receipt_data = _build_receipt(result, path, backend, strategy)
         receipt_path = path.with_suffix(".receipt.json")
         import json
+
         receipt_path.write_text(json.dumps(receipt_data, indent=2))
         click.echo(f"Receipt saved to {receipt_path}")
         click.echo("View execution history and trends at https://qubitboost.io/dashboard")
@@ -495,10 +500,7 @@ def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
     for r in recs:
         click.echo(f"    * {r.gate:14s} {r.status} — {r.headline}")
         if r.validated_claim:
-            click.echo(
-                f"      {'':14s} Hardware-validated: "
-                f"{r.validated_claim} {r.qualifier}"
-            )
+            click.echo(f"      {'':14s} Hardware-validated: {r.validated_claim} {r.qualifier}")
     click.echo()
 
     if is_sdk_available():
@@ -523,7 +525,10 @@ def _load_qasm(circuit_path: str) -> Any:
 
 
 def _build_receipt(
-    result: Any, circuit_path: Path, backend: str | None, strategy: str,
+    result: Any,
+    circuit_path: Path,
+    backend: str | None,
+    strategy: str,
 ) -> dict[str, Any]:
     """Build a compilation receipt dict."""
     import datetime

@@ -72,11 +72,11 @@ V2_FEATURE_NAMES = [
     "layout_mean_t2",
     "layout_mean_readout_error",
     "layout_mean_gate_error",
-    "layout_max_gate_error",       # bottleneck — max error matters more than mean
-    "layout_subgraph_density",     # edges / possible_edges in mapped subgraph
-    "layout_boundary_edges",       # edges from mapped to unmapped (routing flexibility)
-    "layout_max_shortest_path",    # longest shortest path between mapped qubits
-    "layout_region_mean_error",    # average error in the surrounding 2-hop neighborhood
+    "layout_max_gate_error",  # bottleneck — max error matters more than mean
+    "layout_subgraph_density",  # edges / possible_edges in mapped subgraph
+    "layout_boundary_edges",  # edges from mapped to unmapped (routing flexibility)
+    "layout_max_shortest_path",  # longest shortest path between mapped qubits
+    "layout_region_mean_error",  # average error in the surrounding 2-hop neighborhood
 ]
 
 
@@ -174,7 +174,8 @@ class TrainingDataGeneratorV2:
                 # Trial transpile
                 try:
                     tc = transpile(
-                        qc, target=self._target,
+                        qc,
+                        target=self._target,
                         optimization_level=1,
                         initial_layout=phys,
                         seed_transpiler=42,
@@ -184,7 +185,8 @@ class TrainingDataGeneratorV2:
 
                 # Count post-routing metrics
                 n_2q = sum(
-                    1 for inst in tc.data
+                    1
+                    for inst in tc.data
                     if len(inst.qubits) == 2
                     and inst.operation.name not in ("barrier", "measure", "reset")
                 )
@@ -209,7 +211,9 @@ class TrainingDataGeneratorV2:
 
             logger.info(
                 "%s: %d/%d layouts trial-transpiled",
-                name, successes, self._n_trials,
+                name,
+                successes,
+                self._n_trials,
             )
 
         return TrainingDataV2(
@@ -254,7 +258,7 @@ class TrainingDataGeneratorV2:
 
         # Gate errors on edges required by the circuit
         required_errors = []
-        for (la, lb) in interactions:
+        for la, lb in interactions:
             pa, pb = layout[la], layout[lb]
             err = self._gate_errors.get(frozenset({pa, pb}), 0.02)
             required_errors.append(err)
@@ -380,9 +384,9 @@ class TrainingDataGeneratorV2:
         for i in range(n - 1):
             pa, pb = layout[i], layout[i + 1]
             err = self._gate_errors.get(frozenset({pa, pb}), 0.01)
-            fid *= (1.0 - err)
+            fid *= 1.0 - err
         for i in range(n):
             qp = self._backend.qubit(layout[i])
             ro = qp.readout_error if qp and qp.readout_error is not None else 0.015
-            fid *= (1.0 - ro)
+            fid *= 1.0 - ro
         return fid

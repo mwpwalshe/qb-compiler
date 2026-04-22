@@ -93,9 +93,7 @@ class CachedCalibrationProvider(CalibrationProvider):
     def get_qubit_properties(self, qubit: int) -> QubitProperties | None:
         return self._ensure_fresh().get_qubit_properties(qubit)
 
-    def get_gate_properties(
-        self, gate: str, qubits: tuple[int, ...]
-    ) -> GateProperties | None:
+    def get_gate_properties(self, gate: str, qubits: tuple[int, ...]) -> GateProperties | None:
         return self._ensure_fresh().get_gate_properties(gate, qubits)
 
     def get_all_qubit_properties(self) -> list[QubitProperties]:

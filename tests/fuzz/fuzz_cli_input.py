@@ -5,6 +5,7 @@ Targets ``qb_compiler.cli.main`` via click's CliRunner with:
 - Random circuit file paths
 - Random subcommand arguments
 """
+
 from __future__ import annotations
 
 import os
@@ -43,9 +44,7 @@ def test_one_input(data: bytes) -> None:
             strategy = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 30))
 
             # Write fuzzed QASM to a temp file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".qasm", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".qasm", delete=False) as f:
                 f.write(qasm_content)
                 temp_path = f.name
 
@@ -63,8 +62,7 @@ def test_one_input(data: bytes) -> None:
             # Fuzz with completely random argv
             n_args = fdp.ConsumeIntInRange(0, 5)
             args = [
-                fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 50))
-                for _ in range(n_args)
+                fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 50)) for _ in range(n_args)
             ]
             _runner.invoke(cli, args)
 

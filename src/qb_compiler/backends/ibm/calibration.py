@@ -84,9 +84,7 @@ def parse_ibm_calibration(data: dict) -> BackendProperties:
             )
         )
 
-    coupling = [
-        (int(e[0]), int(e[1])) for e in data.get("coupling_map", [])
-    ]
+    coupling = [(int(e[0]), int(e[1])) for e in data.get("coupling_map", [])]
     basis = tuple(data.get("basis_gates", []))
 
     return BackendProperties(
@@ -111,4 +109,5 @@ def load_ibm_calibration(path: str | Path) -> BackendProperties:
 def _is_finite(v: float) -> bool:
     """Check for finite float (not NaN or inf)."""
     import math
+
     return math.isfinite(v)

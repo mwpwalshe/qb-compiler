@@ -55,10 +55,10 @@ class TestQBCircuit:
         => depth = 3
         """
         circ = QBCircuit(3)
-        circ.add_gate(QBGate("h", (0,)))   # q0: layer 1
-        circ.add_gate(QBGate("h", (2,)))   # q2: layer 1
+        circ.add_gate(QBGate("h", (0,)))  # q0: layer 1
+        circ.add_gate(QBGate("h", (2,)))  # q2: layer 1
         circ.add_gate(QBGate("cx", (0, 1)))  # q0,q1: layer 2
-        circ.add_gate(QBGate("h", (1,)))   # q1: layer 3
+        circ.add_gate(QBGate("h", (1,)))  # q1: layer 3
 
         assert circ.depth == 3
 

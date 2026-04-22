@@ -216,9 +216,7 @@ class TestPropertySet:
     def test_nonzero_fidelity_cost(self):
         coupling = _linear_chain(3)
         gate_errors = {(0, 1): 0.05, (1, 2): 0.05}
-        router = NoiseAwareRouter(
-            coupling_map=coupling, gate_errors=gate_errors
-        )
+        router = NoiseAwareRouter(coupling_map=coupling, gate_errors=gate_errors)
 
         circ = QBCircuit(n_qubits=3)
         circ.add_gate(QBGate(name="cx", qubits=(0, 2)))

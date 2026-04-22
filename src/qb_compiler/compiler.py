@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # Protocols / ABCs for extension points
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @runtime_checkable
 class CalibrationProvider(Protocol):
     """Supplies per-qubit / per-gate calibration data for a backend."""
@@ -110,6 +111,7 @@ def _backend_name(spec: BackendSpec) -> str:
 # ═══════════════════════════════════════════════════════════════════════
 # Data containers
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass(frozen=True, slots=True)
 class CostEstimate:
@@ -203,6 +205,7 @@ class EnhancedCompileResult:
 # ═══════════════════════════════════════════════════════════════════════
 # Lightweight circuit representation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class GateOp:
@@ -301,15 +304,13 @@ class QBCircuit:
         return new
 
     def __repr__(self) -> str:
-        return (
-            f"QBCircuit(n_qubits={self.n_qubits}, "
-            f"ops={self.gate_count}, depth={self.depth})"
-        )
+        return f"QBCircuit(n_qubits={self.n_qubits}, ops={self.gate_count}, depth={self.depth})"
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Pass infrastructure
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class BasePass:
     """Abstract base for compiler passes.
@@ -453,16 +454,20 @@ class _BasisTranslationPass(BasePass):
         if op.name == "cx" and len(q) == 2 and "cz" in basis_set:
             # CX = (I⊗H) CZ (I⊗H)  — decompose H if needed
             target = (q[1],)
-            h_ops = _BasisTranslationPass._decompose(
-                GateOp("h", target), basis_set
-            ) if "h" not in basis_set else [GateOp("h", target)]
+            h_ops = (
+                _BasisTranslationPass._decompose(GateOp("h", target), basis_set)
+                if "h" not in basis_set
+                else [GateOp("h", target)]
+            )
             return [*h_ops, GateOp("cz", q), *h_ops]
 
         if op.name == "cz" and len(q) == 2 and "cx" in basis_set:
             target = (q[1],)
-            h_ops = _BasisTranslationPass._decompose(
-                GateOp("h", target), basis_set
-            ) if "h" not in basis_set else [GateOp("h", target)]
+            h_ops = (
+                _BasisTranslationPass._decompose(GateOp("h", target), basis_set)
+                if "h" not in basis_set
+                else [GateOp("h", target)]
+            )
             return [*h_ops, GateOp("cx", q), *h_ops]
 
         if op.name == "x" and len(q) == 1:
@@ -501,14 +506,16 @@ class PassManager:
             t0 = time.perf_counter()
             circuit = p.run(circuit, config)
             elapsed = (time.perf_counter() - t0) * 1000.0
-            log.append(PassResult(
-                pass_name=p.name,
-                elapsed_ms=round(elapsed, 3),
-                depth_before=depth_before,
-                depth_after=circuit.depth,
-                gate_count_before=gc_before,
-                gate_count_after=circuit.gate_count,
-            ))
+            log.append(
+                PassResult(
+                    pass_name=p.name,
+                    elapsed_ms=round(elapsed, 3),
+                    depth_before=depth_before,
+                    depth_after=circuit.depth,
+                    gate_count_before=gc_before,
+                    gate_count_after=circuit.gate_count,
+                )
+            )
         return circuit, log
 
     @classmethod
@@ -566,7 +573,9 @@ def _from_ir_circuit(ir_circ: Any, original: QBCircuit) -> QBCircuit:
 
 
 def _build_synthetic_calibration(
-    spec: BackendSpec, backend_name: str, n_qubits: int,
+    spec: BackendSpec,
+    backend_name: str,
+    n_qubits: int,
 ) -> BackendProperties:
     """Build a BackendProperties with per-qubit variance from BackendSpec medians.
 
@@ -595,15 +604,17 @@ def _build_synthetic_calibration(
         t1_factor = 0.2 + seed * seed * 2.0  # skewed: many bad, few great
         t2_factor = 0.15 + ((seed * 3.7) % 1.0) ** 2 * 2.5
         # Readout: some qubits are 7x worse than best
-        readout_seed = ((seed * 5.3 + 0.17) % 1.0)
+        readout_seed = (seed * 5.3 + 0.17) % 1.0
         readout_factor = 0.1 + readout_seed * readout_seed * 7.0
 
-        qubit_props.append(QubitProperties(
-            qubit_id=q,
-            t1_us=spec.t1_us * t1_factor,
-            t2_us=spec.t2_us * t2_factor,
-            readout_error=spec.median_readout_error * readout_factor,
-        ))
+        qubit_props.append(
+            QubitProperties(
+                qubit_id=q,
+                t1_us=spec.t1_us * t1_factor,
+                t2_us=spec.t2_us * t2_factor,
+                readout_error=spec.median_readout_error * readout_factor,
+            )
+        )
 
     # Build coupling map for common topologies
     coupling_map: list[tuple[int, int]] = []
@@ -642,12 +653,14 @@ def _build_synthetic_calibration(
         seed = ((q0 * 7919 + q1 * 6271 + 17) % 1000) / 1000.0
         # Exponential-like: many edges mediocre, some very good, some very bad
         error_factor = 0.1 + seed * seed * 4.0  # 0.1x to 4.1x median
-        gate_props.append(GateProperties(
-            gate_type="cx",
-            qubits=(q0, q1),
-            error_rate=spec.median_cx_error * error_factor,
-            gate_time_ns=400.0 if spec.provider not in ("ionq", "quantinuum") else 200_000.0,
-        ))
+        gate_props.append(
+            GateProperties(
+                gate_type="cx",
+                qubits=(q0, q1),
+                error_rate=spec.median_cx_error * error_factor,
+                gate_time_ns=400.0 if spec.provider not in ("ionq", "quantinuum") else 200_000.0,
+            )
+        )
 
     return BackendProperties(
         backend=backend_name,
@@ -691,7 +704,9 @@ def _load_calibration_fixture(backend_name: str) -> BackendProperties | None:
     search_dirs.append(
         os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "tests", "fixtures", "calibration_snapshots",
+            "tests",
+            "fixtures",
+            "calibration_snapshots",
         ),
     )
 
@@ -709,7 +724,9 @@ def _load_calibration_fixture(backend_name: str) -> BackendProperties | None:
                     props = BackendProperties.from_qubitboost_json(matches[-1])
                     logger.info(
                         "Loaded calibration from %s (%d qubits, %d gates)",
-                        matches[-1], props.n_qubits, len(props.gate_properties),
+                        matches[-1],
+                        props.n_qubits,
+                        len(props.gate_properties),
                     )
                     return props
                 except Exception as e:
@@ -761,9 +778,9 @@ def _run_calibration_pipeline(
     from qb_compiler.passes.mapping.calibration_mapper import CalibrationMapperConfig
 
     mapper_config = CalibrationMapperConfig(
-        gate_error_weight=10.0,   # Prioritise low-error edges
-        coherence_weight=0.3,     # Secondary: prefer longer-lived qubits
-        readout_weight=5.0,       # Readout error ~5x CZ error on IBM Heron
+        gate_error_weight=10.0,  # Prioritise low-error edges
+        coherence_weight=0.3,  # Secondary: prefer longer-lived qubits
+        readout_weight=5.0,  # Readout error ~5x CZ error on IBM Heron
     )
     # Auto-detect ML layout predictor if available
     layout_predictor = None
@@ -804,6 +821,7 @@ def _run_calibration_pipeline(
 # ═══════════════════════════════════════════════════════════════════════
 # Main compiler
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class QBCompiler:
     """High-level compiler for quantum circuits.
@@ -882,9 +900,7 @@ class QBCompiler:
             Reserve ancilla qubits for QEC syndrome extraction (future).
         """
         if not isinstance(circuit, QBCircuit):
-            raise InvalidCircuitError(
-                f"Expected QBCircuit, got {type(circuit).__name__}"
-            )
+            raise InvalidCircuitError(f"Expected QBCircuit, got {type(circuit).__name__}")
         if circuit.gate_count == 0:
             raise InvalidCircuitError("Cannot compile an empty circuit")
 
@@ -946,9 +962,7 @@ class QBCompiler:
         if budget_usd is not None and self.config.backend is not None:
             cost = self.estimate_cost(compiled, shots=1024)
             if not cost.within_budget(budget_usd):
-                raise BudgetExceededError(
-                    cost.total_usd, budget_usd, shots=1024
-                )
+                raise BudgetExceededError(cost.total_usd, budget_usd, shots=1024)
 
         return CompileResult(
             compiled_circuit=compiled,
@@ -1013,7 +1027,8 @@ class QBCompiler:
                 seed_transpiler=seed,
             )
             count_2q = sum(
-                1 for inst in tc.data
+                1
+                for inst in tc.data
                 if len(inst.qubits) == 2
                 and inst.operation.name not in ("barrier", "measure", "reset")
             )
@@ -1029,8 +1044,7 @@ class QBCompiler:
         n_logical = qiskit_circuit.num_qubits
         if ql and ql.initial_layout:
             physical_qubits = [
-                ql.initial_layout[qiskit_circuit.qubits[i]]
-                for i in range(n_logical)
+                ql.initial_layout[qiskit_circuit.qubits[i]] for i in range(n_logical)
             ]
         else:
             physical_qubits = list(range(n_logical))
@@ -1047,13 +1061,12 @@ class QBCompiler:
 
         if dd_type is None and props is not None:
             enhanced = insert_dd_calibration_aware(
-                best_tc, qiskit_target, props,
+                best_tc,
+                qiskit_target,
+                props,
             )
             # Determine which type was selected
-            t2_values = [
-                qp.t2_us for qp in props.qubit_properties
-                if qp.t2_us and qp.t2_us > 0
-            ]
+            t2_values = [qp.t2_us for qp in props.qubit_properties if qp.t2_us and qp.t2_us > 0]
             if t2_values:
                 median_t2 = sorted(t2_values)[len(t2_values) // 2]
                 actual_dd_type = "XY4" if median_t2 < 50.0 else "XX"
@@ -1062,7 +1075,9 @@ class QBCompiler:
         else:
             actual_dd_type = dd_type or "XX"
             enhanced = insert_dd(
-                best_tc, qiskit_target, dd_type=actual_dd_type,
+                best_tc,
+                qiskit_target,
+                dd_type=actual_dd_type,
             )
 
         # Count DD gates inserted
@@ -1074,9 +1089,9 @@ class QBCompiler:
 
         # 2Q count in enhanced (should be same as base)
         enhanced_2q = sum(
-            1 for inst in enhanced.data
-            if len(inst.qubits) == 2
-            and inst.operation.name not in ("barrier", "measure", "reset")
+            1
+            for inst in enhanced.data
+            if len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset")
         )
 
         # Step 4: Estimate fidelity with DD
@@ -1085,7 +1100,10 @@ class QBCompiler:
         # Conservative estimate: each DD gate pair refocuses ~30% of
         # the idle dephasing on that qubit.
         fidelity_dd = self._estimate_fidelity_with_dd(
-            fidelity_base, dd_total, best_tc, props,
+            fidelity_base,
+            dd_total,
+            best_tc,
+            props,
         )
 
         compilation_ms = (time.perf_counter() - t0) * 1000.0
@@ -1113,7 +1131,9 @@ class QBCompiler:
         )
 
     def _estimate_routed_fidelity(
-        self, tc: Any, props: BackendProperties | None,
+        self,
+        tc: Any,
+        props: BackendProperties | None,
     ) -> float:
         """Estimate fidelity of a routed Qiskit circuit using calibration data."""
         if props is None:
@@ -1126,11 +1146,11 @@ class QBCompiler:
                 if inst.operation.name in ("barrier", "reset", "delay"):
                     continue
                 if inst.operation.name == "measure":
-                    fidelity *= (1.0 - spec.median_readout_error)
+                    fidelity *= 1.0 - spec.median_readout_error
                 elif len(inst.qubits) == 2:
-                    fidelity *= (1.0 - spec.median_cx_error)
+                    fidelity *= 1.0 - spec.median_cx_error
                 else:
-                    fidelity *= (1.0 - spec.median_cx_error / 10.0)
+                    fidelity *= 1.0 - spec.median_cx_error / 10.0
             return max(0.0, fidelity)
 
         # Use per-qubit/per-edge calibration data
@@ -1151,15 +1171,15 @@ class QBCompiler:
             if inst.operation.name == "measure":
                 q = tc.find_bit(inst.qubits[0]).index
                 err = qubit_readout.get(q, 0.015)
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
             elif len(inst.qubits) == 2:
                 q0 = tc.find_bit(inst.qubits[0]).index
                 q1 = tc.find_bit(inst.qubits[1]).index
                 err = gate_map.get(frozenset({q0, q1}), 0.01)
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
             elif inst.operation.name not in ("x", "y"):
                 # Single-qubit gate (skip DD x/y gates from error calc)
-                fidelity *= (1.0 - 0.001)
+                fidelity *= 1.0 - 0.001
         return max(0.0, fidelity)
 
     def _estimate_fidelity_with_dd(
@@ -1191,6 +1211,7 @@ class QBCompiler:
         n_pairs = dd_gates // 2
         # Diminishing returns: recovery = 1 - exp(-pairs/scale)
         import math
+
         scale = max(tc.num_qubits * 2, 10)
         recovery_fraction = 1.0 - math.exp(-n_pairs / scale)
         recovered = t2_infidelity * recovery_fraction * 0.5  # 50% efficiency
@@ -1238,14 +1259,14 @@ class QBCompiler:
                 if op.name == "measure":
                     # Readout error
                     err = self._readout_error(op.qubits[0], spec)
-                    fidelity *= (1.0 - err)
+                    fidelity *= 1.0 - err
                 continue
             if op.is_two_qubit:
                 err = self._cx_error(op.qubits, spec)
             else:
                 # Single-qubit gates: error ≈ cx_error / 10
                 err = spec.median_cx_error / 10.0
-            fidelity *= (1.0 - err)
+            fidelity *= 1.0 - err
 
         return max(0.0, fidelity)
 
@@ -1284,7 +1305,7 @@ class QBCompiler:
             if op.name == "measure":
                 phys_q = layout.get(op.qubits[0], op.qubits[0])
                 err = qubit_readout.get(phys_q, spec.median_readout_error if spec else 0.01)
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
                 continue
             if op.name in ("reset", "barrier"):
                 continue
@@ -1298,17 +1319,15 @@ class QBCompiler:
                     err_val = gate_map.get((phys_1, phys_0))
                 if err_val is None:
                     err_val = spec.median_cx_error if spec else 0.01
-                fidelity *= (1.0 - err_val)
+                fidelity *= 1.0 - err_val
             else:
                 # Single-qubit gate error (unchanged from baseline)
                 err = (spec.median_cx_error if spec else 0.01) / 10.0
-                fidelity *= (1.0 - err)
+                fidelity *= 1.0 - err
 
         return max(0.0, fidelity)
 
-    def _cx_error(
-        self, qubits: tuple[int, ...], spec: BackendSpec
-    ) -> float:
+    def _cx_error(self, qubits: tuple[int, ...], spec: BackendSpec) -> float:
         """Two-qubit error from calibration or backend median."""
         if self.calibration is not None:
             try:
