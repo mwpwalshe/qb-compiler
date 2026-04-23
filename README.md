@@ -14,7 +14,7 @@
 
 ## What is qb-compiler?
 
-qb-compiler helps quantum developers make better execution decisions. Know which backend to use, whether your circuit is viable, what fidelity to expect, and what it will cost — before you spend QPU time.
+qb-compiler helps quantum developers make better execution decisions. Know which backend to use, whether your circuit is viable, what fidelity to expect, and what it will cost, before you spend QPU time.
 
 Built on top of Qiskit's transpiler.
 
@@ -36,7 +36,7 @@ print(result)
 # → Est. fidelity: 0.847
 # → Cost (4096 shots): $0.6554
 # → Suggestions:
-# →   - Circuit looks good — proceed with execution.
+# →   - Circuit looks good, proceed with execution.
 
 # Compile with automatic optimizations
 compiler = QBCompiler.from_backend("ibm_fez")
@@ -47,7 +47,7 @@ compiled = compiler.compile(circuit)
 
 ## CLI
 
-### `qbc preflight` — Should I run this?
+### `qbc preflight`. Should I run this?
 
 ```
 $ qbc preflight circuit.qasm --backend ibm_fez
@@ -62,7 +62,7 @@ $ qbc preflight circuit.qasm --backend ibm_fez
   Cost (4096 shots): $0.6554
 ```
 
-### `qbc analyze` — Detailed analysis with suggestions
+### `qbc analyze`. Detailed analysis with suggestions
 
 ```
 $ qbc analyze circuit.qasm --backend ibm_fez
@@ -84,7 +84,7 @@ $ qbc analyze circuit.qasm --backend ibm_fez
     - Good candidate for error mitigation to further improve results.
 ```
 
-### `qbc diff` — Compare two backends
+### `qbc diff`. Compare two backends
 
 ```
 $ qbc diff circuit.qasm --backend ibm_fez --vs ibm_torino
@@ -102,7 +102,7 @@ $ qbc diff circuit.qasm --backend ibm_fez --vs ibm_torino
   Recommendation: ibm_fez (+0.0145 fidelity)
 ```
 
-### `qbc doctor` — Environment health check
+### `qbc doctor`. Environment health check
 
 ```
 $ qbc doctor
@@ -121,7 +121,7 @@ qbc doctor
 Environment looks good!
 ```
 
-### `qbc compile` — Compile with receipt
+### `qbc compile`. Compile with receipt
 
 ```
 $ qbc compile circuit.qasm --backend ibm_fez --receipt
@@ -157,15 +157,15 @@ Receipt saved to circuit.receipt.json
 
 Validated on IBM Fez (156 qubits, March 2026). All results are measured fidelity from real hardware, 4096 shots per circuit.
 
-### Layout Selection — GHZ Circuits
+### Layout Selection. GHZ Circuits
 
-qb-compiler's CalibrationMapper (post-routing scoring, multi-region search) vs Qiskit `transpile` `optimization_level=3`. Both use Qiskit's SabreSwap for routing — the only difference is initial qubit placement.
+qb-compiler's CalibrationMapper (post-routing scoring, multi-region search) vs Qiskit `transpile` `optimization_level=3`. Both use Qiskit's SabreSwap for routing, the only difference is initial qubit placement.
 
 | Circuit | Qiskit | qb-compiler | Delta | Notes |
 |---------|--------|-------------|-------|-------|
 | GHZ-3 | 96.5% | 96.7% | +0.2% | Both find optimal region |
 | GHZ-5 | 92.5% | 93.2% | +0.7% | Different regions selected |
-| GHZ-8 | 82.1% | 87.5% | **+5.3%** | Best result — region 120-143 |
+| GHZ-8 | 82.1% | 87.5% | **+5.3%** | Best result, region 120-143 |
 | GHZ-10 | 78.8% | 79.8% | +1.0% | Region 120-147 |
 
 Fidelity = P(000...0) + P(111...1) over 4096 shots.
@@ -179,8 +179,8 @@ Selective DD applied after Qiskit routing. DD is automatically skipped for dense
 | Circuit | Without DD | With DD | Delta | Notes |
 |---------|-----------|---------|-------|-------|
 | GHZ-8 | 83.5% | 83.6% | +0.1% | Minimal idle time |
-| QFT-6 | 2.1% | 2.6% | +27% rel. | Long idle periods — DD helps |
-| QAOA-6 | 5.9% | 5.5% | -6.6% rel. | Dense circuit — DD skipped in v0.2.1 |
+| QFT-6 | 2.1% | 2.6% | +27% rel. | Long idle periods. DD helps |
+| QAOA-6 | 5.9% | 5.5% | -6.6% rel. | Dense circuit. DD skipped in v0.2.1 |
 
 QFT-6 and QAOA-6 base fidelities are in the noise floor (circuit depth exceeds viable limit). `qbc preflight` would flag these as DO NOT RUN, saving QPU time.
 
@@ -230,7 +230,7 @@ First Qiskit-side onramp to NVIDIA's `Ising-Decoder-SurfaceCode-1`
 spits out the 4-channel `(B, 4, T, D, D)` tensor the pretrained decoder
 eats. A PyMatching MWPM baseline ships in the box so youve somethign to
 beat. Plug the NVIDIA pre-decoder in when youve got the gated-HF weights
-— qb-compiler doesnt vendor them.
+- qb-compiler doesnt vendor them.
 
 Stim only for now, no hw shots thru it yet. Install:
 
@@ -260,9 +260,9 @@ and the [Notebook 17 walkthrough](notebooks/17_nvidia_ising_integration.ipynb).
 
 qb-compiler works fully standalone. For supported workloads, it can optionally integrate with the QubitBoost SDK to surface compatible execution paths:
 
-- OptGate — adaptive shot reduction for supported QAOA workloads
-- ChemGate — evaluation reduction for supported VQE workflows
-- LiveGate / ShotValidator — optional runtime checks
+- OptGate, adaptive shot reduction for supported QAOA workloads
+- ChemGate, evaluation reduction for supported VQE workflows
+- LiveGate / ShotValidator, optional runtime checks
 
 Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit type is detected with high confidence. Performance figures are hardware-validated, workload-dependent, and documented separately at [qubitboost.io](https://qubitboost.io).
 
