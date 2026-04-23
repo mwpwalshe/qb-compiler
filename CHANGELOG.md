@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0b1] - 2026-04-22
 
-Beta release — Stim-validated only, no hardware runs yet. API may shift.
+Beta release. Stim-validated only, no hardware runs yet. API may shift.
 
 ### Added
-- `qb_compiler.ising` — first Qiskit-side integration for NVIDIA's
+- `qb_compiler.ising`, first Qiskit-side integration for NVIDIA's
   `Ising-Decoder-SurfaceCode-1` model family (released 2026-04-14).
   Converts rotated-surface-code memory experiments (Qiskit or stim)
   into the 4-channel `(B, 4, T, D, D)` float32 tensor consumed by the
@@ -18,7 +18,7 @@ Beta release — Stim-validated only, no hardware runs yet. API may shift.
   `build_ising_tensor`, `PyMatchingDecoder` (MWPM baseline),
   `IsingDecoderWrapper` (pre-decoder + residual-MWPM chain; users
   bring their own gated-HF weights + NVIDIA's Apache-2.0 model
-  definition — qb-compiler does not vendor NVIDIA code or weights),
+  definition, qb-compiler does not vendor NVIDIA code or weights),
   `evaluate_logical_error_rate` harness.  Install via
   `pip install qb-compiler[ising]` for the PyMatching baseline,
   `qb-compiler[ising-nvidia]` to add torch + safetensors for the
@@ -33,7 +33,7 @@ Beta release — Stim-validated only, no hardware runs yet. API may shift.
 ### Added
 - Qiskit SDK 2.x compatibility: `qiskit` dependency widened to `>=1.0,<3.0`.
 - CI now runs the test suite against both Qiskit 1.4 and Qiskit 2.0 in matrix.
-- `QBCalibrationLayoutPlugin` — proper `qiskit.transpiler.layout` stage plugin.
+- `QBCalibrationLayoutPlugin`, proper `qiskit.transpiler.layout` stage plugin.
   Invoke via `generate_preset_pass_manager(layout_method="qb_calibration")`
   with the `QB_CALIBRATION_PATH` env var set.  Plugin is now discoverable
   through Qiskit's entry-point system.
@@ -50,7 +50,7 @@ Beta release — Stim-validated only, no hardware runs yet. API may shift.
   via Qiskit's loader.
 
 ### Deprecated
-- `QBTranspilerPlugin.get_pass_manager(calibration_data=...)` — emits a
+- `QBTranspilerPlugin.get_pass_manager(calibration_data=...)`, emits a
   `DeprecationWarning` and will be removed in 0.4.0.  Migrate to
   `generate_preset_pass_manager(layout_method="qb_calibration")` with
   `QB_CALIBRATION_PATH` set, or call `qb_transpile()` directly.
