@@ -2,7 +2,7 @@
 
 > **Status: beta (`v0.4.0b1`).** Stim only for now, no hw shots thru it yet.
 > NVIDIA dropped the decoder on 2026-04-14 and this onramp went out a week
-> later so expect the API to wobble a bit as people hit corners — pin the
+> later so expect the API to wobble a bit as people hit corners, pin the
 > version if you're using it. Hw run on IBM Heron surface patches is up next.
 
 This package is the first Qiskit-side onramp to NVIDIA's
@@ -13,10 +13,10 @@ under Apache 2.0 code + NVIDIA Open Model License weights).
 
 | Component | Purpose | Runtime deps |
 |---|---|---|
-| `SurfaceCodePatchSpec` | Minimal dataclass describing a rotated-surface-code memory experiment (`distance`, `rounds`, `basis`, `p_error`) | — |
+| `SurfaceCodePatchSpec` | Minimal dataclass describing a rotated-surface-code memory experiment (`distance`, `rounds`, `basis`, `p_error`) |, |
 | `build_ising_tensor()` | Stim detector events → `(B, 4, T, D, D)` float32 tensor with the channel layout `[x_type, z_type, x_present, z_present]` that the pretrained NVIDIA models consume | `stim`, `numpy` |
 | `PyMatchingDecoder` | MWPM baseline built directly from `stim.Circuit.detector_error_model` | `stim`, `pymatching` |
-| `IsingDecoderWrapper` | Optional pre-decoder + MWPM residual chain. Users supply their own gated-HF weights and a `build_model` callable sourced from NVIDIA's public repo — qb-compiler does not vendor NVIDIA code or weights | `torch`, `safetensors`, user-provided model def |
+| `IsingDecoderWrapper` | Optional pre-decoder + MWPM residual chain. Users supply their own gated-HF weights and a `build_model` callable sourced from NVIDIA's public repo, qb-compiler does not vendor NVIDIA code or weights | `torch`, `safetensors`, user-provided model def |
 | `evaluate_logical_error_rate()` | Head-to-head decoder comparison harness | `stim`, `numpy` |
 | `qiskit_bridge.stim_circuit_for()` / `qiskit_circuit_for()` | Reference circuit generators for users coming from either framework | `qiskit` (for the Qiskit one only) |
 
@@ -24,7 +24,7 @@ under Apache 2.0 code + NVIDIA Open Model License weights).
 
 * **This integration module**: Apache 2.0 (same as the rest of qb-compiler).
 * **NVIDIA Ising code**: Apache 2.0 (`github.com/NVIDIA/Ising-Decoding`).
-* **NVIDIA Ising model weights**: NVIDIA Open Model License — gated download
+* **NVIDIA Ising model weights**: NVIDIA Open Model License, gated download
   from HuggingFace (`nvidia/Ising-Decoder-SurfaceCode-1-Fast` and `-Accurate`).
   qb-compiler does not redistribute the weights.
 
@@ -88,7 +88,7 @@ qb-compiler's tensor is SHAPE-compatible with NVIDIA's models, but
 the exact `(row, col)` convention for ancilla→grid mapping depends on
 stim's rotated-surface-code layout, which may not match NVIDIA's
 training-time `code_rotation='XV'` default.  Each
-`SurfaceCodeTensorLayout` carries an `orientation_fingerprint` —
+`SurfaceCodeTensorLayout` carries an `orientation_fingerprint` -
 compare two layouts' fingerprints to detect orientation drift before
 feeding qb-compiler tensors into pretrained NVIDIA weights.  An
 alignment step (permute rows/cols of the output tensor) may be
