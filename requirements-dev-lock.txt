@@ -207,7 +207,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.5
+ruff==0.15.9
     # via qb-compiler (pyproject.toml)
 rustworkx==0.17.1
     # via
