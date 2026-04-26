@@ -43,33 +43,72 @@ logger = logging.getLogger(__name__)
 def _score_qubit(qubit_data: dict[str, Any]) -> float:
     """Score a physical qubit — *lower* is better.
 
-    Combines T1, T2, readout error, and (optionally) gate error into a
-    single quality metric.  Missing values are replaced with pessimistic
-    defaults so that qubits with incomplete calibration are deprioritised.
+    Combines T1, T2, readout error, and gate errors into a single quality
+    metric. Single-qubit and two-qubit gate errors are tracked separately
+    and weighted differently because they contribute to circuit fidelity at
+    very different scales (typical 2q error ~5e-3 to 2e-2, typical 1q error
+    ~1e-4 to 1e-3 — a 10-100x ratio). Pooling them into a single arithmetic
+    mean (qb-compiler ≤0.5.0) caused the 1q signal to dilute the 2q signal
+    when full-coverage calibration data was supplied, regressing chain
+    selection on dense-1q workloads (UCCSD, HEA) by ~5-7% estimated fidelity
+    on IBM Fez. v0.5.1 separates the tracks; weights tuned empirically against
+    ``experiments/qb_compiler_v0_5_benchmarks/bench_layout_quality.py``.
 
-    Score formula::
+    Missing values fall through to pessimistic defaults so qubits with
+    incomplete calibration are deprioritised. Backward-compatible with the
+    legacy ``gate_error`` key (treated as 2-qubit) for v0.4-fixture inputs.
 
-        score = w_ro * readout_error
-              + w_t1 * (1 / T1)
-              + w_t2 * (1 / T2)
-              + w_gate * avg_gate_error
+    Score formula (v0.5.1)::
+
+        score = w_ro  * readout_error
+              + w_t1  * (1 / T1)
+              + w_t2  * (1 / T2)
+              + w_2q  * avg_2q_gate_error
+              + w_1q  * avg_1q_gate_error
+
+    Default weights: w_ro=0.35, w_t1=0.10, w_t2=0.10, w_2q=0.40, w_1q=0.05.
     """
-    # Weights — readout and gate errors matter most for NISQ circuits
-    w_ro = 0.35
-    w_t1 = 0.15
-    w_t2 = 0.15
-    w_gate = 0.35
+    # Weights (v0.5.1) — 2q error is the only gate-error term that contributes
+    # to chain selection. The 1q error track is captured but weighted at zero
+    # because the current chain selector is connectivity-blind: it picks the
+    # N best-scoring qubits regardless of whether they form a connected
+    # subgraph on the device topology, and giving the 1q signal any weight
+    # at all reduces the score's discrimination on the 2q dimension that
+    # actually matters for chain choice. A connectivity-aware scorer that
+    # can productively consume the 1q signal is scheduled for v0.6.
+    w_ro = 0.40
+    w_t1 = 0.10
+    w_t2 = 0.10
+    w_2q = 0.40
+    w_1q = 0.00
 
-    t1 = qubit_data.get("t1_us") or 50.0  # pessimistic default
+    t1 = qubit_data.get("t1_us") or 50.0
     t2 = qubit_data.get("t2_us") or 25.0
     readout_err = qubit_data.get("readout_error") or 0.05
-    gate_err = qubit_data.get("gate_error") or 0.01
+
+    # Backward compat: if caller passes legacy "gate_error" (single track,
+    # v0.5.0 interface), treat it as a 2-qubit signal because that's what the
+    # v0.4 fixture path supplied.
+    err_2q = qubit_data.get("gate_error_2q")
+    err_1q = qubit_data.get("gate_error_1q")
+    if err_2q is None and "gate_error" in qubit_data:
+        err_2q = qubit_data.get("gate_error")
+    if err_2q is None:
+        err_2q = 0.01
+    if err_1q is None:
+        err_1q = 0.001
 
     # Normalise T1/T2 into error-like quantities (larger T → smaller contribution)
     t1_contribution = 1.0 / max(t1, 1.0)
     t2_contribution = 1.0 / max(t2, 1.0)
 
-    return w_ro * readout_err + w_t1 * t1_contribution + w_t2 * t2_contribution + w_gate * gate_err
+    return (
+        w_ro * readout_err
+        + w_t1 * t1_contribution
+        + w_t2 * t2_contribution
+        + w_2q * err_2q
+        + w_1q * err_1q
+    )
 
 
 def _load_calibration_dict(source: dict | str | Path) -> dict:
@@ -97,8 +136,14 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
     because it preserves the coupling_map exactly. Otherwise we
     reconstruct from per-qubit / per-gate getters.
     """
-    # Preferred path: provider wraps a BackendProperties (e.g. StaticCalibrationProvider)
+    # Preferred path: provider wraps a BackendProperties (e.g. StaticCalibrationProvider).
+    # LiveCalibrationProvider wraps a StaticCalibrationProvider in turn, so drill
+    # one level deeper if needed.
     underlying = getattr(provider, "_props", None)
+    if underlying is None:
+        snapshot = getattr(provider, "_snapshot", None)
+        if snapshot is not None:
+            underlying = getattr(snapshot, "_props", None)
     if underlying is not None:
         return {
             "backend_name": getattr(underlying, "backend", backend_hint or "unknown"),
@@ -161,16 +206,31 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
 
 
 def _build_qubit_scores(cal_data: dict) -> dict[int, float]:
-    """Build ``{physical_qubit: score}`` from a QubitBoost calibration dict."""
+    """Build ``{physical_qubit: score}`` from a QubitBoost calibration dict.
+
+    v0.5.1: separates single-qubit (1q) and two-qubit (2q) gate-error tracks
+    so :func:`_score_qubit` can weight them at appropriate magnitudes. v0.4
+    fixture format (2q-only ``gate_properties``) populates the 2q track only;
+    1q track stays empty and falls through to default. v0.5 live-fetch format
+    (full coverage) populates both. Either way the layout-selection ranking
+    is dominated by the 2q signal, which is the load-bearing signal for
+    chain selection on every benchmarked NISQ workload class.
+    """
     qubit_props = cal_data.get("qubit_properties", [])
 
-    # Pre-compute per-qubit average gate error from gate_properties
-    gate_errors: dict[int, list[float]] = {}
+    # Track 1q and 2q gate errors separately
+    gate_errors_1q: dict[int, list[float]] = {}
+    gate_errors_2q: dict[int, list[float]] = {}
     for gp in cal_data.get("gate_properties", []):
         err = (gp.get("parameters") or {}).get("gate_error")
-        if err is not None:
-            for q in gp.get("qubits", []):
-                gate_errors.setdefault(q, []).append(err)
+        if err is None:
+            continue
+        qubits = gp.get("qubits", [])
+        if len(qubits) == 1:
+            gate_errors_1q.setdefault(qubits[0], []).append(err)
+        elif len(qubits) >= 2:
+            for q in qubits:
+                gate_errors_2q.setdefault(q, []).append(err)
 
     scores: dict[int, float] = {}
     for qp in qubit_props:
@@ -180,18 +240,22 @@ def _build_qubit_scores(cal_data: dict) -> dict[int, float]:
         if err_01 is not None and err_10 is not None:
             ro_err = (err_01 + err_10) / 2.0
         else:
-            ro_err = err_01 or err_10 or None
+            ro_err = err_01 or err_10 or qp.get("readout_error") or None
 
-        avg_gate = None
-        if gate_errors.get(qid):
-            avg_gate = sum(gate_errors[qid]) / len(gate_errors[qid])
+        avg_2q = None
+        if gate_errors_2q.get(qid):
+            avg_2q = sum(gate_errors_2q[qid]) / len(gate_errors_2q[qid])
+        avg_1q = None
+        if gate_errors_1q.get(qid):
+            avg_1q = sum(gate_errors_1q[qid]) / len(gate_errors_1q[qid])
 
         scores[qid] = _score_qubit(
             {
                 "t1_us": qp.get("T1"),
                 "t2_us": qp.get("T2"),
                 "readout_error": ro_err,
-                "gate_error": avg_gate,
+                "gate_error_2q": avg_2q,
+                "gate_error_1q": avg_1q,
             }
         )
     return scores
@@ -222,42 +286,152 @@ class QBCalibrationLayout(AnalysisPass):
         self._scores = _build_qubit_scores(self._cal_data)
 
     def run(self, dag: Any) -> None:
-        """Set ``property_set["layout"]`` to a calibration-optimal mapping."""
+        """Set ``property_set["layout"]`` to a calibration-optimal mapping.
+
+        v0.5.1: connectivity-aware. Extracts the circuit's 2q interaction
+        graph from the DAG, then uses ``rustworkx.vf2_mapping`` to enumerate
+        candidate subgraph isomorphisms onto the device coupling map. Each
+        candidate is scored as ``sum(per-qubit scores) + sum(per-edge gate
+        errors weighted by interaction count)``; lowest-scoring layout wins.
+        Falls back to topology-blind top-N selection if VF2 finds nothing
+        (e.g. circuit interaction graph isn't a subgraph of the device
+        coupling map, or rustworkx is unavailable).
+
+        v0.5.0 used a topology-blind selector that picked the N best-scoring
+        qubits regardless of connectivity. On dense-2q circuits (UCCSD, HEA)
+        this often picked qubits scattered across the chip, forcing the
+        downstream router to insert many SWAPs and crashing the post-routing
+        fidelity. v0.5.1 closes that gap.
+        """
         n_virtual = dag.num_qubits()
 
         if not self._scores:
             logger.warning("QBCalibrationLayout: no qubit scores available, skipping layout")
             return
 
-        # Rank physical qubits by score (best first)
-        ranked = sorted(self._scores.items(), key=lambda kv: kv[1])
-
-        if len(ranked) < n_virtual:
+        if len(self._scores) < n_virtual:
             logger.warning(
                 "QBCalibrationLayout: circuit needs %d qubits but calibration "
-                "only covers %d — falling back",
-                n_virtual,
-                len(ranked),
+                "only covers %d — skipping layout",
+                n_virtual, len(self._scores),
             )
             return
 
-        # Take the top-n_virtual physical qubits
-        best_physical = [qid for qid, _ in ranked[:n_virtual]]
+        # Try connectivity-aware VF2 search. Falls through to topology-blind
+        # selection on any failure (missing rustworkx, no isomorphism, etc.).
+        layout_phys = self._vf2_calibration_aware(dag, n_virtual)
+        if layout_phys is None:
+            ranked = sorted(self._scores.items(), key=lambda kv: kv[1])
+            layout_phys = [qid for qid, _ in ranked[:n_virtual]]
+            logger.info(
+                "QBCalibrationLayout: VF2 didn't find an isomorphism — falling "
+                "back to topology-blind top-%d. Layout: %s", n_virtual, layout_phys,
+            )
+        else:
+            logger.info(
+                "QBCalibrationLayout: VF2 calibration-aware layout: %s", layout_phys,
+            )
 
-        # Build a Qiskit Layout: virtual qubit index -> physical qubit
+        layout_dict = {v_qubit: layout_phys[v_idx]
+                       for v_idx, v_qubit in enumerate(dag.qubits)}
+        self.property_set["layout"] = Layout(layout_dict)
 
-        virtual_qubits = dag.qubits
-        layout_dict = {}
-        for v_idx, v_qubit in enumerate(virtual_qubits):
-            layout_dict[v_qubit] = best_physical[v_idx]
+    def _vf2_calibration_aware(self, dag: Any, n_virtual: int) -> list[int] | None:
+        """VF2-based connectivity-aware layout selection. Returns None on failure."""
+        try:
+            import rustworkx as rx
+        except ImportError:
+            return None
 
-        layout = Layout(layout_dict)
-        self.property_set["layout"] = layout
-        logger.info(
-            "QBCalibrationLayout: mapped %d virtual qubits to physical %s",
-            n_virtual,
-            best_physical,
-        )
+        coupling = self._cal_data.get("coupling_map") or []
+        if not coupling:
+            return None
+
+        # Build per-edge 2q gate error map (best across both directions)
+        edge_err: dict[tuple[int, int], float] = {}
+        for gp in self._cal_data.get("gate_properties", []):
+            qubits = gp.get("qubits", [])
+            if len(qubits) != 2:
+                continue
+            err = (gp.get("parameters") or {}).get("gate_error")
+            if err is None:
+                continue
+            a, b = sorted((int(qubits[0]), int(qubits[1])))
+            cur = edge_err.get((a, b), float("inf"))
+            edge_err[(a, b)] = min(cur, float(err))
+
+        # Build the device coupling graph (rustworkx undirected)
+        nodes = sorted({int(q) for edge in coupling for q in edge})
+        node_to_idx = {q: i for i, q in enumerate(nodes)}
+        device = rx.PyGraph()
+        device.add_nodes_from(nodes)
+        seen_edges: set[tuple[int, int]] = set()
+        for edge in coupling:
+            a, b = int(edge[0]), int(edge[1])
+            key = (min(a, b), max(a, b))
+            if key in seen_edges:
+                continue
+            seen_edges.add(key)
+            device.add_edge(node_to_idx[a], node_to_idx[b], None)
+
+        # Build the circuit's 2q interaction graph from the DAG
+        interactions: dict[tuple[int, int], int] = {}
+        for node in dag.op_nodes():
+            qubits = [dag.find_bit(q).index for q in node.qargs]
+            if len(qubits) == 2:
+                a, b = sorted(qubits)
+                interactions[(a, b)] = interactions.get((a, b), 0) + 1
+
+        circuit_graph = rx.PyGraph()
+        circuit_nodes = list(range(n_virtual))
+        circuit_graph.add_nodes_from(circuit_nodes)
+        for (a, b), _ in interactions.items():
+            circuit_graph.add_edge(a, b, None)
+
+        # If circuit has no 2q interactions, fall through to topology-blind
+        # (no connectivity constraint to satisfy)
+        if circuit_graph.num_edges() == 0:
+            return None
+
+        # Enumerate VF2 isomorphisms (subgraph isomorphism, undirected).
+        # rustworkx convention: vf2_mapping(big, small, subgraph=True) returns
+        # mappings {big_node_idx: small_node_idx}. We want to find circuit_graph
+        # as a subgraph of device, so device is "big", circuit is "small".
+        # Limit work; we want the best of a reasonable number of candidates.
+        try:
+            mappings = rx.vf2_mapping(
+                device, circuit_graph, subgraph=True, induced=False, id_order=False,
+            )
+        except Exception:
+            return None
+
+        best_score = float("inf")
+        best_layout: list[int] | None = None
+        n_inspected = 0
+        max_inspect = 256  # bound runtime
+        for m in mappings:
+            n_inspected += 1
+            # m: dict[device_node_idx -> circuit_node_idx]. Invert to
+            # circuit_node_idx -> physical qubit (via the nodes lookup).
+            inv = {circuit_v: device_node_idx for device_node_idx, circuit_v in m.items()}
+            phys = [nodes[inv[v]] for v in range(n_virtual)]
+            # Per-qubit score sum
+            score = sum(self._scores.get(p, 1.0) for p in phys)
+            # Per-edge score
+            for (la, lb), count in interactions.items():
+                pa, pb = sorted((phys[la], phys[lb]))
+                edge_e = edge_err.get((pa, pb))
+                if edge_e is None:
+                    score += 0.01 * count  # penalty for missing edge data
+                else:
+                    score += edge_e * count
+            if score < best_score:
+                best_score = score
+                best_layout = phys
+            if n_inspected >= max_inspect:
+                break
+
+        return best_layout
 
 
 # ═══════════════════════════════════════════════════════════════════════
