@@ -106,8 +106,34 @@ class LiveCalibrationProvider(CalibrationProvider):
         backend: str,
         *,
         api_key: str | None = None,
+        account: str = "qubitboost_cloud",
         cache_ttl_minutes: float = 30.0,
     ) -> None:
+        """Initialise the live calibration provider.
+
+        Parameters
+        ----------
+        backend:
+            Vendor backend identifier (e.g. ``"ibm_fez"``).
+        api_key:
+            Reserved for future remote-API mode; not used in v0.5
+            (in-process tier authenticates via the saved ``account``
+            credential profile).
+        account:
+            Saved-credential profile name to authenticate with.
+            Default ``"qubitboost_cloud"``. External users must first
+            run::
+
+                from qiskit_ibm_runtime import QiskitRuntimeService
+                QiskitRuntimeService.save_account(name="my_account",
+                                                  channel="ibm_quantum",
+                                                  token="...")
+
+            then pass ``account="my_account"``.
+        cache_ttl_minutes:
+            Snapshot TTL in minutes. Default 30. The hub is configured
+            with the same value; no inconsistency between them.
+        """
         if not _HAS_QUBITBOOST:
             raise ImportError(
                 "Live calibration requires qubitboost-sdk. "
@@ -115,7 +141,10 @@ class LiveCalibrationProvider(CalibrationProvider):
             )
 
         self._backend = backend
-        self._hub = CalibrationHub(api_key=api_key)
+        # Pass cache_ttl down to the hub so both layers agree on freshness.
+        self._hub = CalibrationHub(
+            api_key=api_key, account=account, max_age_minutes=cache_ttl_minutes,
+        )
         self._cache_ttl = cache_ttl_minutes
         self._snapshot = self._hub.get_latest(backend)
 
