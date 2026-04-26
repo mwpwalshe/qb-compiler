@@ -105,15 +105,58 @@ smaller than 2-qubit), but the data is now complete.
   `QBCalibrationLayout` consumes via the nested `parameters.gate_error`
   path, which `_provider_to_dict()` emits — verified working.
 
-### Benchmarks
+### Benchmarks (re-run 2026-04-26)
 
-**v0.5 has not been re-benchmarked against Qiskit `optimization_level=3`
-on the live (full-coverage) calibration path.** The "matches or exceeds
-Qiskit's default on hardware-validated benchmarks" claim in the README
-was established on the v0.4 partial-fixture path and remains the
-baseline. v0.5's calibration data is a strict superset of v0.4's so the
-claim should not regress, but no new benchmark numbers are asserted.
-Re-benchmarking on the live path is scheduled for v0.5.1.
+v0.5's layout-selection algorithm was benchmarked against the v0.4
+static-fixture path AND against Qiskit `optimization_level=3` on a
+fixed circuit set on IBM Fez calibration data. n=30 random seeds per
+circuit, paired Wilcoxon signed-rank with Bonferroni correction across
+3 comparisons per circuit, classical noise-aware fidelity scoring
+(no QPU execution; QPU companion deferred to v0.5.1).
+
+Circuit set: GHZ-{4,8,12}, QAOA-8 ring p={1,2}, UCCSD-H4 4e4o, HEA-{8,12} d=4.
+
+**Headline finding: v0.5 is workload-dependent, not uniformly better.**
+
+| Workload class | v0.5 vs v0.4 fixture | v0.5 vs Qiskit opt=3 |
+|---|---|---|
+| Ring QAOA (sparse 1q, dense 2q) | **+4 to +4 % median fid (p<0.05)** | **+5 to +14 % median fid (p<0.05)** |
+| GHZ (mostly 2q) | tied | mixed (1 win at 12q, 2 losses at 4q/8q) |
+| UCCSD / HEA (dense 1q + 2q) | **−5 to −7 % median fid (p<0.0001)** | **−3 to −6 % median fid (p<0.0001)** |
+
+**Tally for v0.5 vs Qiskit opt=3:** 3 wins, 5 losses, 0 ties (8 circuits).
+**Tally for v0.5 vs v0.4:** 2 wins, 3 losses, 3 ties (8 circuits).
+
+**Interpretation:** the added single-qubit gate-error data in v0.5
+appears to distort qb-compiler's chain-scoring on dense-single-qubit
+workloads (UCCSD, HEA), and this distortion costs more than the
+QAOA-side gains on most circuit classes. An algorithm-level retune
+of the chain-scoring weights between single-qubit and 2-qubit error
+contributions is scheduled for v0.5.1; the goal is uniformly
+equal-or-better-than-v0.4 across all circuit classes.
+
+**Practical guidance for v0.5 callers:**
+- QAOA-style workloads: use `LiveCalibrationProvider` (the v0.5 default).
+- Dense-single-qubit workloads (UCCSD, HEA, generic VQE ansatz): use
+  `calibration_path=...` with the v0.4-style fixture format until
+  v0.5.1 ships the algorithm fix. The live data path is correct;
+  the chain-scoring algorithm using it is not yet tuned for this
+  workload class.
+
+Full results: `QubitBoost-internal experiments/qb_compiler_v0_5_benchmarks/results/`.
+
+### README claim correction (line 222)
+
+The wording "calibration-aware layout selection that matches or exceeds
+Qiskit's default on hardware-validated benchmarks" is workload-dependent
+under v0.5 (5 of 8 circuits regress vs Qiskit opt=3 in the benchmark
+above). Recommended replacement wording on the README:
+
+> "calibration-aware layout selection that matches or exceeds Qiskit's
+> default on QAOA-style hardware workloads. Performance is workload-
+> dependent; see CHANGELOG v0.5.0 for the full benchmark table including
+> circuit classes where qb-compiler currently underperforms (UCCSD-style
+> chemistry ansatzes and dense hardware-efficient ansatzes)."
 
 ### Added
 - `qb_transpile(..., calibration_provider=...)` accepts any
