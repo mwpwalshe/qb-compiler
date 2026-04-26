@@ -82,6 +82,84 @@ def _load_calibration_dict(source: dict | str | Path) -> dict:
     raise TypeError(f"calibration_data must be a dict or path, got {type(source)}")
 
 
+def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict:
+    """Materialise a CalibrationProvider snapshot into the dict format
+    consumed by :class:`QBCalibrationLayout`.
+
+    Used internally by :func:`qb_transpile` when called with
+    ``calibration_provider=...``. Walks the provider's ``get_all_*``
+    methods and emits a qb-compiler-compatible calibration dict
+    (top-level ``qubit_properties``, ``gate_properties``,
+    ``coupling_map``, ``basis_gates``).
+
+    The provider's underlying ``BackendProperties`` (when accessible
+    via ``_props`` per :class:`StaticCalibrationProvider`) is preferred
+    because it preserves the coupling_map exactly. Otherwise we
+    reconstruct from per-qubit / per-gate getters.
+    """
+    # Preferred path: provider wraps a BackendProperties (e.g. StaticCalibrationProvider)
+    underlying = getattr(provider, "_props", None)
+    if underlying is not None:
+        return {
+            "backend_name": getattr(underlying, "backend", backend_hint or "unknown"),
+            "n_qubits": getattr(underlying, "n_qubits", None),
+            "timestamp": getattr(underlying, "timestamp", None),
+            "basis_gates": list(getattr(underlying, "basis_gates", [])),
+            "coupling_map": [list(e) for e in getattr(underlying, "coupling_map", [])],
+            "qubit_properties": [
+                {
+                    "qubit": q.qubit_id,
+                    "T1": q.t1_us,
+                    "T2": q.t2_us,
+                    "frequency": q.frequency_ghz,
+                    "readout_error": q.readout_error,
+                    "readout_error_0to1": q.readout_error_0to1,
+                    "readout_error_1to0": q.readout_error_1to0,
+                }
+                for q in underlying.qubit_properties
+            ],
+            "gate_properties": [
+                {
+                    "gate": g.gate_type,
+                    "qubits": list(g.qubits),
+                    "parameters": {
+                        "gate_error": g.error_rate,
+                        "gate_length": g.gate_time_ns,
+                    },
+                }
+                for g in underlying.gate_properties
+            ],
+        }
+
+    # Fallback path: walk the abstract provider interface
+    return {
+        "backend_name": getattr(provider, "backend_name", backend_hint or "unknown"),
+        "timestamp": str(getattr(provider, "timestamp", "")),
+        "qubit_properties": [
+            {
+                "qubit": q.qubit_id,
+                "T1": q.t1_us,
+                "T2": q.t2_us,
+                "readout_error": q.readout_error,
+                "readout_error_0to1": getattr(q, "readout_error_0to1", None),
+                "readout_error_1to0": getattr(q, "readout_error_1to0", None),
+            }
+            for q in provider.get_all_qubit_properties()
+        ],
+        "gate_properties": [
+            {
+                "gate": g.gate_type,
+                "qubits": list(g.qubits),
+                "parameters": {
+                    "gate_error": g.error_rate,
+                    "gate_length": g.gate_time_ns,
+                },
+            }
+            for g in provider.get_all_gate_properties()
+        ],
+    }
+
+
 def _build_qubit_scores(cal_data: dict) -> dict[int, float]:
     """Build ``{physical_qubit: score}`` from a QubitBoost calibration dict."""
     qubit_props = cal_data.get("qubit_properties", [])
@@ -305,6 +383,7 @@ def qb_transpile(
     backend: str | None = None,
     calibration_path: str | Path | None = None,
     calibration_data: dict | None = None,
+    calibration_provider: object | None = None,
     optimization_level: int = 2,
 ) -> QuantumCircuit:
     """Transpile a Qiskit circuit with calibration-aware layout.
@@ -324,6 +403,14 @@ def qb_transpile(
         Path to a QubitBoost ``calibration_hub`` JSON file.
     calibration_data:
         Pre-parsed calibration dict (alternative to *calibration_path*).
+    calibration_provider:
+        v0.5+. A :class:`~qb_compiler.calibration.provider.CalibrationProvider`
+        instance (typically a
+        :class:`~qb_compiler.calibration.live_provider.LiveCalibrationProvider`).
+        Takes precedence over *calibration_path* / *calibration_data* if
+        provided. Use this when you want fresh-fetched calibration data
+        from :mod:`qubitboost_sdk.calibration.CalibrationHub` rather than
+        a static fixture file.
     optimization_level:
         Qiskit optimization level (0-3).  Default is 2.
 
@@ -336,9 +423,13 @@ def qb_transpile(
 
     from qb_compiler.config import BACKEND_CONFIGS
 
-    # Resolve calibration
+    # Resolve calibration. Provider takes precedence; we materialise its
+    # snapshot to a dict so the existing QBCalibrationLayout pass (which
+    # consumes a dict, not a provider) can be reused unchanged.
     cal_dict: dict | None = None
-    if calibration_path is not None:
+    if calibration_provider is not None:
+        cal_dict = _provider_to_dict(calibration_provider, backend)
+    elif calibration_path is not None:
         cal_dict = _load_calibration_dict(calibration_path)
     elif calibration_data is not None:
         cal_dict = calibration_data

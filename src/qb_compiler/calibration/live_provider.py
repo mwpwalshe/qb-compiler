@@ -150,8 +150,19 @@ class LiveCalibrationProvider(CalibrationProvider):
     # ── Extended API ──────────────────────────────────────────────────
 
     def refresh(self) -> None:
-        """Force a re-fetch of calibration data from the API."""
-        self._snapshot = self._hub.get_latest(self._backend)
+        """Force a re-fetch of calibration data from the API.
+
+        Bypasses the hub's TTL cache to guarantee a fresh vendor call.
+        Use ``cache_ttl_minutes`` (init-time) to control implicit
+        re-fetching via :attr:`is_stale`; use this method for explicit
+        invalidation (e.g. before a critical experiment).
+        """
+        if hasattr(self._hub, "fetch"):
+            self._snapshot = self._hub.fetch(self._backend)
+        else:
+            # Older qubitboost-sdk versions only exposed get_latest. Fall
+            # back; freshness will then respect the hub's TTL only.
+            self._snapshot = self._hub.get_latest(self._backend)
 
     @property
     def is_stale(self) -> bool:

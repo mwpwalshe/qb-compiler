@@ -5,6 +5,51 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-26
+
+Live calibration end-to-end against real backends. The
+``LiveCalibrationProvider`` path stops being a stub: it now delegates to
+a working ``qubitboost_sdk.calibration.CalibrationHub`` (in-process tier
+shipped in this release; continuous PM2 poller + Redis cache + FastAPI
+endpoint scheduled for v0.6).
+
+### Added
+- ``qb_transpile(..., calibration_provider=...)`` accepts any
+  :class:`~qb_compiler.calibration.provider.CalibrationProvider`
+  instance directly, including the live one. Previously only
+  ``calibration_path`` and ``calibration_data`` were supported.
+- ``_provider_to_dict`` helper materialises a provider's snapshot into
+  the calibration dict ``QBCalibrationLayout`` consumes — enables the
+  live provider to drive the layout pass without bespoke wiring.
+
+### Changed
+- ``LiveCalibrationProvider.refresh()`` now calls ``hub.fetch()``
+  directly to bypass the cache TTL, so explicit ``refresh()`` always
+  produces a fresh vendor call. Previously it called ``hub.get_latest()``,
+  which would silently serve cached data within the TTL window.
+- ``LiveCalibrationProvider`` no longer raises ImportError when
+  ``qubitboost-sdk>=2.6`` is installed. Earlier versions pointed at
+  ``qubitboost_sdk.calibration.CalibrationHub`` which did not exist;
+  v2.6 of the SDK ships that module.
+
+### Honest disclosure on prior versions
+- v0.1-v0.4 calibration-aware claims operated on real IBM backend
+  properties (audit at QubitBoost-internal
+  ``sales/QB_COMPILER_FIXTURE_PROVENANCE.md``), but the shipped fixture
+  files contained 2-qubit gate errors only and dropped per-basis-gate
+  single-qubit error data. From v0.5 onwards the live fetch via
+  CalibrationHub provides the full property surface (T1, T2,
+  prob_meas0_prep1, prob_meas1_prep0, readout_length per qubit; gate
+  errors per (basis_gate, qubits) pair). For chain selection the
+  practical impact of the prior partial coverage was small (single-qubit
+  errors are typically much smaller than 2-qubit), but v0.5 closes the
+  gap.
+- README claim "Calibration data can be loaded from local JSON files
+  or fetched from vendor APIs" was technically incorrect on v0.4 and
+  earlier (the vendor-API path raised ImportError). It is correct on
+  v0.5 with ``pip install qb-compiler[qubitboost]`` (which now resolves
+  to a working SDK).
+
 ## [0.4.0b1] - 2026-04-22
 
 Beta release. Stim-validated only, no hardware runs yet. API may shift.
