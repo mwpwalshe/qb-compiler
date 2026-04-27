@@ -219,52 +219,61 @@ Your Circuit
   └─→ Compilation Receipt      Full audit trail (JSON)
 ```
 
-All transpilation uses Qiskit's routing engine internally. qb-compiler's value is in execution intelligence (preflight, viability, cost estimation) and calibration-aware layout selection that matches or exceeds Qiskit's default on hardware-validated benchmarks.
+All transpilation uses Qiskit's routing engine internally. qb-compiler's value is in execution intelligence (preflight, viability, cost estimation) and calibration-aware layout selection. Performance vs Qiskit `optimization_level=3` is workload-dependent: qb-compiler v0.5.1 wins on QAOA-style and VQE chemistry workloads (UCCSD-H4 4e4o: +12% estimated fidelity vs Qiskit, p<0.05 paired Wilcoxon, n=30 seeds, IBM Fez calibration), ties or marginally underperforms on simple GHZ circuits where Qiskit's own VF2 layout is already strong. Full benchmark + raw data in CHANGELOG v0.5.1.
 
 ---
 
-## NVIDIA Ising Decoder Integration (v0.4.0b1, beta)
+## Additional integrations
 
-First Qiskit-side onramp to NVIDIA's `Ising-Decoder-SurfaceCode-1`
-(dropped 2026-04-14). Takes a rotated surface-code memory experiment,
-spits out the 4-channel `(B, 4, T, D, D)` tensor the pretrained decoder
-eats. A PyMatching MWPM baseline ships in the box so youve somethign to
-beat. Plug the NVIDIA pre-decoder in when youve got the gated-HF weights
-- qb-compiler doesnt vendor them.
+Beyond the core calibration-aware compiler, qb-compiler ships two opt-in
+integrations. Neither loads unless you install the matching extra; the
+core `pip install qb-compiler` doesn't pull these dependencies.
 
-Stim only for now, no hw shots thru it yet. Install:
+### Live calibration via QubitBoost SDK (v0.5+)
 
 ```bash
-pip install --pre qb-compiler[ising]          # stim + pymatching
+pip install qb-compiler[qubitboost]
+```
+
+Replaces the static-fixture calibration path with a live fetch from IBM
+Quantum (or other vendor APIs as they're added). Auto-refreshes every 30
+min, falls back to stale cache with a `UserWarning` on vendor outages.
+See `LiveCalibrationProvider` in `qb_compiler.calibration.live_provider`.
+
+Optional companion gates from the QubitBoost SDK (OptGate adaptive shot
+reduction for QAOA; ChemGate eval reduction for VQE; LiveGate /
+ShotValidator runtime checks) are surfaced as recommendations in
+`qbc preflight` / `qbc analyze` when circuit type is detected. Gate
+performance figures are documented separately at
+[qubitboost.io](https://qubitboost.io).
+
+### NVIDIA Ising Decoder onramp (v0.4.0b1, beta)
+
+```bash
+pip install --pre qb-compiler[ising]          # stim + pymatching baseline
 pip install --pre qb-compiler[ising-nvidia]   # adds torch + safetensors
 ```
+
+First Qiskit-side onramp to NVIDIA's `Ising-Decoder-SurfaceCode-1`
+(released 2026-04-14). Takes a rotated surface-code memory experiment,
+emits the 4-channel `(B, 4, T, D, D)` tensor the pretrained decoder
+consumes. A PyMatching MWPM baseline ships in the package; bring your
+own NVIDIA gated weights (Apache 2.0 integration code; NVIDIA Open Model
+License weights distributed separately by NVIDIA). Stim-validated only,
+no hw shots through it yet.
 
 ```python
 from qb_compiler.ising import (
     SurfaceCodePatchSpec, PyMatchingDecoder, evaluate_logical_error_rate,
 )
-
 spec = SurfaceCodePatchSpec(distance=7, rounds=7, basis="X", p_error=0.003)
 result = evaluate_logical_error_rate(
     spec, PyMatchingDecoder(spec), shots=50_000, seed=42,
 )
-print(result.as_dict())
 ```
 
-See [`src/qb_compiler/ising/README.md`](src/qb_compiler/ising/README.md)
-for the full API, licensing breakdown (Apache 2.0 integration code;
-NVIDIA Open Model License weights distributed separately by NVIDIA),
-and the [Notebook 17 walkthrough](notebooks/17_nvidia_ising_integration.ipynb).
-
-## Optional QubitBoost SDK Integration
-
-qb-compiler works fully standalone. For supported workloads, it can optionally integrate with the QubitBoost SDK to surface compatible execution paths:
-
-- OptGate, adaptive shot reduction for supported QAOA workloads
-- ChemGate, evaluation reduction for supported VQE workflows
-- LiveGate / ShotValidator, optional runtime checks
-
-Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit type is detected with high confidence. Performance figures are hardware-validated, workload-dependent, and documented separately at [qubitboost.io](https://qubitboost.io).
+Full API + walkthrough: [`src/qb_compiler/ising/README.md`](src/qb_compiler/ising/README.md)
+and [Notebook 17](notebooks/17_nvidia_ising_integration.ipynb).
 
 ---
 
@@ -278,7 +287,7 @@ Gate recommendations appear in `qbc preflight` and `qbc analyze` when circuit ty
 | IQM        | Garnet, Emerald                | 5-20    | CZ, PRX       |
 | Quantinuum | H2                             | 32      | RZ, U1Q, ZZ   |
 
-Calibration data can be loaded from local JSON files or fetched from vendor APIs.
+Calibration data can be loaded from local JSON files OR fetched live from vendor APIs via `LiveCalibrationProvider`. The live path requires `pip install qb-compiler[qubitboost]` and a saved IBM-credentials profile; see Quick Start for the live-fetch workflow.
 
 ---
 

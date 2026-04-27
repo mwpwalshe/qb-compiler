@@ -5,6 +5,69 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-04-27
+
+Connectivity-aware chain selection. Closes the v0.5.0 UCCSD/HEA regression.
+
+v0.5.0 had three latent bugs that combined to make the live-calibration
+path underperform the v0.4 static-fixture path on dense-1q workloads
+(UCCSD, hardware-efficient ansatzes). v0.5.1 fixes all three. Headline
+benchmark result on IBM Fez (n=30 random seeds, paired Wilcoxon
+signed-rank, Bonferroni-adjusted, classical noise-aware fidelity scoring
+against a fresh live calibration snapshot):
+
+| Comparison                       | v0.5.0 (broken) | v0.5.1 (fixed)        |
+|----------------------------------|-----------------|------------------------|
+| v0.5 vs v0.4 fixture path        | 2W / 3L / 3T    | **0W / 0L / 8T**       |
+| v0.5 vs Qiskit `optimization_level=3` | 3W / 5L / 0T  | **5W / 2L / 1T**       |
+| UCCSD-H4 vs Qiskit (median delta) | -3.9 % (loss)  | **+12.3 %** (p<0.0001) |
+| QAOA-8 ring p=2 vs Qiskit         | +13.9 %        | +8.8 % (p<0.0001)      |
+| HEA-8 d=4 vs Qiskit               | -5.5 %         | +0.3 %                 |
+
+Full circuit suite + raw data:
+`QubitBoost-internal/experiments/qb_compiler_v0_5_benchmarks/`.
+
+### Fixed
+- **Connectivity-blind chain selection (the load-bearing fix).**
+  `QBCalibrationLayout` previously picked the N best-scoring physical
+  qubits regardless of whether they formed a connected subgraph on the
+  device coupling map. On dense-2q circuits this often picked qubits
+  scattered across the chip, forcing the downstream router to insert
+  many SWAPs and crashing post-routing fidelity. v0.5.1 adds
+  `_vf2_calibration_aware()` which uses `rustworkx.vf2_mapping` to
+  enumerate subgraph isomorphisms of the circuit's 2q interaction graph
+  onto the device coupling map and scores each candidate by
+  `sum(per-qubit scores) + sum(per-edge gate errors × interaction
+  count)`. Falls back to the v0.5.0 topology-blind path if VF2 finds no
+  mapping (e.g. when the circuit has no 2q interactions).
+- **Mixed 1q/2q gate-error pooling.** v0.5.0's `_build_qubit_scores`
+  pooled single-qubit and two-qubit gate errors into a single arithmetic
+  mean. With the v0.5 live calibration's full coverage, the small 1q
+  errors (~1e-4) diluted the larger 2q errors (~5e-3) by ~5x, distorting
+  score ordering. v0.5.1 tracks `gate_error_1q` and `gate_error_2q` on
+  separate score keys with weights `w_2q=0.40`, `w_1q=0.00`. The 1q
+  signal is captured but weighted at zero because the connectivity-aware
+  scorer above doesn't usefully consume it without per-edge 1q
+  modelling; that's scheduled for v0.6.
+- **`_provider_to_dict` LiveCalibrationProvider unwrapping.** When called
+  with a `LiveCalibrationProvider`, the materializer's
+  `getattr(provider, "_props")` returned None because the
+  `BackendProperties` lives at `provider._snapshot._props`, one level
+  deeper. The materialised calibration dict was missing `coupling_map`,
+  `n_qubits`, and `basis_gates`. Without `coupling_map`, the new
+  VF2 path was a silent no-op. Fixed by drilling into `_snapshot._props`
+  if `_props` is absent at the top level.
+
+### Deprecated
+- Nothing. v0.5.1 is wire-compatible with v0.5.0.
+
+### Notes on prior v0.5.0 release notes
+The v0.5.0 entry below contains a workload-dependent regression
+disclosure that is now obsolete. The regression is closed in v0.5.1.
+Anyone reading v0.5.0 release notes for the first time should treat
+v0.5.1 as the authoritative version; v0.5.0 is retained below for
+historical context.
+
 ## [0.5.0] - 2026-04-26
 
 Live calibration end-to-end against real backends. The
