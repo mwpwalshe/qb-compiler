@@ -72,7 +72,7 @@ class TestQBCalibrationLayout:
             cal_data = json.load(f)
 
         scores = _build_qubit_scores(cal_data)
-        # Qubit 4 should have one of the best (lowest) scores
+        # Qubit 4 should have one of the best (lowest) scores by per-qubit metric
         ranked = sorted(scores.items(), key=lambda kv: kv[1])
         best_ids = [qid for qid, _ in ranked[:3]]
         assert 4 in best_ids, (
@@ -80,7 +80,12 @@ class TestQBCalibrationLayout:
             f"but top 3 are {best_ids} with scores {dict(ranked[:5])}"
         )
 
-        # Now verify the layout actually uses qubit 4 for a small circuit
+        # v0.5.1: layout is connectivity-aware via VF2. The chosen physical
+        # qubits must form a connected subgraph on the device coupling map AND
+        # have low total per-qubit + per-edge score. For a 2q Bell circuit, the
+        # winning pair will be the lowest-total-cost connected edge in the
+        # coupling map -> not necessarily the single best-individual qubit if
+        # that qubit's only neighbours have high error.
         qc = QuantumCircuit(2)
         qc.h(0)
         qc.cx(0, 1)
@@ -90,9 +95,21 @@ class TestQBCalibrationLayout:
         cal_pass.run(dag)
 
         layout = cal_pass.property_set["layout"]
-        assigned = {layout[vq] for vq in qc.qubits}
-        assert 4 in assigned, (
-            f"Qubit 4 should be assigned for a 2-qubit circuit, but got physical qubits {assigned}"
+        assigned = sorted({layout[vq] for vq in qc.qubits})
+        # Must be a connected pair on the coupling map
+        coupling_edges = {tuple(sorted(e)) for e in cal_data.get("coupling_map", [])}
+        assert tuple(assigned) in coupling_edges, (
+            f"v0.5.1 must pick a connected pair; got {assigned} which is not in the coupling map"
+        )
+        # And the pair's total score should be in the top quartile of all coupling edges
+        edge_total = sum(scores.get(q, 1.0) for q in assigned)
+        all_edge_totals = sorted(
+            sum(scores.get(q, 1.0) for q in edge) for edge in coupling_edges
+        )
+        top_quartile_threshold = all_edge_totals[len(all_edge_totals) // 4]
+        assert edge_total <= top_quartile_threshold, (
+            f"v0.5.1 chose pair {assigned} with total score {edge_total:.4f}; "
+            f"top quartile of coupling edges is <={top_quartile_threshold:.4f}"
         )
 
 
