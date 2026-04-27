@@ -27,6 +27,28 @@ against a fresh live calibration snapshot):
 Full circuit suite + raw data:
 `QubitBoost-internal/experiments/qb_compiler_v0_5_benchmarks/`.
 
+### Hardware companion (re-run, n=16 supersedes initial n=4)
+
+Initial release (2026-04-27 17:24 UTC) reported a hardware companion
+result of "v0.5.1 lands 6.4 mHa closer to E_RHF than Qiskit opt=3" on
+the H2O 4e4o HF state on IBM Fez at n=4 reps per arm. **A 90-minute
+follow-up at n=16 reps reversed the verdict**: same circuit, same
+layouts, but Qiskit opt=3 came in at |delta E_RHF| = 7.21 mHa vs
+v0.5.1's 12.33 mHa. The 5.12 mHa gap at n=16 is below 1 sigma of the
+combined SEMs (~12.5 mHa), so the honest verdict is **statistically
+equivalent on this single circuit at p=0.05**. The initial n=4 win was
+a tail event; the n>=5 / ideally n=8 hardware-claim rule applies and
+n=4 was below threshold for any defensible single-circuit verdict.
+
+The classical n=30-seed benchmark above is unaffected (different
+sample-size regime, paired comparison rather than absolute, drift-
+isolated by scoring against a single fresh snapshot for both arms).
+**The +12.3% UCCSD-H4 estimated-fidelity result vs Qiskit stands.**
+
+A larger statistical-power hardware run (n>=32, multi-window) is
+scheduled for v0.5.2 to make a hardware-validated absolute claim
+defensible.
+
 ### Fixed
 - **Connectivity-blind chain selection (the load-bearing fix).**
   `QBCalibrationLayout` previously picked the N best-scoring physical
