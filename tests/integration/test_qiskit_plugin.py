@@ -103,9 +103,7 @@ class TestQBCalibrationLayout:
         )
         # And the pair's total score should be in the top quartile of all coupling edges
         edge_total = sum(scores.get(q, 1.0) for q in assigned)
-        all_edge_totals = sorted(
-            sum(scores.get(q, 1.0) for q in edge) for edge in coupling_edges
-        )
+        all_edge_totals = sorted(sum(scores.get(q, 1.0) for q in edge) for edge in coupling_edges)
         top_quartile_threshold = all_edge_totals[len(all_edge_totals) // 4]
         assert edge_total <= top_quartile_threshold, (
             f"v0.5.1 chose pair {assigned} with total score {edge_total:.4f}; "

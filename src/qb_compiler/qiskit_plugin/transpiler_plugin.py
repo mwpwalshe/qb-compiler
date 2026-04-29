@@ -313,7 +313,8 @@ class QBCalibrationLayout(AnalysisPass):
             logger.warning(
                 "QBCalibrationLayout: circuit needs %d qubits but calibration "
                 "only covers %d — skipping layout",
-                n_virtual, len(self._scores),
+                n_virtual,
+                len(self._scores),
             )
             return
 
@@ -325,15 +326,17 @@ class QBCalibrationLayout(AnalysisPass):
             layout_phys = [qid for qid, _ in ranked[:n_virtual]]
             logger.info(
                 "QBCalibrationLayout: VF2 didn't find an isomorphism — falling "
-                "back to topology-blind top-%d. Layout: %s", n_virtual, layout_phys,
+                "back to topology-blind top-%d. Layout: %s",
+                n_virtual,
+                layout_phys,
             )
         else:
             logger.info(
-                "QBCalibrationLayout: VF2 calibration-aware layout: %s", layout_phys,
+                "QBCalibrationLayout: VF2 calibration-aware layout: %s",
+                layout_phys,
             )
 
-        layout_dict = {v_qubit: layout_phys[v_idx]
-                       for v_idx, v_qubit in enumerate(dag.qubits)}
+        layout_dict = {v_qubit: layout_phys[v_idx] for v_idx, v_qubit in enumerate(dag.qubits)}
         self.property_set["layout"] = Layout(layout_dict)
 
     def _vf2_calibration_aware(self, dag: Any, n_virtual: int) -> list[int] | None:
@@ -400,7 +403,11 @@ class QBCalibrationLayout(AnalysisPass):
         # Limit work; we want the best of a reasonable number of candidates.
         try:
             mappings = rx.vf2_mapping(
-                device, circuit_graph, subgraph=True, induced=False, id_order=False,
+                device,
+                circuit_graph,
+                subgraph=True,
+                induced=False,
+                id_order=False,
             )
         except Exception:
             return None
