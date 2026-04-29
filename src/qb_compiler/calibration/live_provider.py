@@ -143,7 +143,9 @@ class LiveCalibrationProvider(CalibrationProvider):
         self._backend = backend
         # Pass cache_ttl down to the hub so both layers agree on freshness.
         self._hub = CalibrationHub(
-            api_key=api_key, account=account, max_age_minutes=cache_ttl_minutes,
+            api_key=api_key,
+            account=account,
+            max_age_minutes=cache_ttl_minutes,
         )
         self._cache_ttl = cache_ttl_minutes
         self._snapshot = self._hub.get_latest(backend)
