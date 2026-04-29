@@ -189,7 +189,7 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
                 "readout_error_0to1": getattr(q, "readout_error_0to1", None),
                 "readout_error_1to0": getattr(q, "readout_error_1to0", None),
             }
-            for q in provider.get_all_qubit_properties()
+            for q in provider.get_all_qubit_properties()  # type: ignore[attr-defined]
         ],
         "gate_properties": [
             {
@@ -200,7 +200,7 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
                     "gate_length": g.gate_time_ns,
                 },
             }
-            for g in provider.get_all_gate_properties()
+            for g in provider.get_all_gate_properties()  # type: ignore[attr-defined]
         ],
     }
 
@@ -407,10 +407,8 @@ class QBCalibrationLayout(AnalysisPass):
 
         best_score = float("inf")
         best_layout: list[int] | None = None
-        n_inspected = 0
         max_inspect = 256  # bound runtime
-        for m in mappings:
-            n_inspected += 1
+        for n_inspected, m in enumerate(mappings, start=1):
             # m: dict[device_node_idx -> circuit_node_idx]. Invert to
             # circuit_node_idx -> physical qubit (via the nodes lookup).
             inv = {circuit_v: device_node_idx for device_node_idx, circuit_v in m.items()}
