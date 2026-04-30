@@ -29,6 +29,8 @@ from qiskit.transpiler import CouplingMap
 from qiskit.transpiler.basepasses import AnalysisPass
 from qiskit.transpiler.layout import Layout
 
+from qb_compiler.config import BACKEND_CONFIGS
+
 if TYPE_CHECKING:
     from qiskit.circuit import QuantumCircuit
 
@@ -119,6 +121,99 @@ def _load_calibration_dict(source: dict | str | Path) -> dict:
     if isinstance(source, dict):
         return source
     raise TypeError(f"calibration_data must be a dict or path, got {type(source)}")
+
+
+def _resolve_backend(
+    backend: object | None,
+) -> tuple[list[str] | None, CouplingMap | None, str | None]:
+    """Resolve a *backend* arg to ``(basis_gates, coupling_map, name)``.
+
+    Accepts ``None``, a string registered in :data:`BACKEND_CONFIGS`, or
+    a Qiskit ``BackendV1`` / ``BackendV2`` instance. The object path
+    queries ``.configuration()`` / ``.target`` / ``.basis_gates`` at
+    runtime so the registry's cached gate set can't go stale on the
+    real device (e.g. Heron r2 went from ``cx`` to ``ecr``).
+
+    The returned ``name`` is forwarded to :func:`_provider_to_dict` for
+    snapshot labelling when a calibration provider is also passed.
+    """
+    if backend is None:
+        return None, None, None
+
+    if isinstance(backend, str):
+        if backend in BACKEND_CONFIGS:
+            spec = BACKEND_CONFIGS[backend]
+            return list(spec.basis_gates), None, backend
+        # Unknown string. Return it as the name so the calibration provider
+        # still gets a label, but skip backend-aware targeting.
+        return None, None, backend
+
+    # Duck-typed object path. Tolerates BackendV1, BackendV2, IBM-runtime
+    # backends, and minimal test stubs without pinning a Qiskit class.
+    name_attr = getattr(backend, "name", None)
+    name: str | None
+    if callable(name_attr):
+        # BackendV1 exposes name as a method.
+        try:
+            name = str(name_attr())
+        except Exception:
+            name = None
+    elif isinstance(name_attr, str):
+        name = name_attr
+    else:
+        name = None
+
+    basis_gates: list[str] | None = None
+    coupling_map: CouplingMap | None = None
+
+    # .configuration() covers BackendV1 and qiskit-ibm-runtime BackendV2
+    # (which keeps it for back-compat).
+    config_fn = getattr(backend, "configuration", None)
+    if callable(config_fn):
+        try:
+            cfg = config_fn()
+        except Exception:
+            cfg = None
+        if cfg is not None:
+            bg = getattr(cfg, "basis_gates", None)
+            if bg is not None:
+                basis_gates = list(bg)
+            cm = getattr(cfg, "coupling_map", None)
+            if cm is not None:
+                try:
+                    coupling_map = CouplingMap(couplinglist=list(cm))
+                except Exception:
+                    coupling_map = None
+
+    # Modern BackendV2 fallback when .configuration() did not yield a basis.
+    if basis_gates is None:
+        target = getattr(backend, "target", None)
+        if target is not None:
+            op_names = getattr(target, "operation_names", None)
+            if op_names is not None:
+                basis_gates = list(op_names)
+            build_cm = getattr(target, "build_coupling_map", None)
+            if coupling_map is None and callable(build_cm):
+                try:
+                    coupling_map = build_cm()
+                except Exception:
+                    coupling_map = None
+
+    # Bare .basis_gates attr, mostly for test stubs.
+    if basis_gates is None:
+        bg = getattr(backend, "basis_gates", None)
+        if bg is not None:
+            basis_gates = list(bg)
+
+    if basis_gates is None:
+        raise TypeError(
+            f"backend object of type {type(backend).__name__} does not expose "
+            "basis_gates via .configuration(), .target, or .basis_gates. "
+            "Pass a string backend name registered in BACKEND_CONFIGS, "
+            "or a Qiskit BackendV1/V2 instance."
+        )
+
+    return basis_gates, coupling_map, name
 
 
 def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict:
@@ -559,7 +654,7 @@ class QBTranspilerPlugin(QBCalibrationLayoutPlugin):
 
 def qb_transpile(
     circuit: QuantumCircuit,
-    backend: str | None = None,
+    backend: object | None = None,
     calibration_path: str | Path | None = None,
     calibration_data: dict | None = None,
     calibration_provider: object | None = None,
@@ -576,8 +671,13 @@ def qb_transpile(
     circuit:
         The Qiskit ``QuantumCircuit`` to transpile.
     backend:
-        Target backend name (e.g. ``"ibm_fez"``).  Used to look up
-        basis gates and coupling map from qb-compiler's backend registry.
+        Either a string backend name (e.g. ``"ibm_fez"``) registered in
+        :data:`BACKEND_CONFIGS`, or a Qiskit ``BackendV1`` / ``BackendV2``
+        instance. The object path reads ``basis_gates`` and
+        ``coupling_map`` from the live backend at runtime via
+        ``.configuration()`` / ``.target``, so the registry can't go
+        stale on the real device. Added in v0.5.2 after Heron r2 went
+        from ``cx`` to ``ecr``.
     calibration_path:
         Path to a QubitBoost ``calibration_hub`` JSON file.
     calibration_data:
@@ -600,31 +700,26 @@ def qb_transpile(
     """
     from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
-    from qb_compiler.config import BACKEND_CONFIGS
+    # Resolve backend first so the calibration provider gets the right name.
+    basis_gates, backend_coupling, backend_name = _resolve_backend(backend)
 
     # Resolve calibration. Provider takes precedence; we materialise its
     # snapshot to a dict so the existing QBCalibrationLayout pass (which
     # consumes a dict, not a provider) can be reused unchanged.
     cal_dict: dict | None = None
     if calibration_provider is not None:
-        cal_dict = _provider_to_dict(calibration_provider, backend)
+        cal_dict = _provider_to_dict(calibration_provider, backend_name)
     elif calibration_path is not None:
         cal_dict = _load_calibration_dict(calibration_path)
     elif calibration_data is not None:
         cal_dict = calibration_data
 
-    # Resolve backend properties for Qiskit
-    basis_gates = None
-    coupling_map = None
-    if backend is not None and backend in BACKEND_CONFIGS:
-        spec = BACKEND_CONFIGS[backend]
-        basis_gates = list(spec.basis_gates)
-
-        # Build coupling map from calibration data if available, else from
-        # calibration file, else leave as None (all-to-all)
-        if cal_dict and "coupling_map" in cal_dict:
-            edges = cal_dict["coupling_map"]
-            coupling_map = CouplingMap(couplinglist=edges)
+    # Prefer the calibration snapshot's coupling_map when present (live and
+    # window-matched), else whatever the backend object reported, else None.
+    coupling_map = backend_coupling
+    if cal_dict and "coupling_map" in cal_dict:
+        edges = cal_dict["coupling_map"]
+        coupling_map = CouplingMap(couplinglist=edges)
 
     try:
         pm = generate_preset_pass_manager(

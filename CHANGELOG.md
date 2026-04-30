@@ -5,6 +5,53 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-04-30
+
+`qb_transpile` now accepts a Qiskit backend object directly, not only
+a string name. Closes the class of bug where the registry's hardcoded
+`basis_gates` drifts from the real device.
+
+### What changed
+
+`qb_transpile(circuit, backend=...)` used to require a string in
+`BACKEND_CONFIGS`. With v0.5.2 you can also pass a Qiskit
+`BackendV1` / `BackendV2` instance, in which case `basis_gates` and
+`coupling_map` are pulled from `.configuration()` / `.target` /
+`.basis_gates` at runtime.
+
+### Why
+
+`BACKEND_CONFIGS["ibm_fez"]` shipped with `cx` as the native 2q gate.
+IBM Heron r2 (Fez, Marrakesh) actually uses `ecr`. The routed circuit
+would emit cx and IBM Runtime would reject it. Same trap is waiting for
+any future Heron-family gate-set update. Querying the live backend
+avoids it permanently.
+
+```python
+from qiskit_ibm_runtime import QiskitRuntimeService
+service = QiskitRuntimeService()
+backend = service.backend("ibm_fez")
+
+# v0.5.1 and earlier (still works, still emits stale cx for Heron):
+compiled = qb_transpile(circuit, backend="ibm_fez", ...)
+
+# v0.5.2 (recommended): pulls live ecr basis from the backend itself
+compiled = qb_transpile(circuit, backend=backend, ...)
+```
+
+### Backward compat
+
+String path is unchanged. Existing callers passing `backend="ibm_fez"`
+keep the legacy registry behaviour. The registry entries for `ibm_fez`,
+`ibm_marrakesh`, `ibm_torino` were left as-is on purpose, the object
+path makes them advisory rather than load-bearing for transpilation.
+
+### Tests
+
+3 new integration tests cover the object path, the legacy string path
+(unchanged), and the error case where a backend object exposes none of
+the inspected attributes.
+
 ## [0.5.1] - 2026-04-27
 
 Connectivity-aware chain selection. Closes the v0.5.0 UCCSD/HEA regression.

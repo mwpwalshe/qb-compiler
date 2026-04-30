@@ -181,6 +181,97 @@ class TestQBTranspile:
 
 
 @requires_qiskit
+class TestQBTranspileBackendObject:
+    """qb_transpile takes a Qiskit backend object, not only a string (v0.5.2).
+
+    Covers the case where the registry's hardcoded basis_gates lag the
+    live device (Heron r2 went from ``cx`` to ``ecr``).
+    """
+
+    def _stub_backend(self, basis_gates, name="stub_heron", coupling_map=None):
+        """Tiny duck-type backend that mimics BackendV1.configuration()."""
+
+        class _Cfg:
+            def __init__(self, bg, cm):
+                self.basis_gates = list(bg)
+                self.coupling_map = cm
+
+        class _Backend:
+            def __init__(self, n, bg, cm):
+                self.name = n
+                self._cfg = _Cfg(bg, cm)
+
+            def configuration(self):
+                return self._cfg
+
+        return _Backend(name, basis_gates, coupling_map)
+
+    def test_qb_transpile_with_backend_object_uses_runtime_basis(self):
+        """Backend object's runtime basis_gates wins over the registry."""
+        from qiskit.circuit import QuantumCircuit
+
+        from qb_compiler.qiskit_plugin import qb_transpile
+
+        backend_obj = self._stub_backend(
+            basis_gates=["id", "rz", "sx", "x", "ecr", "reset"],
+            name="stub_heron_r2",
+        )
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure([0, 1], [0, 1])
+
+        compiled = qb_transpile(qc, backend=backend_obj, optimization_level=2)
+
+        # Backend exposed ecr only, cx must be translated away.
+        ops = compiled.count_ops()
+        assert "cx" not in ops, f"cx leaked through despite ecr-only backend. Ops: {dict(ops)}"
+
+    def test_qb_transpile_string_path_unchanged(self):
+        """Legacy string path keeps the registry behaviour."""
+        from qiskit.circuit import QuantumCircuit
+
+        from qb_compiler.qiskit_plugin import qb_transpile
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure([0, 1], [0, 1])
+
+        compiled = qb_transpile(
+            qc,
+            backend="ibm_fez",  # registry still says cx
+            calibration_path=CALIBRATION_FIXTURE,
+            optimization_level=2,
+        )
+
+        # String path keeps cx, that bug stays opt-in until callers move
+        # to passing the backend object.
+        assert isinstance(compiled, QuantumCircuit)
+
+    def test_qb_transpile_unknown_object_raises(self):
+        """Backend object exposing nothing usable raises TypeError."""
+        from qiskit.circuit import QuantumCircuit
+
+        from qb_compiler.qiskit_plugin import qb_transpile
+
+        class _Useless:
+            pass
+
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+
+        try:
+            qb_transpile(qc, backend=_Useless())
+        except TypeError as exc:
+            assert "basis_gates" in str(exc)
+            return
+        raise AssertionError("expected TypeError on unusable backend object")
+
+
+@requires_qiskit
 class TestQBPassManager:
     """Tests for QBPassManager."""
 
