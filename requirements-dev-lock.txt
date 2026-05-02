@@ -191,7 +191,7 @@ pyyaml==6.0.3
     #   pre-commit
 pyzmq==27.1.0
     # via jupyter-client
-qiskit==1.4.5
+qiskit==2.3.1
     # via qb-compiler (pyproject.toml)
 referencing==0.37.0
     # via
