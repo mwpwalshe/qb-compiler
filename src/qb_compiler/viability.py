@@ -91,6 +91,7 @@ class ViabilityResult:
     cost_estimate_usd: float | None = None
     error_budget: dict[str, float] | None = None
     fidelity_typical_abs_error: float | None = None
+    calibration_age_days: float | None = None
 
     def __str__(self) -> str:
         lines = [
@@ -109,6 +110,8 @@ class ViabilityResult:
             f"Status: {self.status}",
             f"Reason: {self.reason}",
         ]
+        if self.calibration_age_days is not None:
+            lines.append(f"Calibration snapshot age: {self.calibration_age_days:.0f} days")
         if self.error_budget:
             total = sum(self.error_budget.values()) or 1.0
             lines.append("Error budget:")
@@ -164,6 +167,22 @@ def _count_2q(tc: Any) -> int:
         for inst in tc.data
         if len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset")
     )
+
+
+def _calibration_age_days(backend_props: Any) -> float | None:
+    """Age of the calibration snapshot in days, when the props carry a timestamp."""
+    ts = getattr(backend_props, "timestamp", None)
+    if not ts:
+        return None
+    import datetime
+
+    try:
+        when = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=datetime.timezone.utc)
+    return (datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() / 86400.0
 
 
 def _estimate_routed_fidelity(
@@ -389,6 +408,13 @@ def check_viability(
 
     circuit_name = getattr(circuit, "name", None) or f"{n_qubits}q circuit"
 
+    cal_age = _calibration_age_days(backend_props) if backend_props is not None else None
+    if cal_age is not None and cal_age > 7:
+        suggestions.append(
+            f"Calibration snapshot is {cal_age:.0f} days old; the estimate reflects that "
+            "date. Pass fresh backend_props or set QBC_CALIBRATION_DIR for current numbers."
+        )
+
     return ViabilityResult(
         viable=viable,
         status=status,
@@ -405,6 +431,7 @@ def check_viability(
         cost_estimate_usd=round(cost, 4) if cost else None,
         error_budget={k: round(v, 6) for k, v in error_budget.items()},
         fidelity_typical_abs_error=FIDELITY_TYPICAL_ABS_ERROR,
+        calibration_age_days=round(cal_age, 1) if cal_age is not None else None,
     )
 
 
