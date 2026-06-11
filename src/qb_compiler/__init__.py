@@ -33,6 +33,12 @@ from qb_compiler.compiler import (
 
 # ── eagerly imported (lightweight, always needed) ────────────────────
 from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
+from qb_compiler.discovery import (
+    DiscoveredBackend,
+    check_viability_pub,
+    discover_backends,
+    rank_discovered,
+)
 from qb_compiler.exceptions import (
     BackendNotSupportedError,
     BudgetExceededError,
@@ -43,6 +49,7 @@ from qb_compiler.exceptions import (
     InvalidCircuitError,
     QBCompilerError,
 )
+from qb_compiler.qec_preflight import QECPreflightResult, qec_preflight
 from qb_compiler.recommender import BackendRecommender, RecommendationReport
 from qb_compiler.viability import ViabilityResult, check_viability
 
@@ -134,6 +141,7 @@ __all__ = [
     "CompilerConfig",
     "CostEstimate",
     "CostEstimator",
+    "DiscoveredBackend",
     "EnhancedCompileResult",
     "GateOp",
     "InvalidCircuitError",
@@ -143,11 +151,16 @@ __all__ = [
     "QBCircuit",
     "QBCompiler",
     "QBCompilerError",
+    "QECPreflightResult",
     "RecommendationReport",
     "ViabilityResult",
     "__version__",
     "check_viability",
+    "check_viability_pub",
+    "discover_backends",
     "passmanager",
+    "qec_preflight",
+    "rank_discovered",
 ]
 
 
