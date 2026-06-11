@@ -45,7 +45,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
     "ibm_fez": BackendSpec(
         provider="ibm",
         n_qubits=156,
-        basis_gates=("id", "rz", "sx", "x", "cx", "reset"),
+        basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 156q (Heron r2)",
         cost_per_shot=0.00016,
         median_cx_error=0.005,
@@ -56,7 +56,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
     "ibm_torino": BackendSpec(
         provider="ibm",
         n_qubits=133,
-        basis_gates=("id", "rz", "sx", "x", "cx", "reset"),
+        basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 133q (Heron r1)",
         cost_per_shot=0.00014,
         median_cx_error=0.006,
@@ -67,7 +67,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
     "ibm_marrakesh": BackendSpec(
         provider="ibm",
         n_qubits=156,
-        basis_gates=("id", "rz", "sx", "x", "cx", "reset"),
+        basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 156q (Heron r2)",
         cost_per_shot=0.00016,
         median_cx_error=0.0055,
