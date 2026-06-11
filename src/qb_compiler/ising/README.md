@@ -68,6 +68,46 @@ nvidia = IsingDecoderWrapper(spec, config)
 nvidia_result = evaluate_logical_error_rate(spec, nvidia, shots=50_000, seed=42)
 ```
 
+## Telemetry surface (v0.5.0)
+
+Both decoders now expose `decode_full()`, which returns a frozen
+`IsingDecodeResult` instead of the bare bool array. Design doc:
+`docs/design/v050_telemetry_surface.md`. Everything on it is a
+measurement (prediction, per-shot `mwpm_weight`, layout fingerprint,
+decoder name/version provenance, decode timing). No thresholds, no
+gating, no policy of any kind lives in this package; if you want to
+make decisions on these signals, that happens in your own code.
+
+```python
+result = decoder.decode_full(detector_events)
+result.mwpm_weight        # (B,) float64, free via pymatching return_weights
+result.decoder_version    # package version, or "sha256:<first16>" of the
+                          # weights file on the NVIDIA path ("user-supplied"
+                          # when no checkpoint path was given)
+result.to_json_dict()     # aggregates + metadata only; pass
+                          # include_arrays=True to embed per-shot arrays
+```
+
+Opt-in per-shot fields (default off, they get big fast, see the memory
+table in the design doc): `decode_full(collect_residual=True)` keeps the
+residual detector events, `collect_logits=True` keeps the NVIDIA
+pre-decoder's raw forward-pass output (always `None` on the bare
+PyMatching path, nothing is recomputed to fill it). On the wrapper,
+`decode(events, collect_telemetry=True)` returns the same record from a
+single forward pass; the default `decode()` call is unchanged from
+v0.4.x.
+
+`PyMatchingDecoder(spec, enable_correlations=True)` opts into
+PyMatching's correlated matching (needs `pymatching >= 2.3`). Note this
+changes what `mwpm_weight` means (two-pass modified edge weights), which
+is exactly why it stays off by default.
+
+`evaluate_logical_error_rate(..., collect_telemetry=True)` attaches a
+bounded `EvaluationTelemetry` to the returned record: aggregate counts
+over every shot plus a uniform reservoir sample of at most
+`telemetry_max_shots` (default 1024) per-shot records, so the harness
+stays at fixed memory no matter the shot count.
+
 ## Hardware-data status (as of release)
 
 NVIDIA Ising models target **rotated surface codes**.  Existing hardware

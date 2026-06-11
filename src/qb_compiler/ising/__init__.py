@@ -45,7 +45,9 @@ NVIDIA Open Model License; qb-compiler does not redistribute them.
 from __future__ import annotations
 
 from qb_compiler.ising.decoder import (
+    EvaluationTelemetry,
     IsingDecoderConfig,
+    IsingDecodeResult,
     IsingDecoderWrapper,
     LogicalErrorRate,
     PyMatchingDecoder,
@@ -62,6 +64,8 @@ from qb_compiler.ising.stim_adapter import (
 )
 
 __all__ = [
+    "EvaluationTelemetry",
+    "IsingDecodeResult",
     "IsingDecoderConfig",
     "IsingDecoderWrapper",
     "LogicalErrorRate",
