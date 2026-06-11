@@ -103,7 +103,7 @@ class TestRecommendGates:
         opt = next(r for r in recs if r.gate == "OptGate")
         assert opt.status == "Eligible"
         assert opt.validated_claim is not None
-        assert "117" in opt.validated_claim
+        assert opt.validated_claim == "adaptive shot allocation"
 
     def test_qaoa_medium_confidence(self) -> None:
         recs = recommend_gates("qaoa", Confidence.MEDIUM)
