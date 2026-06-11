@@ -37,6 +37,11 @@ class VendorPricing:
     cost_per_shot_usd: float
     currency: str = "USD"
     notes: str = ""
+    cost_per_task_usd: float = 0.0
+
+    def job_cost(self, shots: int, tasks: int = 1) -> float:
+        """Total cost of a job: per-shot volume plus per-task fees (Braket-style)."""
+        return self.cost_per_shot_usd * shots + self.cost_per_task_usd * tasks
 
 
 # ── Master pricing table ────────────────────────────────────────────
@@ -89,12 +94,14 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
     # IonQ (AWS Braket)
     "ionq_aria": VendorPricing(
         backend="ionq_aria",
+        cost_per_task_usd=0.30,
         provider="ionq",
         cost_per_shot_usd=0.30,
         notes="Aria-2, 25q, Braket pricing",
     ),
     "ionq_forte": VendorPricing(
         backend="ionq_forte",
+        cost_per_task_usd=0.30,
         provider="ionq",
         cost_per_shot_usd=0.30,
         notes="Forte-1, 36q, Braket pricing",
@@ -102,12 +109,14 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
     # IQM (AWS Braket)
     "iqm_garnet": VendorPricing(
         backend="iqm_garnet",
+        cost_per_task_usd=0.30,
         provider="iqm",
         cost_per_shot_usd=0.00045,
         notes="Garnet, 20q, Braket pricing",
     ),
     "iqm_emerald": VendorPricing(
         backend="iqm_emerald",
+        cost_per_task_usd=0.30,
         provider="iqm",
         cost_per_shot_usd=0.00020,
         notes="Emerald, 5q, Braket pricing",
@@ -115,6 +124,7 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
     # Rigetti (AWS Braket)
     "rigetti_ankaa": VendorPricing(
         backend="rigetti_ankaa",
+        cost_per_task_usd=0.30,
         provider="rigetti",
         cost_per_shot_usd=0.00035,
         notes="Ankaa-3, 84q, Braket pricing",
