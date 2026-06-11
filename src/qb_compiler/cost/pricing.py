@@ -42,6 +42,30 @@ class VendorPricing:
 # ── Master pricing table ────────────────────────────────────────────
 # Kept in sync with config.py BackendSpec.cost_per_shot.
 
+# Last manual review of the price table. Update this whenever the numbers are re-checked
+# against vendor pricing pages; get_pricing() warns when the table has gone stale.
+PRICING_AS_OF = "2026-02-15"
+_PRICING_STALE_DAYS = 90
+_stale_warned = False
+
+
+def _warn_if_stale() -> None:
+    global _stale_warned
+    if _stale_warned:
+        return
+    import datetime
+    import warnings
+
+    age = (datetime.date.today() - datetime.date.fromisoformat(PRICING_AS_OF)).days
+    if age > _PRICING_STALE_DAYS:
+        warnings.warn(
+            f"qb-compiler price table last reviewed {PRICING_AS_OF} ({age} days ago); "
+            "treat cost estimates as indicative and check vendor pricing pages.",
+            stacklevel=3,
+        )
+        _stale_warned = True
+
+
 VENDOR_PRICING: dict[str, VendorPricing] = {
     # IBM Heron (Utility tier, ~$1.60/sec)
     "ibm_fez": VendorPricing(
@@ -106,6 +130,7 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
 
 
 def get_pricing(backend: str) -> VendorPricing | None:
+    _warn_if_stale()
     """Look up pricing for *backend*, returning *None* if unknown."""
     return VENDOR_PRICING.get(backend)
 
