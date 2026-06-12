@@ -97,12 +97,18 @@ def test_qec_preflight_and_cli_smokes(tmp_path):
     f = tmp_path / "bell.qasm"
     f.write_text(qasm)
     runner = CliRunner()
-    for args in (
+    smokes = [
         ["preflight", str(f), "-b", "ibm_fez"],
         ["when", str(f), "--seeds", "1"],
-        ["verify", str(f), "-b", "ibm_fez", "--shots", "64"],
         ["doctor"],
         ["info"],
-    ):
+    ]
+    try:
+        import qiskit_aer  # noqa: F401
+
+        smokes.append(["verify", str(f), "-b", "ibm_fez", "--shots", "64"])
+    except ImportError:
+        pass
+    for args in smokes:
         result = runner.invoke(cli, args)
         assert result.exit_code == 0, (args, result.output, result.exception)
