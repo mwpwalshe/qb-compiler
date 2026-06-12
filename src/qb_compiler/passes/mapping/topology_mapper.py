@@ -72,7 +72,7 @@ class TopologyMapper(TransformationPass):
         interactions = self._extract_interactions(circuit)
 
         if not interactions:
-            # No 2Q gates — use identity mapping
+            # No 2Q gates: use identity mapping
             layout = {i: i for i in range(n_logical)}
         else:
             layout = self._find_layout(circuit, interactions)

@@ -60,7 +60,7 @@ class TestASAPScheduler:
         ctx: dict = {}
         result = scheduler.run(circ, ctx)
 
-        # All three gates are independent — depth should be 1
+        # All three gates are independent: depth should be 1
         assert result.circuit.depth == 1
         assert result.circuit.gate_count == 3
 

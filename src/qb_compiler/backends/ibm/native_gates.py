@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# IBM Heron r1/r2 native basis — the hardware runs CZ natively (Heron),
+# IBM Heron r1/r2 native basis: the hardware runs CZ natively (Heron),
 # but the Qiskit transpiler commonly targets ECR for Eagle.  We include
 # both basis sets so the compiler can target either.
 
@@ -12,7 +12,7 @@ IBM_HERON_BASIS: tuple[str, ...] = ("cz", "rz", "sx", "x", "id")
 IBM_EAGLE_BASIS: tuple[str, ...] = ("ecr", "rz", "sx", "x", "id")
 """Native gates for IBM Eagle r3 processors."""
 
-# Gate durations (typical, in nanoseconds) — used as defaults when
+# Gate durations (typical, in nanoseconds): used as defaults when
 # calibration data is unavailable.
 IBM_TYPICAL_GATE_TIMES_NS: dict[str, float] = {
     "id": 24.0,

@@ -193,7 +193,7 @@ Live calibration end-to-end against real backends. The
 ``LiveCalibrationProvider`` path stops being a stub: it now delegates to
 a working ``qubitboost_sdk.calibration.CalibrationHub``.
 
-### Architectural scope of v0.5 — the "in-process tier"
+### Architectural scope of v0.5: the "in-process tier"
 
 What this release ships and explicitly does not ship:
 
@@ -285,7 +285,7 @@ smaller than 2-qubit), but the data is now complete.
   convention internally (because qb-compiler's `BackendProperties`
   dataclass keeps only the legacy fields after parsing).
   `QBCalibrationLayout` consumes via the nested `parameters.gate_error`
-  path, which `_provider_to_dict()` emits — verified working.
+  path, which `_provider_to_dict()` emits: verified working.
 
 ### Benchmarks (re-run 2026-04-26)
 
@@ -346,7 +346,7 @@ above). Recommended replacement wording on the README:
   Previously only `calibration_path` and `calibration_data` were
   supported.
 - `_provider_to_dict` helper materialises a provider's snapshot into
-  the calibration dict `QBCalibrationLayout` consumes — enables the
+  the calibration dict `QBCalibrationLayout` consumes: enables the
   live provider to drive the layout pass without bespoke wiring.
 - `LiveCalibrationProvider(..., account="...")` parameter so external
   users can pass their saved-credential profile name. Default
@@ -355,7 +355,7 @@ above). Recommended replacement wording on the README:
 ### Changed
 - `LiveCalibrationProvider.refresh()` calls `hub.fetch()` directly to
   bypass the cache TTL. Previously it called `hub.get_latest()`, which
-  would silently serve cached data within the TTL window — contradicting
+  would silently serve cached data within the TTL window: contradicting
   the docstring's "force re-fetch" promise.
 - `LiveCalibrationProvider`'s `cache_ttl_minutes` is now propagated
   down to the hub it constructs, so both layers agree on freshness.

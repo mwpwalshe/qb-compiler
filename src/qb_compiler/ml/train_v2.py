@@ -326,7 +326,7 @@ def train_model_v2(
             logger.info(f"Training data saved to {parquet_path}")
     except ImportError:
         if verbose:
-            logger.info("pyarrow not available — skipping parquet export")
+            logger.info("pyarrow not available: skipping parquet export")
 
     return meta
 

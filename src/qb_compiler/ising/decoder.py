@@ -3,16 +3,16 @@
 Provides a small protocol :class:`SurfaceCodeDecoder` with two
 implementations:
 
-* :class:`PyMatchingDecoder` — MWPM baseline built directly from the
+* :class:`PyMatchingDecoder`: MWPM baseline built directly from the
   stim detector-error model.  Always available (``pymatching`` is a
   required runtime dep of :mod:`qb_compiler.ising`).
-* :class:`IsingDecoderWrapper` — optional wrapper around NVIDIA's
+* :class:`IsingDecoderWrapper`: optional wrapper around NVIDIA's
   Ising-Decoder-SurfaceCode-1 pre-decoder chain.  Uses
   ``torch``/``safetensors`` + user-supplied weights (gated on
   HuggingFace under the NVIDIA Open Model License); graceful
   ``ImportError`` if torch is not installed.
 
-The NVIDIA pre-decoder is NOT a standalone logical-error predictor —
+The NVIDIA pre-decoder is NOT a standalone logical-error predictor -
 it emits a 4-channel correction tensor that qb-compiler XORs onto the
 input syndromes before feeding the residual to PyMatching.  Both
 pipelines therefore return the same object type (an
@@ -380,7 +380,7 @@ class PyMatchingDecoder:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# NVIDIA Ising wrapper (optional — requires torch + weights)
+# NVIDIA Ising wrapper (optional: requires torch + weights)
 # ═══════════════════════════════════════════════════════════════════════
 
 
@@ -406,7 +406,7 @@ class IsingDecoderConfig:
         gives correct results on CPU.
     build_model:
         Optional callable that returns the torch ``nn.Module`` given the
-        :class:`SurfaceCodePatchSpec` — lets users plug in their own
+        :class:`SurfaceCodePatchSpec`: lets users plug in their own
         architecture if they are tracking the NVIDIA reference repo.
         If omitted, the wrapper raises :class:`NotImplementedError` with
         clear instructions on where to get the model definition.

@@ -10,22 +10,22 @@ Pass Contract
 
 Every pass follows a strict contract:
 
-1. ``__init__`` takes **configuration only** — no circuit data
+1. ``__init__`` takes **configuration only**: no circuit data
 2. ``run(circuit, context)`` returns a ``PassResult``
-3. Analysis passes override ``analyze(circuit, context)`` — read-only
-4. Transformation passes override ``transform(circuit, context)`` — may modify
+3. Analysis passes override ``analyze(circuit, context)``: read-only
+4. Transformation passes override ``transform(circuit, context)``: may modify
 
 Base Classes
 ------------
 
 There are two base classes to choose from:
 
-- ``AnalysisPass`` — override ``analyze(circuit, context) -> None``.
+- ``AnalysisPass``: override ``analyze(circuit, context) -> None``.
   Writes results to ``context`` but does not modify the circuit.
-- ``TransformationPass`` — override ``transform(circuit, context) -> PassResult``.
+- ``TransformationPass``: override ``transform(circuit, context) -> PassResult``.
   May return a new circuit.
 
-Example: Analysis Pass — Gate Frequency
+Example: Analysis Pass: Gate Frequency
 ----------------------------------------
 
 .. code-block:: python
@@ -63,7 +63,7 @@ Usage:
    print(ctx["gate_frequencies"])
    # {'h': 1, 'cx': 1}
 
-Example: Transformation Pass — Identity Gate Removal
+Example: Transformation Pass: Identity Gate Removal
 -----------------------------------------------------
 
 .. code-block:: python
@@ -226,9 +226,9 @@ Test with known circuits and expected outcomes:
 Tips
 ----
 
-- Keep passes **focused** — one pass, one transformation.
+- Keep passes **focused**: one pass, one transformation.
 - Use ``AnalysisPass`` for read-only passes, ``TransformationPass`` for mutations.
 - Test with edge cases: empty circuits, single-gate circuits, measurements.
-- Passes should be **idempotent** — running twice produces the same result.
+- Passes should be **idempotent**: running twice produces the same result.
 - The ``context`` dict is shared across all passes in a ``PassManager``.
   Use descriptive keys to avoid collisions.

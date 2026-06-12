@@ -106,7 +106,7 @@ class CommutationOptimizer(TransformationPass):
                             found_merge = True
                             break
                         else:
-                            # Different gate on overlapping qubits — stop
+                            # Different gate on overlapping qubits: stop
                             break
 
                     j += 1

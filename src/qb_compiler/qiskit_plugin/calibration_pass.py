@@ -113,7 +113,7 @@ class QBCalibrationPass(TransformationPass):
 
 
 def _score_qubits_from_target(target: Any) -> dict[int, float]:
-    """Score physical qubits from a Qiskit Target — lower is better.
+    """Score physical qubits from a Qiskit Target: lower is better.
 
     Combines gate error, readout error, and duration into a single
     quality metric per qubit.

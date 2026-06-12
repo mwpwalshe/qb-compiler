@@ -1,4 +1,4 @@
-"""Calibration subsystem — models, providers, and caching."""
+"""Calibration subsystem: models, providers, and caching."""
 
 from __future__ import annotations
 

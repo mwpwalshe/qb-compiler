@@ -1,4 +1,4 @@
-"""qb-compiler — calibration-aware quantum circuit compiler by QubitBoost.
+"""qb-compiler: calibration-aware quantum circuit compiler by QubitBoost.
 
 Built by `QubitBoost <https://qubitboost.io>`_.
 
@@ -138,7 +138,7 @@ def passmanager(backend: object = None, *, optimization_level: int = 2) -> objec
         pm.layout.append(cal_pass)
         return pm
 
-    # Fallback — no backend
+    # Fallback: no backend
     return generate_preset_pass_manager(optimization_level=optimization_level)
 
 

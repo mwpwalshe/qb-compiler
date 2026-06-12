@@ -2,7 +2,7 @@
 """Example 15: Circuit type detection and gate eligibility.
 
 Automatically detect whether your circuit is QAOA, VQE, QEC,
-or general — and see which QubitBoost gates are applicable.
+or general: and see which QubitBoost gates are applicable.
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def show_detection(name: str, qc: QuantumCircuit) -> None:
     if recs:
         print("QubitBoost Gate Eligibility:")
         for r in recs:
-            print(f"  {r.gate:14s}  {r.status} — {r.headline}")
+            print(f"  {r.gate:14s}  {r.status}: {r.headline}")
             if r.validated_claim:
                 print(f"  {'':14s}  Hardware-validated: {r.validated_claim} {r.qualifier}")
     print()

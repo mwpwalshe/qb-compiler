@@ -70,7 +70,7 @@ class GateCancellationPass(TransformationPass):
                             found_cancel = True
                             break
                         else:
-                            # Different gate on overlapping qubits — stop
+                            # Different gate on overlapping qubits: stop
                             break
                     # else: non-overlapping gate, keep scanning
                     j += 1

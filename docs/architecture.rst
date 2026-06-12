@@ -12,13 +12,13 @@ modified) circuit.
 
 The default pipeline at each optimisation level:
 
-- **Level 0** — Basis translation only. Decomposes gates into the target
+- **Level 0**: Basis translation only. Decomposes gates into the target
   backend's native gate set.
-- **Level 1** — Adds gate cancellation. Adjacent self-inverse gate pairs
+- **Level 1**: Adds gate cancellation. Adjacent self-inverse gate pairs
   (H-H, X-X, CX-CX on the same qubits) are eliminated.
-- **Level 2** (default) — Adds rotation merging. Consecutive single-qubit
+- **Level 2** (default): Adds rotation merging. Consecutive single-qubit
   rotations on the same axis are combined and normalised.
-- **Level 3** — Aggressive. Runs cancellation and rotation merge twice
+- **Level 3**: Aggressive. Runs cancellation and rotation merge twice
   to catch opportunities exposed by earlier passes.
 
 Pass types
@@ -26,11 +26,11 @@ Pass types
 
 Passes are organised into categories under ``qb_compiler.passes``:
 
-- **Transformation** — gate cancellation, rotation merge, decomposition
-- **Mapping** — qubit routing and layout selection (coupling-aware)
-- **Scheduling** — noise-aware gate ordering
-- **Analysis** — depth / fidelity / cost estimation
-- **QEC** — ancilla reservation for error correction (future)
+- **Transformation**: gate cancellation, rotation merge, decomposition
+- **Mapping**: qubit routing and layout selection (coupling-aware)
+- **Scheduling**: noise-aware gate ordering
+- **Analysis**: depth / fidelity / cost estimation
+- **QEC**: ancilla reservation for error correction (future)
 
 Calibration system
 ------------------
@@ -42,18 +42,18 @@ to noise-aware passes.
 abstract interface. Concrete implementations include:
 
 - :class:`~qb_compiler.calibration.static_provider.StaticCalibrationProvider`
-  — serves data from a JSON snapshot file (offline / testing).
+ : serves data from a JSON snapshot file (offline / testing).
 - :class:`~qb_compiler.calibration.cached_provider.CachedProvider`
-  — wraps another provider with time-based caching.
+ : wraps another provider with time-based caching.
 
 Calibration data is modelled by:
 
 - :class:`~qb_compiler.calibration.models.backend_properties.BackendProperties`
-  — full device snapshot
+ : full device snapshot
 - :class:`~qb_compiler.calibration.models.qubit_properties.QubitProperties`
-  — per-qubit T1, T2, readout errors
+ : per-qubit T1, T2, readout errors
 - :class:`~qb_compiler.calibration.models.coupling_properties.GateProperties`
-  — per-gate error rate and duration
+ : per-gate error rate and duration
 
 Fidelity estimation
 -------------------

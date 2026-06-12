@@ -226,11 +226,11 @@ def main() -> None:
 
     win_rate = wins / total * 100 if total > 0 else 0
     if win_rate >= 75:
-        console.print(f"\n  [bold green]WIN RATE: {win_rate:.0f}% — READY FOR HARDWARE[/bold green]")
+        console.print(f"\n  [bold green]WIN RATE: {win_rate:.0f}%: READY FOR HARDWARE[/bold green]")
     elif win_rate >= 50:
-        console.print(f"\n  [bold yellow]WIN RATE: {win_rate:.0f}% — Promising but needs tuning[/bold yellow]")
+        console.print(f"\n  [bold yellow]WIN RATE: {win_rate:.0f}%: Promising but needs tuning[/bold yellow]")
     else:
-        console.print(f"\n  [bold red]WIN RATE: {win_rate:.0f}% — Still losing[/bold red]")
+        console.print(f"\n  [bold red]WIN RATE: {win_rate:.0f}%: Still losing[/bold red]")
 
 
 if __name__ == "__main__":

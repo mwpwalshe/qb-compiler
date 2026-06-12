@@ -106,7 +106,7 @@ def est_fidelity(layout: dict[int, int], props: BackendProperties, n: int) -> fl
 def props_from_backend_target(backend: Any) -> BackendProperties:
     """Build BackendProperties from a live IBM backend's target.
 
-    This fetches FRESH calibration — not cached fixture data.
+    This fetches FRESH calibration: not cached fixture data.
     """
     target = backend.target
     n_qubits = target.num_qubits
@@ -310,7 +310,7 @@ def main() -> None:
         snap_path.mkdir(parents=True, exist_ok=True)
         ts_str = datetime.now(tz=timezone.utc).strftime("%Y_%m_%d")
         snap_file = snap_path / f"ibm_fez_{ts_str}_live.json"
-        # We'd need to serialize here — skip for now, focus on validation
+        # We'd need to serialize here: skip for now, focus on validation
 
     elif args.calibration:
         cal_path = Path(args.calibration)
@@ -448,7 +448,7 @@ def main() -> None:
     console.print(f"  Calibration timestamp: {props.timestamp}")
 
     if args.dry_run:
-        console.print("\n[yellow bold]DRY RUN COMPLETE — no circuits submitted[/yellow bold]")
+        console.print("\n[yellow bold]DRY RUN COMPLETE: no circuits submitted[/yellow bold]")
 
         # Save dry-run results
         dry_results = {
@@ -474,7 +474,7 @@ def main() -> None:
     console.print(f"  About to submit {n_circuits} circuits to {BACKEND_NAME}")
     console.print(f"  This will use ~{n_circuits * EST_SECONDS_PER_CIRCUIT:.0f}s of QPU time")
     if not args.yes:
-        confirm = input("\n  Mike — proceed? (yes/no): ").strip().lower()
+        confirm = input("\n  Mike: proceed? (yes/no): ").strip().lower()
         if confirm not in ("yes", "y"):
             console.print("[red]Aborted.[/red]")
             sys.exit(0)

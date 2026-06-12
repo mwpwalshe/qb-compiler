@@ -88,7 +88,7 @@ def main():
 
     # Show results
     print(f"\n{'='*90}")
-    print(f"GHZ-5 Post-Routing Rescore — Tiebreaker Results")
+    print(f"GHZ-5 Post-Routing Rescore: Tiebreaker Results")
     print(f"{'='*90}")
 
     details = mapper._last_rescore_details

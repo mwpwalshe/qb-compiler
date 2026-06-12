@@ -7,8 +7,8 @@ better qubit layouts than Qiskit's built-in SabreLayout?
 **Test design**: For each GHZ circuit, compile TWO ways using the
 SAME Qiskit routing (optimization_level=3):
 
-  A) Pure Qiskit — ``transpile(circuit, target, optimization_level=3)``
-  B) qb-compiler layout + Qiskit routing —
+  A) Pure Qiskit: ``transpile(circuit, target, optimization_level=3)``
+  B) qb-compiler layout + Qiskit routing -
      ``transpile(circuit, target, optimization_level=3, initial_layout=qb_layout)``
 
 Both paths use Qiskit's SabreSwap for routing. The ONLY difference is
@@ -16,15 +16,15 @@ initial qubit placement. This isolates layout quality.
 
 Three outcomes:
 
-1. **B beats A** — CalibrationMapper finds better qubits. Ship it.
-2. **B ties A** — Layout isn't helping. Scoring weights need tuning.
-3. **B loses to A** — Layout is picking worse qubits. Fundamental issue.
+1. **B beats A**: CalibrationMapper finds better qubits. Ship it.
+2. **B ties A**: Layout isn't helping. Scoring weights need tuning.
+3. **B loses to A**: Layout is picking worse qubits. Fundamental issue.
 
 Also runs a T1 asymmetry test comparing high vs low asymmetry qubits.
 
 Usage::
 
-    # Dry run — no QPU time
+    # Dry run: no QPU time
     python scripts/hardware_validation.py --dry-run
 
     # Real execution (uses latest calibration fixture)
@@ -208,8 +208,8 @@ def run_validation(
     console.print("\n[bold]Phase 1: Preparing circuits[/bold]\n")
 
     # For each GHZ size, we submit TWO circuits:
-    #   ghz_{n}_qiskit  — pure Qiskit layout + routing
-    #   ghz_{n}_qb      — qb-compiler layout + Qiskit routing
+    #   ghz_{n}_qiskit : pure Qiskit layout + routing
+    #   ghz_{n}_qb     : qb-compiler layout + Qiskit routing
     ghz_circuits: list[QuantumCircuit] = []
     ghz_labels: list[str] = []
     ghz_layouts: dict[int, dict[int, int]] = {}
@@ -235,8 +235,8 @@ def run_validation(
     # T1 asymmetry circuits
     high_asym, low_asym = select_asymmetry_qubits(props, T1_NUM_QUBITS)
 
-    console.print(f"\n  T1 asymmetry — high qubits: {high_asym}")
-    console.print(f"  T1 asymmetry — low qubits:  {low_asym}")
+    console.print(f"\n  T1 asymmetry: high qubits: {high_asym}")
+    console.print(f"  T1 asymmetry: low qubits:  {low_asym}")
     for label, group in [("High", high_asym), ("Low", low_asym)]:
         parts = []
         for q in group:
@@ -275,7 +275,7 @@ def run_validation(
     # ── Dry run ───────────────────────────────────────────────────
 
     if dry_run:
-        console.print("\n[yellow bold]DRY RUN — no circuits submitted[/yellow bold]\n")
+        console.print("\n[yellow bold]DRY RUN: no circuits submitted[/yellow bold]\n")
 
         table = Table(title="Circuits that would be submitted")
         table.add_column("#", style="dim")
@@ -358,7 +358,7 @@ def run_validation(
                 # Pure Qiskit
                 tc = transpile(qc_item, target=target, optimization_level=3)
         else:
-            # T1 asymmetry — map to specific physical qubit
+            # T1 asymmetry: map to specific physical qubit
             q_id = int(label.split("_q")[1])
             tc = transpile(
                 qc_item, target=target,
@@ -446,11 +446,11 @@ def run_validation(
     deltas = [r["delta"] for r in results["ghz_results"]]
     avg_delta = sum(deltas) / len(deltas)
     if avg_delta > 0.005:
-        verdict = "[bold green]LAYOUT WINS — CalibrationMapper finds better qubits[/bold green]"
+        verdict = "[bold green]LAYOUT WINS: CalibrationMapper finds better qubits[/bold green]"
     elif avg_delta > -0.005:
-        verdict = "[bold yellow]TIE — Layout not significantly different from Qiskit[/bold yellow]"
+        verdict = "[bold yellow]TIE: Layout not significantly different from Qiskit[/bold yellow]"
     else:
-        verdict = "[bold red]LAYOUT LOSES — CalibrationMapper picking worse qubits[/bold red]"
+        verdict = "[bold red]LAYOUT LOSES: CalibrationMapper picking worse qubits[/bold red]"
     console.print(f"\n  Average delta: {avg_delta:+.4f}")
     console.print(f"  Verdict: {verdict}")
 

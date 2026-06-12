@@ -23,9 +23,9 @@ class QubitProperties:
     frequency_ghz:
         Qubit drive frequency in GHz, or *None*.
     readout_error_0to1:
-        P(1|0) — probability of reading 1 when state is 0, or *None*.
+        P(1|0): probability of reading 1 when state is 0, or *None*.
     readout_error_1to0:
-        P(0|1) — probability of reading 0 when state is 1, or *None*.
+        P(0|1): probability of reading 0 when state is 1, or *None*.
     """
 
     qubit_id: int
@@ -42,7 +42,7 @@ class QubitProperties:
 
         On superconducting qubits, thermal excitation P(1|0) is typically
         much smaller than relaxation P(0|1).  A high ratio means the qubit
-        loses |1⟩ states disproportionately — circuits that hold qubits in
+        loses |1⟩ states disproportionately: circuits that hold qubits in
         |1⟩ (after X gates, CNOT targets, etc.) suffer more on these qubits.
 
         Returns 1.0 when asymmetry data is unavailable, meaning no penalty.

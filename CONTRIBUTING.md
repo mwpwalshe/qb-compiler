@@ -91,10 +91,10 @@ well-defined stages:
 ```
 Input (Qiskit / OpenQASM 2.0)
   -> IR conversion (QBCircuit / QBDag)
-  -> Mapping (CalibrationMapper — VF2 placement)
-  -> Routing (NoiseAwareRouter — SWAP insertion)
-  -> Scheduling (NoiseAwareScheduler — ALAP with T1/T2 urgency)
-  -> Decomposition (GateDecomposition — native basis gates)
+  -> Mapping (CalibrationMapper: VF2 placement)
+  -> Routing (NoiseAwareRouter: SWAP insertion)
+  -> Scheduling (NoiseAwareScheduler: ALAP with T1/T2 urgency)
+  -> Decomposition (GateDecomposition: native basis gates)
   -> Analysis (depth, gate count, error budget estimation)
   -> Output (QBCircuit / Qiskit QuantumCircuit)
 ```

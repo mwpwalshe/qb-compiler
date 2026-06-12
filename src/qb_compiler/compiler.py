@@ -452,7 +452,7 @@ class _BasisTranslationPass(BasePass):
                 ]
 
         if op.name == "cx" and len(q) == 2 and "cz" in basis_set:
-            # CX = (I⊗H) CZ (I⊗H)  — decompose H if needed
+            # CX = (I⊗H) CZ (I⊗H) : decompose H if needed
             target = (q[1],)
             h_ops = (
                 _BasisTranslationPass._decompose(GateOp("h", target), basis_set)
@@ -539,7 +539,7 @@ class PassManager:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# IR bridge — convert between compiler QBCircuit and ir.circuit.QBCircuit
+# IR bridge: convert between compiler QBCircuit and ir.circuit.QBCircuit
 # ═══════════════════════════════════════════════════════════════════════
 
 
@@ -798,7 +798,7 @@ def _run_calibration_pipeline(
             layout_predictor = MLLayoutPredictor.load_bundled("ibm_heron")
             logger.info("ML layout predictor loaded")
     except Exception:
-        pass  # ML not available or weights missing — use standard VF2
+        pass  # ML not available or weights missing: use standard VF2
 
     try:
         mapper = CalibrationMapper(
@@ -1207,7 +1207,7 @@ class QBCompiler:
         # The improvement depends on idle time vs T2.
         # Conservative model: each DD pair improves fidelity by
         # recovering ~0.1% of the lost fidelity (from dephasing).
-        # This is conservative — real DD can recover 2-5%.
+        # This is conservative: real DD can recover 2-5%.
         infidelity = 1.0 - base_fidelity
         # DD recovers a fraction of the T2-related infidelity
         # Assume ~40% of infidelity is from T2 dephasing (rest is gate error)

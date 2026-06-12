@@ -18,7 +18,7 @@ for i in range(7):
     circuit.cx(i, i + 1)
 circuit.measure_all()
 
-# Compile — ML predictor is used automatically if installed
+# Compile: ML predictor is used automatically if installed
 compiler = QBCompiler.from_backend("ibm_fez")
 result = compiler.compile(circuit)
 

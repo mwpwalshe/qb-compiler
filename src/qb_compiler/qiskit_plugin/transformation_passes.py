@@ -35,7 +35,7 @@ class QBGateCancellation(TransformationPass):
     def run(self, dag: DAGCircuit) -> DAGCircuit:
         """Run gate cancellation on the DAG.
 
-        This is a structural pass — it looks for patterns in the DAG
+        This is a structural pass: it looks for patterns in the DAG
         topology rather than doing full unitary simulation.
 
         Returns the (potentially modified) DAG.

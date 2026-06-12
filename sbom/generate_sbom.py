@@ -31,7 +31,7 @@ def generate_dependency_list(version: str) -> None:
          "--with-urls"],
         capture_output=True, text=True
     )
-    header = f"# qb-compiler {version} — Dependencies\n\nGenerated: {datetime.now(timezone.utc).isoformat()}\n\n## Direct and Transitive Dependencies\n\n"
+    header = f"# qb-compiler {version}: Dependencies\n\nGenerated: {datetime.now(timezone.utc).isoformat()}\n\n## Direct and Transitive Dependencies\n\n"
     output_path.write_text(header + result.stdout)
     print(f"Dependency list written to {output_path}")
 

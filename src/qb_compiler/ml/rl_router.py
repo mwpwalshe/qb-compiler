@@ -11,7 +11,7 @@ Architecture:
     Reward = negative calibration-aware error of inserted gates
 
 The RL agent is trained per-backend using nightly calibration snapshots.
-This module is **proprietary** — it requires ``qubitboost-sdk`` for
+This module is **proprietary**: it requires ``qubitboost-sdk`` for
 production models.  The open-source version provides the agent
 architecture and training loop for research/educational use.
 
@@ -195,7 +195,7 @@ class RoutingEnvironment:
         elif action.action_type == "swap" and action.swap_edge is not None:
             return self._insert_swap(state, action.swap_edge)
         else:
-            # Invalid action — small penalty
+            # Invalid action: small penalty
             return state, -0.01, False
 
     def _advance(self, state: RoutingState) -> tuple[RoutingState, float, bool]:
@@ -213,14 +213,14 @@ class RoutingEnvironment:
 
             # Check if gate is executable (qubits are adjacent)
             if phys_q1 in state.adjacency.get(phys_q0, set()):
-                # Gate is executable — add its error
+                # Gate is executable: add its error
                 gate_err = state.edge_errors.get(
                     (phys_q0, phys_q1),
                     state.edge_errors.get((phys_q1, phys_q0), 0.01),
                 )
                 error += gate_err
             else:
-                # Gate NOT executable — penalty for unresolved routing
+                # Gate NOT executable: penalty for unresolved routing
                 error += 0.1  # large penalty
 
         new_state = RoutingState(

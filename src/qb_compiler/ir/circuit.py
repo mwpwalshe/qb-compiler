@@ -25,7 +25,7 @@ Operation = QBGate | QBMeasure | QBBarrier
 
 
 class QBCircuit:
-    """Ordered list of quantum operations — the compiler's main IR.
+    """Ordered list of quantum operations: the compiler's main IR.
 
     Parameters
     ----------

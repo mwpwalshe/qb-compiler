@@ -1,4 +1,4 @@
-"""As-Late-As-Possible (ALAP) scheduler — no noise awareness.
+"""As-Late-As-Possible (ALAP) scheduler: no noise awareness.
 
 Delays each gate as late as possible while respecting data dependencies.
 This is the simpler counterpart of :class:`NoiseAwareScheduler` for use
@@ -17,7 +17,7 @@ class ALAPScheduler(TransformationPass):
     """Schedule gates as late as possible while respecting dependencies.
 
     Operations are partitioned into layers via the DAG and emitted in
-    reverse-dependency order — each gate is placed in the latest possible
+    reverse-dependency order: each gate is placed in the latest possible
     layer.  The output preserves correctness (topological order) while
     pushing operations toward the end of the circuit.
     """
