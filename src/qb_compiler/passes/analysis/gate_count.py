@@ -14,8 +14,8 @@ class GateCountAnalysis(AnalysisPass):
     """Count gates by type and store in ``context["gate_counts"]``.
 
     Also populates:
-    - ``context["total_gates"]`` — total gate count
-    - ``context["two_qubit_gates"]`` — number of 2+ qubit gates
+    - ``context["total_gates"]``: total gate count
+    - ``context["two_qubit_gates"]``: number of 2+ qubit gates
     """
 
     @property

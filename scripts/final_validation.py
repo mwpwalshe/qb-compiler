@@ -187,7 +187,7 @@ def main():
 
     print()
     if all_positive:
-        print("ALL CIRCUITS SHOW POSITIVE OR NEUTRAL DELTA — READY FOR HARDWARE")
+        print("ALL CIRCUITS SHOW POSITIVE OR NEUTRAL DELTA: READY FOR HARDWARE")
     else:
         print("WARNING: Some circuits show negative delta")
 

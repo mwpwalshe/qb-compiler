@@ -153,7 +153,7 @@ class PassManager:
         Parameters
         ----------
         circuit : QBCircuit
-            Input circuit (will not be mutated — a copy is made).
+            Input circuit (will not be mutated: a copy is made).
         context : dict | None
             Shared context dict.  Created if *None*.
 

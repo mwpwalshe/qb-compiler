@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class StaticCalibrationProvider(CalibrationProvider):
     """Serves calibration data from an in-memory :class:`BackendProperties`.
 
-    This is the simplest provider — no network calls, no caching logic.
+    This is the simplest provider: no network calls, no caching logic.
     Useful for offline analysis, unit tests, and replaying historical
     calibration snapshots from the QubitBoost ``calibration_hub``.
 

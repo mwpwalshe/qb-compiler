@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 class BackendTarget:
     """Hardware target that the compiler compiles *to*.
 
-    Encapsulates the physical constraints — qubit count, native gate set,
-    and coupling topology — that compilation passes must respect.
+    Encapsulates the physical constraints: qubit count, native gate set,
+    and coupling topology: that compilation passes must respect.
 
     Parameters
     ----------

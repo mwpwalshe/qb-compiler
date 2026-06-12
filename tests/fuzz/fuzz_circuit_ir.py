@@ -52,7 +52,7 @@ def test_one_input(data: bytes) -> None:
                 circ.add_gate(gate)
 
         elif choice == 1:
-            # GateOp with NaN/Inf params — test inverse, repr
+            # GateOp with NaN/Inf params: test inverse, repr
             params = tuple(
                 fdp.PickValueInList(_SPECIAL_FLOATS) for _ in range(fdp.ConsumeIntInRange(0, 5))
             )

@@ -127,7 +127,7 @@ class CostEstimator:
             raise BackendNotSupportedError(backend, list(VENDOR_PRICING.keys())) from None
 
         if cps <= 0:
-            # Free backend — effectively unlimited
+            # Free backend: effectively unlimited
             return 2**31 - 1
         return int(budget / cps)
 

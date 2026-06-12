@@ -1,4 +1,4 @@
-"""``qbc`` — command-line interface for qb-compiler.
+"""``qbc``: command-line interface for qb-compiler.
 
 Usage
 -----
@@ -30,7 +30,7 @@ from qb_compiler.config import BACKEND_CONFIGS, get_backend_spec
 @click.group()
 @click.version_option(__version__, prog_name="qb-compiler")
 def cli() -> None:
-    """qb-compiler by QubitBoost — quantum execution intelligence toolkit."""
+    """qb-compiler by QubitBoost: quantum execution intelligence toolkit."""
 
 
 # ── qbc preflight ───────────────────────────────────────────────────
@@ -272,10 +272,10 @@ def doctor() -> None:
         if tuple(int(x) for x in qver.split(".")[:2]) >= (1, 0):
             console.print(f"[green]\u2714[/green]  Qiskit {qver}")
         else:
-            console.print(f"[yellow]![/yellow]  Qiskit {qver} — recommend >=1.0")
+            console.print(f"[yellow]![/yellow]  Qiskit {qver}: recommend >=1.0")
             all_ok = False
     except ImportError:
-        console.print("[red]\u2718[/red]  Qiskit not installed — pip install qiskit")
+        console.print("[red]\u2718[/red]  Qiskit not installed: pip install qiskit")
         all_ok = False
 
     # 4. IBM credentials
@@ -289,7 +289,7 @@ def doctor() -> None:
             )
         else:
             console.print(
-                "[yellow]![/yellow]  No IBM credentials saved — run: "
+                "[yellow]![/yellow]  No IBM credentials saved: run: "
                 "QiskitRuntimeService.save_account("
                 "channel='ibm_quantum_platform', token='...')"
             )
@@ -344,7 +344,7 @@ def doctor() -> None:
             console.print("[green]\u2714[/green]  QubitBoost SDK available")
     else:
         console.print(
-            "[dim]-[/dim]  QubitBoost SDK not installed (optional) — pip install qubitboost-sdk"
+            "[dim]-[/dim]  QubitBoost SDK not installed (optional): pip install qubitboost-sdk"
         )
 
     # 9. Core dependencies
@@ -365,7 +365,7 @@ def doctor() -> None:
     if all_ok:
         console.print("[bold green]Environment looks good![/bold green]")
     else:
-        console.print("[bold yellow]Some issues detected — see above.[/bold yellow]")
+        console.print("[bold yellow]Some issues detected: see above.[/bold yellow]")
     console.print()
 
 
@@ -498,7 +498,7 @@ def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
 
     click.echo("  QubitBoost gate eligibility:")
     for r in recs:
-        click.echo(f"    * {r.gate:14s} {r.status} — {r.headline}")
+        click.echo(f"    * {r.gate:14s} {r.status}: {r.headline}")
         if r.validated_claim:
             click.echo(f"      {'':14s} Hardware-validated: {r.validated_claim} {r.qualifier}")
     click.echo()
@@ -590,3 +590,35 @@ def _parse_qasm_gates(
         if qubits and all(0 <= q < n_qubits for q in qubits):
             gates.append((name, qubits, params))
     return gates
+
+
+@cli.command()
+@click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
+@click.option("--shots", default=4096, type=int, help="Shots used for the cost column.")
+@click.option("--seeds", "-n", default=2, type=int, help="Transpiler seeds per backend.")
+def when(circuit: str, shots: int, seeds: int) -> None:
+    """Rank backends by predicted fidelity per dollar for this circuit."""
+    from qb_compiler.windows import format_table, rank_value
+
+    qc = _load_qasm(circuit)
+    rows = rank_value(qc, shots=shots, n_seeds=seeds)
+    click.echo(format_table(rows))
+
+
+@cli.command()
+@click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--backend", "-b", default=None, help="Backend name for the prediction (e.g. ibm_fez)."
+)
+@click.option("--shots", default=256, type=int, help="Mirror-circuit shots.")
+@click.option("--no-record", is_flag=True, help="Do not append to the local accuracy record.")
+def verify(circuit: str, backend: str | None, shots: int, no_record: bool) -> None:
+    """Check the fidelity prediction against a mirror-circuit measurement (simulator)."""
+    from qb_compiler.verify import verify_viability
+
+    qc = _load_qasm(circuit)
+    try:
+        result = verify_viability(qc, "aer", backend=backend, shots=shots, record=not no_record)
+    except ImportError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(str(result))

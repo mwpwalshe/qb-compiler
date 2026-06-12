@@ -6,7 +6,7 @@ documentation (channels ``[x_type, z_type, x_present, z_present]``,
 values = XOR of successive-round syndromes with presence masks encoding
 both stabiliser weight and basis-round validity).
 
-This is a clean-room reimplementation — it uses stim's native detector
+This is a clean-room reimplementation: it uses stim's native detector
 coordinates and ``compile_detector_sampler`` rather than NVIDIA's
 custom stab-index maps.  Tensors are shape-compatible with the
 pretrained Ising-Decoder models; an orientation check is recommended
@@ -37,7 +37,7 @@ from qb_compiler.ising.patch_spec import SurfaceCodePatchSpec
 class SurfaceCodeTensorLayout:
     """Mapping from stim detector coordinates to (channel, round, row, col).
 
-    Frozen by ``(distance, rounds, basis)`` — cached because the
+    Frozen by ``(distance, rounds, basis)``: cached because the
     resolution is deterministic per stim task and gets expensive for
     large distances.
 
@@ -60,7 +60,7 @@ class SurfaceCodeTensorLayout:
         are ``(channel, round, row, col)``.  ``channel`` is ``0`` for
         X-type and ``1`` for Z-type.
     orientation_fingerprint:
-        Short hex string derived from the ancilla→grid mapping — useful
+        Short hex string derived from the ancilla→grid mapping: useful
         for detecting orientation mismatches against a reference
         (e.g. NVIDIA pretrained weights).
     """
@@ -243,7 +243,7 @@ def _presence_mask_for_channel(
     Uses the per-ancilla weight computed during layout resolution: bulk
     stabilisers (four data-qubit neighbours) map to ``1.0`` and boundary
     stabilisers (two neighbours) to ``0.5``.  When ``is_wrong_basis`` is
-    true the first and last rounds are zeroed — those rounds contain
+    true the first and last rounds are zeroed: those rounds contain
     no reliable wrong-basis parity information in a memory experiment.
     """
     per_round = np.zeros((distance, distance), dtype=np.float32)
@@ -275,7 +275,7 @@ def build_ising_tensor(
         The :class:`SurfaceCodePatchSpec` describing the experiment.
     detector_events:
         Array of shape ``(batch, num_detectors)`` with ``bool`` or
-        ``{0, 1}`` int dtype — the output of
+        ``{0, 1}`` int dtype: the output of
         :meth:`stim.CompiledDetectorSampler.sample` for a circuit built
         from *spec*.
 
@@ -361,7 +361,7 @@ def build_ising_tensor(
     out[:, 3] = z_presence[None, :, :, :]
 
     # Basis-zeroing rule: in a basis=X memory experiment, z_type first
-    # and last rounds carry no reliable parity — zero them explicitly.
+    # and last rounds carry no reliable parity: zero them explicitly.
     if spec.basis == "X":
         out[:, 1, 0] = 0.0
         if spec.rounds > 1:
@@ -388,7 +388,7 @@ def sample_and_build_tensor(
         Float32 array of shape ``(shots, 4, rounds, distance, distance)``.
     observables:
         Bool array of shape ``(shots, num_observables)``.  The
-        corresponding logical-observable flips — used as ground-truth
+        corresponding logical-observable flips: used as ground-truth
         labels when comparing decoder accuracy.
     """
     circuit = stim.Circuit.generated(

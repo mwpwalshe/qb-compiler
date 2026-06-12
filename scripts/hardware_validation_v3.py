@@ -9,7 +9,7 @@ but seed it with our calibration-aware layout. Then add DD on top.
 This means we get Qiskit's best routing AND our best layout AND DD.
 
 Comparison:
-  A) Qiskit opt_level=3 (no DD) — what users get by default
+  A) Qiskit opt_level=3 (no DD): what users get by default
   B) qb-compiler: our layout + Qiskit routing + DD
 
 Usage::
@@ -327,7 +327,7 @@ def main() -> None:
         n = qc.num_qubits
         console.print(f"  {name}: {n}q, {count_2q(qc)} original 2Q gates")
 
-        # A) Qiskit best of 20 seeds (NO DD — what users get by default)
+        # A) Qiskit best of 20 seeds (NO DD: what users get by default)
         best_qi_tc = None
         best_qi_fid = -1.0
         best_qi_seed = -1
@@ -417,7 +417,7 @@ def main() -> None:
     console.print(tbl)
 
     if args.dry_run:
-        console.print("\n[yellow bold]DRY RUN — no submission[/yellow bold]")
+        console.print("\n[yellow bold]DRY RUN: no submission[/yellow bold]")
         out = Path("results/hardware_validation_v3_dryrun.json")
         out.parent.mkdir(parents=True, exist_ok=True)
         with open(out, "w") as f:
@@ -486,7 +486,7 @@ def main() -> None:
         idx += 2
 
         # Generic fidelity: fraction of most common bitstring
-        # (not GHZ-specific — works for any circuit)
+        # (not GHZ-specific: works for any circuit)
         total_qi = sum(counts_qi.values())
         total_qb = sum(counts_qb.values())
         # Heavy output probability: fraction of outputs in top 50% of ideal distribution

@@ -43,13 +43,13 @@ logger = logging.getLogger(__name__)
 
 
 def _score_qubit(qubit_data: dict[str, Any]) -> float:
-    """Score a physical qubit — *lower* is better.
+    """Score a physical qubit: *lower* is better.
 
     Combines T1, T2, readout error, and gate errors into a single quality
     metric. Single-qubit and two-qubit gate errors are tracked separately
     and weighted differently because they contribute to circuit fidelity at
     very different scales (typical 2q error ~5e-3 to 2e-2, typical 1q error
-    ~1e-4 to 1e-3 — a 10-100x ratio). Pooling them into a single arithmetic
+    ~1e-4 to 1e-3: a 10-100x ratio). Pooling them into a single arithmetic
     mean (qb-compiler ≤0.5.0) caused the 1q signal to dilute the 2q signal
     when full-coverage calibration data was supplied, regressing chain
     selection on dense-1q workloads (UCCSD, HEA) by ~5-7% estimated fidelity
@@ -70,7 +70,7 @@ def _score_qubit(qubit_data: dict[str, Any]) -> float:
 
     Default weights: w_ro=0.35, w_t1=0.10, w_t2=0.10, w_2q=0.40, w_1q=0.05.
     """
-    # Weights (v0.5.1) — 2q error is the only gate-error term that contributes
+    # Weights (v0.5.1): 2q error is the only gate-error term that contributes
     # to chain selection. The 1q error track is captured but weighted at zero
     # because the current chain selector is connectivity-blind: it picks the
     # N best-scoring qubits regardless of whether they form a connected
@@ -132,7 +132,8 @@ def _resolve_backend(
     a Qiskit ``BackendV1`` / ``BackendV2`` instance. The object path
     queries ``.configuration()`` / ``.target`` / ``.basis_gates`` at
     runtime so the registry's cached gate set can't go stale on the
-    real device (e.g. Heron r2 went from ``cx`` to ``ecr``).
+    real device (e.g. a registry basis-gate staleness incident
+        (Heron's native two-qubit gate is ``cz``)).
 
     The returned ``name`` is forwarded to :func:`_provider_to_dict` for
     snapshot labelling when a calibration provider is also passed.
@@ -357,7 +358,7 @@ def _build_qubit_scores(cal_data: dict) -> dict[int, float]:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# QBCalibrationLayout — Qiskit AnalysisPass
+# QBCalibrationLayout: Qiskit AnalysisPass
 # ═══════════════════════════════════════════════════════════════════════
 
 
@@ -407,7 +408,7 @@ class QBCalibrationLayout(AnalysisPass):
         if len(self._scores) < n_virtual:
             logger.warning(
                 "QBCalibrationLayout: circuit needs %d qubits but calibration "
-                "only covers %d — skipping layout",
+                "only covers %d: skipping layout",
                 n_virtual,
                 len(self._scores),
             )
@@ -420,7 +421,7 @@ class QBCalibrationLayout(AnalysisPass):
             ranked = sorted(self._scores.items(), key=lambda kv: kv[1])
             layout_phys = [qid for qid, _ in ranked[:n_virtual]]
             logger.info(
-                "QBCalibrationLayout: VF2 didn't find an isomorphism — falling "
+                "QBCalibrationLayout: VF2 didn't find an isomorphism: falling "
                 "back to topology-blind top-%d. Layout: %s",
                 n_virtual,
                 layout_phys,
@@ -535,7 +536,7 @@ class QBCalibrationLayout(AnalysisPass):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# QBCalibrationLayoutPlugin — Qiskit transpiler-stage plugin
+# QBCalibrationLayoutPlugin: Qiskit transpiler-stage plugin
 # ═══════════════════════════════════════════════════════════════════════
 
 
@@ -571,15 +572,15 @@ class QBCalibrationLayoutPlugin:
         so that subsequent routing/translation passes have the correct
         number of physical qubits.  This plugin runs, in order:
 
-        1. :class:`QBCalibrationLayout` — set ``property_set["layout"]``
+        1. :class:`QBCalibrationLayout`: set ``property_set["layout"]``
            from calibration-aware scoring.  Falls back to
            :class:`~qiskit.transpiler.passes.TrivialLayout` if
            ``QB_CALIBRATION_PATH`` is not set.
-        2. :class:`~qiskit.transpiler.passes.FullAncillaAllocation` —
+        2. :class:`~qiskit.transpiler.passes.FullAncillaAllocation` -
            reserve physical qubits not touched by the layout.
-        3. :class:`~qiskit.transpiler.passes.EnlargeWithAncilla` —
+        3. :class:`~qiskit.transpiler.passes.EnlargeWithAncilla` -
            extend the circuit with those ancillas.
-        4. :class:`~qiskit.transpiler.passes.ApplyLayout` — rewrite
+        4. :class:`~qiskit.transpiler.passes.ApplyLayout`: rewrite
            the DAG onto physical qubits.
         """
         import os
@@ -659,7 +660,9 @@ def qb_transpile(
     calibration_data: dict | None = None,
     calibration_provider: object | None = None,
     optimization_level: int = 2,
-) -> QuantumCircuit:
+    n_seeds: int = 1,
+    return_candidates: bool = False,
+) -> QuantumCircuit | tuple[QuantumCircuit, list[dict[str, Any]]]:
     """Transpile a Qiskit circuit with calibration-aware layout.
 
     This is the easiest way to use qb-compiler from Qiskit.  It builds a
@@ -676,8 +679,8 @@ def qb_transpile(
         instance. The object path reads ``basis_gates`` and
         ``coupling_map`` from the live backend at runtime via
         ``.configuration()`` / ``.target``, so the registry can't go
-        stale on the real device. Added in v0.5.2 after Heron r2 went
-        from ``cx`` to ``ecr``.
+        stale on the real device (added in v0.5.2 after a registry
+        basis-gate staleness incident).
     calibration_path:
         Path to a QubitBoost ``calibration_hub`` JSON file.
     calibration_data:
@@ -692,11 +695,25 @@ def qb_transpile(
         a static fixture file.
     optimization_level:
         Qiskit optimization level (0-3).  Default is 2.
+    n_seeds:
+        When greater than 1, the pipeline is run once per transpiler seed
+        and the candidate with the best score is returned: scored by the
+        calibration-aware fidelity estimate when calibration data is
+        available, else by fewest two-qubit gates.  Deletes seed-to-seed
+        variance for the cost of N transpiles; the estimate carries the
+        validated typical-error band documented in
+        :mod:`qb_compiler.viability`.
+    return_candidates:
+        When True, returns ``(best_circuit, candidates)`` where candidates
+        is a per-seed list of ``{"seed", "two_q", "depth", "score"}``
+        dicts (the evidence trail for a compilation receipt).
 
     Returns
     -------
-    QuantumCircuit
-        The transpiled circuit.
+    QuantumCircuit or (QuantumCircuit, list of dict)
+        The transpiled circuit; with ``return_candidates=True`` a tuple of the
+        best circuit and the per-seed candidate evidence (a single
+        ``{"fallback": True}`` entry when the custom pipeline degraded).
     """
     from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
@@ -729,7 +746,7 @@ def qb_transpile(
         )
 
         # Inject calibration-aware layout if we have calibration data.
-        # The layout must be pre-set before Qiskit's own layout stage runs —
+        # The layout must be pre-set before Qiskit's own layout stage runs -
         # appending to ``pm.layout`` after the preset stage already built a
         # layout raises KeyError in Qiskit 2.x's ApplyLayout.  Using
         # ``pre_layout`` lets QBCalibrationLayout seed ``property_set["layout"]``
@@ -742,8 +759,64 @@ def qb_transpile(
                 pm.pre_layout = _PassManager()
             pm.pre_layout.append(cal_layout)
 
-        result = pm.run(circuit)
-        return result
+        def _score(tc: QuantumCircuit) -> tuple[float, dict[str, Any]]:
+            two_q = sum(
+                1
+                for inst in tc.data
+                if len(inst.qubits) == 2
+                and inst.operation.name not in ("barrier", "measure", "reset")
+            )
+            entry: dict[str, Any] = {"two_q": two_q, "depth": tc.depth()}
+            if cal_dict is not None:
+                try:
+                    from qb_compiler.calibration.models.backend_properties import (
+                        BackendProperties,
+                    )
+                    from qb_compiler.viability import _estimate_routed_fidelity
+
+                    props = BackendProperties.from_qubitboost_dict(cal_dict)
+                    fid = _estimate_routed_fidelity(tc, props, 0.005, 0.01)
+                    entry["score"] = fid
+                    return fid, entry
+                except Exception:  # estimator unavailable: fall through to 2q count
+                    pass
+            entry["score"] = -float(two_q)
+            return -float(two_q), entry
+
+        if n_seeds <= 1:
+            result = pm.run(circuit)
+            if return_candidates:
+                _, entry = _score(result)
+                entry["seed"] = None
+                return result, [entry]
+            return result
+
+        best: QuantumCircuit | None = None
+        best_score = -float("inf")
+        candidates: list[dict[str, Any]] = []
+        for seed in range(n_seeds):
+            pm_seed = generate_preset_pass_manager(
+                optimization_level=optimization_level,
+                basis_gates=basis_gates,
+                coupling_map=coupling_map,
+                seed_transpiler=seed,
+            )
+            if cal_dict is not None:
+                from qiskit.transpiler import PassManager as _PassManager
+
+                pre = _PassManager()
+                pre.append(QBCalibrationLayout(cal_dict))
+                pm_seed.pre_layout = pre
+            tc = pm_seed.run(circuit)
+            score, entry = _score(tc)
+            entry["seed"] = seed
+            candidates.append(entry)
+            if score > best_score:
+                best_score, best = score, tc
+        assert best is not None
+        if return_candidates:
+            return best, candidates
+        return best
 
     except Exception as exc:
         # Graceful fallback: if anything goes wrong with the custom pipeline,
@@ -761,4 +834,7 @@ def qb_transpile(
             kwargs["basis_gates"] = basis_gates
         if coupling_map is not None:
             kwargs["coupling_map"] = coupling_map
-        return transpile(circuit, **kwargs)
+        fallback_circuit = transpile(circuit, **kwargs)
+        if return_candidates:
+            return fallback_circuit, [{"seed": None, "fallback": True, "score": None}]
+        return fallback_circuit

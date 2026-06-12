@@ -1,4 +1,4 @@
-"""qb-compiler — calibration-aware quantum circuit compiler by QubitBoost.
+"""qb-compiler: calibration-aware quantum circuit compiler by QubitBoost.
 
 Built by `QubitBoost <https://qubitboost.io>`_.
 
@@ -33,6 +33,12 @@ from qb_compiler.compiler import (
 
 # ── eagerly imported (lightweight, always needed) ────────────────────
 from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
+from qb_compiler.discovery import (
+    DiscoveredBackend,
+    check_viability_pub,
+    discover_backends,
+    rank_discovered,
+)
 from qb_compiler.exceptions import (
     BackendNotSupportedError,
     BudgetExceededError,
@@ -43,8 +49,26 @@ from qb_compiler.exceptions import (
     InvalidCircuitError,
     QBCompilerError,
 )
+from qb_compiler.qec_preflight import QECPreflightResult, qec_preflight
+from qb_compiler.receipts import (
+    CompilationReceipt,
+    RegressionReport,
+    make_receipt,
+    receipt_history,
+    record_receipt,
+    regression_check,
+)
 from qb_compiler.recommender import BackendRecommender, RecommendationReport
+from qb_compiler.verify import (
+    MirrorResult,
+    VerifyResult,
+    accuracy_summary,
+    build_mirror,
+    run_mirror,
+    verify_viability,
+)
 from qb_compiler.viability import ViabilityResult, check_viability
+from qb_compiler.windows import BackendValue, calibration_trend, rank_value
 
 
 def passmanager(backend: object = None, *, optimization_level: int = 2) -> object:
@@ -114,7 +138,7 @@ def passmanager(backend: object = None, *, optimization_level: int = 2) -> objec
         pm.layout.append(cal_pass)
         return pm
 
-    # Fallback — no backend
+    # Fallback: no backend
     return generate_preset_pass_manager(optimization_level=optimization_level)
 
 
@@ -123,6 +147,7 @@ __all__ = [
     "BackendNotSupportedError",
     "BackendRecommender",
     "BackendSpec",
+    "BackendValue",
     "BasePass",
     "BudgetExceededError",
     "CalibrationError",
@@ -130,24 +155,44 @@ __all__ = [
     "CalibrationProvider",
     "CalibrationStaleError",
     "CompilationError",
+    "CompilationReceipt",
     "CompileResult",
     "CompilerConfig",
     "CostEstimate",
     "CostEstimator",
+    "DiscoveredBackend",
     "EnhancedCompileResult",
     "GateOp",
     "InvalidCircuitError",
+    "MirrorResult",
     "NoiseModel",
     "PassManager",
     "PassResult",
     "QBCircuit",
     "QBCompiler",
     "QBCompilerError",
+    "QECPreflightResult",
     "RecommendationReport",
+    "RegressionReport",
+    "VerifyResult",
     "ViabilityResult",
     "__version__",
+    "accuracy_summary",
+    "build_mirror",
+    "calibration_trend",
     "check_viability",
+    "check_viability_pub",
+    "discover_backends",
+    "make_receipt",
     "passmanager",
+    "qec_preflight",
+    "rank_discovered",
+    "rank_value",
+    "receipt_history",
+    "record_receipt",
+    "regression_check",
+    "run_mirror",
+    "verify_viability",
 ]
 
 

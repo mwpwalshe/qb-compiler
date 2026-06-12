@@ -29,6 +29,15 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+# Fidelity-estimate accuracy band, derived from the committed hardware validation set
+# (results/hardware_validation_v2.json: IBM Fez, GHZ 5/8/10, n=6 predicted-vs-measured pairs,
+# March 2026). Median absolute error 0.045; the product model is OPTIMISTIC by ~+0.047 on average
+# (no crosstalk / idle terms). Small n, one backend, one circuit family: treat as indicative, not
+# a guarantee. Update when the validation set grows.
+FIDELITY_TYPICAL_ABS_ERROR = 0.05
+FIDELITY_BIAS_NOTE = "model tends to overestimate; validated on n=6 hw circuits (Fez, GHZ family)"
+
+
 @dataclass(frozen=True, slots=True)
 class ViabilityResult:
     """Outcome of a viability check.
@@ -80,17 +89,34 @@ class ViabilityResult:
     reason: str
     suggestions: list[str] = field(default_factory=list)
     cost_estimate_usd: float | None = None
+    error_budget: dict[str, float] | None = None
+    fidelity_typical_abs_error: float | None = None
+    calibration_age_days: float | None = None
 
     def __str__(self) -> str:
         lines = [
             f"Circuit: {self.circuit_name}",
             f"Backend: {self.backend}",
-            f"Estimated fidelity: {self.estimated_fidelity:.4f}",
+            (
+                f"Estimated fidelity: {self.estimated_fidelity:.4f}"
+                + (
+                    f" (+-{self.fidelity_typical_abs_error:.2f} typical, {FIDELITY_BIAS_NOTE})"
+                    if self.fidelity_typical_abs_error is not None
+                    else ""
+                )
+            ),
             f"Noise floor: {self.noise_floor:.4f}",
             f"Signal/noise ratio: {self.signal_to_noise:.1f}x",
             f"Status: {self.status}",
             f"Reason: {self.reason}",
         ]
+        if self.calibration_age_days is not None:
+            lines.append(f"Calibration snapshot age: {self.calibration_age_days:.0f} days")
+        if self.error_budget:
+            total = sum(self.error_budget.values()) or 1.0
+            lines.append("Error budget:")
+            for src, loss in sorted(self.error_budget.items(), key=lambda kv: -kv[1]):
+                lines.append(f"  - {src}: {loss:.4f} ({100 * loss / total:.0f}% of loss)")
         if self.cost_estimate_usd is not None:
             lines.append(f"Cost (4096 shots): ${self.cost_estimate_usd:.4f}")
         if self.suggestions:
@@ -143,6 +169,22 @@ def _count_2q(tc: Any) -> int:
     )
 
 
+def _calibration_age_days(backend_props: Any) -> float | None:
+    """Age of the calibration snapshot in days, when the props carry a timestamp."""
+    ts = getattr(backend_props, "timestamp", None)
+    if not ts:
+        return None
+    import datetime
+
+    try:
+        when = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=datetime.timezone.utc)
+    return (datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() / 86400.0
+
+
 def _estimate_routed_fidelity(
     tc: Any,
     backend_props: Any,
@@ -150,6 +192,23 @@ def _estimate_routed_fidelity(
     median_readout_error: float,
 ) -> float:
     """Estimate fidelity of a routed circuit using per-edge calibration."""
+    fidelity, _ = _estimate_routed_fidelity_budget(
+        tc, backend_props, median_2q_error, median_readout_error
+    )
+    return fidelity
+
+
+def _estimate_routed_fidelity_budget(
+    tc: Any,
+    backend_props: Any,
+    median_2q_error: float,
+    median_readout_error: float,
+) -> tuple[float, dict[str, float]]:
+    """Fidelity estimate plus a per-source error budget.
+
+    The budget maps source -> fidelity loss attributable to that source
+    (1 - the partial product), so users can see WHERE the estimate loses
+    fidelity: two-qubit gates vs readout. Signals only."""
     if backend_props is not None:
         gate_map: dict[frozenset[int], float] = {}
         for gp in backend_props.gate_properties:
@@ -161,13 +220,13 @@ def _estimate_routed_fidelity(
             if qp.readout_error is not None:
                 qubit_ro[qp.qubit_id] = qp.readout_error
 
-        fidelity = 1.0
+        f_2q, f_ro = 1.0, 1.0
         for inst in tc.data:
             if inst.operation.name in ("barrier", "reset", "delay"):
                 continue
             if inst.operation.name == "measure":
                 q = tc.find_bit(inst.qubits[0]).index
-                fidelity *= 1.0 - qubit_ro.get(q, median_readout_error)
+                f_ro *= 1.0 - qubit_ro.get(q, median_readout_error)
             elif len(inst.qubits) == 2 and inst.operation.name not in (
                 "barrier",
                 "measure",
@@ -176,17 +235,19 @@ def _estimate_routed_fidelity(
                 q0 = tc.find_bit(inst.qubits[0]).index
                 q1 = tc.find_bit(inst.qubits[1]).index
                 err = gate_map.get(frozenset({q0, q1}), median_2q_error)
-                fidelity *= 1.0 - err
-        return max(0.0, fidelity)
+                f_2q *= 1.0 - err
+        budget = {"two_qubit_gates": 1.0 - f_2q, "readout": 1.0 - f_ro}
+        return max(0.0, f_2q * f_ro), budget
 
     # Fallback: use median errors
-    fidelity = 1.0
+    f_2q, f_ro = 1.0, 1.0
     for inst in tc.data:
         if inst.operation.name == "measure":
-            fidelity *= 1.0 - median_readout_error
+            f_ro *= 1.0 - median_readout_error
         elif len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset"):
-            fidelity *= 1.0 - median_2q_error
-    return max(0.0, fidelity)
+            f_2q *= 1.0 - median_2q_error
+    budget = {"two_qubit_gates": 1.0 - f_2q, "readout": 1.0 - f_ro}
+    return max(0.0, f_2q * f_ro), budget
 
 
 def check_viability(
@@ -256,7 +317,7 @@ def check_viability(
             qiskit_target = _build_target_from_props(loaded_props)
 
     if qiskit_target is None:
-        # Can't transpile — estimate from circuit structure alone
+        # Can't transpile: estimate from circuit structure alone
         return _estimate_without_transpile(
             circuit,
             backend or "unknown",
@@ -287,8 +348,8 @@ def check_viability(
     n_qubits = circuit.num_qubits
     depth = best_tc.depth()
 
-    # Estimate fidelity
-    fidelity = _estimate_routed_fidelity(
+    # Estimate fidelity (with per-source budget)
+    fidelity, error_budget = _estimate_routed_fidelity_budget(
         best_tc,
         backend_props,
         median_2q_error,
@@ -324,7 +385,7 @@ def check_viability(
             viable = True
             reason = (
                 f"Estimated fidelity {fidelity:.3f} is above noise floor but low. "
-                f"Results will be noisy — consider error mitigation."
+                f"Results will be noisy: consider error mitigation."
             )
     else:
         status = "NOT VIABLE"
@@ -347,6 +408,13 @@ def check_viability(
 
     circuit_name = getattr(circuit, "name", None) or f"{n_qubits}q circuit"
 
+    cal_age = _calibration_age_days(backend_props) if backend_props is not None else None
+    if cal_age is not None and cal_age > 7:
+        suggestions.append(
+            f"Calibration snapshot is {cal_age:.0f} days old; the estimate reflects that "
+            "date. Pass fresh backend_props or set QBC_CALIBRATION_DIR for current numbers."
+        )
+
     return ViabilityResult(
         viable=viable,
         status=status,
@@ -361,6 +429,9 @@ def check_viability(
         reason=reason,
         suggestions=suggestions,
         cost_estimate_usd=round(cost, 4) if cost else None,
+        error_budget={k: round(v, 6) for k, v in error_budget.items()},
+        fidelity_typical_abs_error=FIDELITY_TYPICAL_ABS_ERROR,
+        calibration_age_days=round(cal_age, 1) if cal_age is not None else None,
     )
 
 
@@ -376,7 +447,7 @@ def _estimate_without_transpile(
     n_qubits = circuit.num_qubits
     ops = circuit.count_ops()
 
-    # Count 2Q gates from the unrouted circuit (underestimate — routing adds SWAPs)
+    # Count 2Q gates from the unrouted circuit (underestimate: routing adds SWAPs)
     cx_count = sum(v for k, v in ops.items() if k in ("cx", "cz", "cp", "swap", "ecr"))
     # Routing typically adds 30-100% more 2Q gates
     estimated_2q = int(cx_count * 1.5)
@@ -447,7 +518,7 @@ def _build_suggestions(
     if status == "NOT VIABLE":
         suggestions.append(
             "Circuit output will be indistinguishable from noise. "
-            "Do not submit — you will waste QPU time and money."
+            "Do not submit: you will waste QPU time and money."
         )
         if two_q_count > 20:
             suggestions.append(
@@ -463,7 +534,7 @@ def _build_suggestions(
         )
         if fidelity < 0.1:
             suggestions.append(
-                "Fidelity below 10% — error mitigation may not be sufficient. "
+                "Fidelity below 10%: error mitigation may not be sufficient. "
                 "Consider reducing circuit depth."
             )
 
@@ -471,7 +542,7 @@ def _build_suggestions(
         suggestions.append("Good candidate for error mitigation to further improve results.")
 
     if not suggestions:
-        suggestions.append("Circuit looks good — proceed with execution.")
+        suggestions.append("Circuit looks good: proceed with execution.")
 
     return suggestions
 

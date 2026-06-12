@@ -6,11 +6,11 @@ General Questions
 
 **What does qb-compiler do that Qiskit's transpiler doesn't?**
 
-Qiskit's transpiler maps circuits using **topology only** — it knows which
+Qiskit's transpiler maps circuits using **topology only**: it knows which
 qubits are connected but not how noisy each qubit/gate is. qb-compiler
 uses **today's calibration data** (T1, T2, gate error, readout error) to
 select the best physical qubits. This typically improves estimated fidelity
-by 2–5%.
+by 2-5%.
 
 **Do I need a QubitBoost account?**
 
@@ -41,20 +41,20 @@ Calibration Questions
 
 Three options:
 
-1. **Test fixtures** — qb-compiler ships with calibration snapshots in
+1. **Test fixtures**: qb-compiler ships with calibration snapshots in
    ``tests/fixtures/calibration_snapshots/``. These are real data captured
    from IBM and Rigetti devices.
 
-2. **Capture your own** — Use your vendor's API to download calibration
+2. **Capture your own**: Use your vendor's API to download calibration
    data and save as JSON. Set ``QBC_CALIBRATION_DIR`` to point at your
    snapshot directory.
 
-3. **Live feed** — Install ``qubitboost-sdk`` and use
+3. **Live feed**: Install ``qubitboost-sdk`` and use
    ``LiveCalibrationProvider`` for real-time data.
 
 **How old can calibration data be?**
 
-Calibration data is valid for 4–24 hours on superconducting devices
+Calibration data is valid for 4-24 hours on superconducting devices
 (IBM, Rigetti, IQM). Trapped-ion devices (IonQ) have more stable
 calibration. The ``CachedCalibrationProvider`` can enforce staleness
 limits.
@@ -94,7 +94,7 @@ Practically limited by compilation time. The VF2 subgraph isomorphism
 search is the bottleneck:
 
 - Up to 20 qubits: < 1 second
-- 20–50 qubits: 1–10 seconds
+- 20-50 qubits: 1-10 seconds
 - 50+ qubits: may need ``max_candidates`` tuning
 
 **Can I compile for a backend I don't have access to?**

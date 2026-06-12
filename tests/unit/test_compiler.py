@@ -76,7 +76,7 @@ class TestQBCompiler:
         """Compile with a tiny budget should raise BudgetExceededError."""
         compiler = QBCompiler.from_backend("ionq_aria")
 
-        # IonQ Aria costs $0.30/shot — at 1024 shots that is ~$307
+        # IonQ Aria costs $0.30/shot: at 1024 shots that is ~$307
         # A budget of $0.001 should definitely be exceeded
         with pytest.raises(BudgetExceededError):
             compiler.compile(sample_circuit, budget_usd=0.001)

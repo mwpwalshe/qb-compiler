@@ -19,7 +19,7 @@ QBTranspilerPlugin
     an older ``get_pass_manager(calibration_data=...)`` method.  Scheduled
     for removal in 0.4.0.
 qb_transpile
-    Convenience function — transpile with calibration-aware layout in one call.
+    Convenience function: transpile with calibration-aware layout in one call.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ A :class:`SurfaceCodePatchSpec` captures everything needed to build a
 stim surface-code memory experiment and prepare the 4-channel input
 tensor consumed by NVIDIA's Ising-Decoder-SurfaceCode-1 family.
 
-The spec is intentionally minimal — it carries only the physical
+The spec is intentionally minimal: it carries only the physical
 parameters the decoder's training data was parameterised over.  It
 does not carry layout orientation flags beyond ``"rotated_memory_x"``
 / ``"rotated_memory_z"`` because those are the two code families the

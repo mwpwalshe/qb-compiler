@@ -11,7 +11,7 @@ class TestQBDag:
     """DAG construction and traversal."""
 
     def _make_bell_circuit(self) -> QBCircuit:
-        """H(0), CX(0,1) — simple Bell state."""
+        """H(0), CX(0,1): simple Bell state."""
         circ = QBCircuit(2)
         circ.add_gate(QBGate("h", (0,)))
         circ.add_gate(QBGate("cx", (0, 1)))

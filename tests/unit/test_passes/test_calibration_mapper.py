@@ -194,7 +194,7 @@ class TestCalibrationMapperBasic:
 
 
 class TestCalibrationMapperNo2QGates:
-    """Circuit with no 2Q gates — should pick lowest-error individual qubits."""
+    """Circuit with no 2Q gates: should pick lowest-error individual qubits."""
 
     def test_picks_best_individual_qubits(self):
         backend = _make_backend()
@@ -232,7 +232,7 @@ class TestCalibrationMapperNo2QGates:
 
 
 class TestCalibrationMapperWith2QGates:
-    """Circuit with 2Q gates — should prefer lowest-error edges."""
+    """Circuit with 2Q gates: should prefer lowest-error edges."""
 
     def test_prefers_low_error_edges(self):
         backend = _make_backend()
@@ -535,9 +535,9 @@ class TestInteractionExtraction:
 def _make_large_backend(n_qubits: int = 30) -> BackendProperties:
     """Build a larger synthetic backend with multiple regions of varying quality.
 
-    Region 0 (qubits 0-9):   mediocre — CX error ~0.008
-    Region 1 (qubits 10-19): good — CX error ~0.003
-    Region 2 (qubits 20-29): bad — CX error ~0.015
+    Region 0 (qubits 0-9):   mediocre: CX error ~0.008
+    Region 1 (qubits 10-19): good: CX error ~0.003
+    Region 2 (qubits 20-29): bad: CX error ~0.015
     """
     qubit_props = []
     for q in range(n_qubits):
@@ -883,5 +883,5 @@ class TestIRToQiskitCircuit:
         circ = _make_ghz_circuit(3)
         result = CalibrationMapper._ir_to_qiskit_circuit(circ)
         # If qiskit is installed, result should be a QuantumCircuit
-        # If not, None — either way, no crash
+        # If not, None: either way, no crash
         assert result is None or hasattr(result, "num_qubits")

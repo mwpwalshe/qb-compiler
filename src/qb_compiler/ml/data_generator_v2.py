@@ -72,7 +72,7 @@ V2_FEATURE_NAMES = [
     "layout_mean_t2",
     "layout_mean_readout_error",
     "layout_mean_gate_error",
-    "layout_max_gate_error",  # bottleneck — max error matters more than mean
+    "layout_max_gate_error",  # bottleneck: max error matters more than mean
     "layout_subgraph_density",  # edges / possible_edges in mapped subgraph
     "layout_boundary_edges",  # edges from mapped to unmapped (routing flexibility)
     "layout_max_shortest_path",  # longest shortest path between mapped qubits
@@ -160,7 +160,7 @@ class TrainingDataGeneratorV2:
             interactions = CalibrationMapper._extract_interactions(circuit)
             qc = CalibrationMapper._ir_to_qiskit_circuit(circuit)
             if qc is None:
-                logger.warning("Could not convert %s to Qiskit — skipping", name)
+                logger.warning("Could not convert %s to Qiskit: skipping", name)
                 continue
 
             successes = 0
@@ -328,7 +328,7 @@ class TrainingDataGeneratorV2:
                 if tgt in dist:
                     max_dist = max(max_dist, dist[tgt])
                 else:
-                    # Not connected in subgraph — large penalty
+                    # Not connected in subgraph: large penalty
                     max_dist = max(max_dist, len(qubits) * 3)
         return max_dist
 

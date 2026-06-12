@@ -23,7 +23,7 @@ class SpeedOptimalStrategy(CompilationStrategy):
 
     Uses only the bare minimum passes: trivial layout, basic routing,
     and basis gate decomposition.  Calibration and noise data are
-    ignored entirely — this strategy is intended for quick development
+    ignored entirely: this strategy is intended for quick development
     cycles and simulator runs where compilation overhead matters more
     than output fidelity.
     """

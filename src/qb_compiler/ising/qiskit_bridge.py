@@ -10,12 +10,12 @@ module lets users:
 2. Recover the equivalent stim circuit (used internally by the
    decoders) from the same spec.
 
-The Qiskit circuit is a functional equivalent — it prepares the
+The Qiskit circuit is a functional equivalent: it prepares the
 logical eigenstate, runs ``rounds`` of stabiliser extraction and
 measures in the matching basis.  It is NOT an optimised device-ready
 circuit; users should still route / decompose it via their favourite
 transpiler (qb-compiler's own layout-stage plugin will happily slot
-into the layout stage — see :mod:`qb_compiler.qiskit_plugin`).
+into the layout stage: see :mod:`qb_compiler.qiskit_plugin`).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ def stim_circuit_for(spec: SurfaceCodePatchSpec) -> stim.Circuit:
 def qiskit_circuit_for(spec: SurfaceCodePatchSpec) -> Any:
     """Return a Qiskit ``QuantumCircuit`` implementing the same experiment.
 
-    Qiskit is imported lazily — ``qb_compiler.ising`` can be used with
+    Qiskit is imported lazily: ``qb_compiler.ising`` can be used with
     stim-only installs; the Qiskit bridge is only triggered if this
     helper is called.
 
@@ -53,7 +53,7 @@ def qiskit_circuit_for(spec: SurfaceCodePatchSpec) -> Any:
     The returned circuit uses the canonical planar layout: data qubits
     at indices ``[0 .. d*d-1]`` (row-major), X ancillas next, Z
     ancillas last.  It does NOT include the circuit-level noise
-    primitives Stim carries — Qiskit noise is backend-specific and up
+    primitives Stim carries: Qiskit noise is backend-specific and up
     to the caller to attach (e.g. via an :class:`AerSimulator` noise
     model or qb-compiler's own noise profiles).
     """
@@ -112,7 +112,7 @@ def qiskit_circuit_for(spec: SurfaceCodePatchSpec) -> Any:
 
     # Enumerate ancilla positions in the standard rotated layout.
     # X stabs at (r, c) with r in 0..d-1, c in 0..d-1 where (r+c) even
-    # (boundary pattern simplified — MVP visualisation circuit only).
+    # (boundary pattern simplified: MVP visualisation circuit only).
     x_positions: list[tuple[int, int]] = []
     z_positions: list[tuple[int, int]] = []
     for r in range(d + 1):

@@ -1,27 +1,27 @@
 """QubitBoost SDK integration for qb-compiler.
 
 This bridges qb-compiler (open source) with the QubitBoost SDK
-(proprietary).  The integration is **optional** — qb-compiler works
+(proprietary).  The integration is **optional**: qb-compiler works
 standalone without the SDK.
 
 When the SDK is installed, the compile pipeline gains access to all
 seven QubitBoost gates:
 
 Pre-execution:
-    TomoGate     — pre-flight state fidelity certification
-    SafetyGate   — QEC trust scoring and doom detection
+    TomoGate    : pre-flight state fidelity certification
+    SafetyGate  : QEC trust scoring and doom detection
 
 During execution:
-    OptGate      — adaptive QAOA (hardware-validated: 117-208x shot
+    OptGate      : adaptive QAOA shot allocation (see qubitboost.io for
                    reduction on supported workloads)
-    ChemGate     — VQE operator preselection (hardware-validated:
+    ChemGate    : VQE operator preselection (hardware-validated:
                    32-42% fewer evaluations on supported workflows)
-    GuardGate    — QAOA quality assurance on validated workloads
-    LiveGate     — real-time doom detection on supported backends
-    ShotValidator — redundant syndrome verification
+    GuardGate   : QAOA quality assurance on validated workloads
+    LiveGate    : real-time doom detection on supported backends
+    ShotValidator: redundant syndrome verification
 
 Post-execution:
-    ShotValidator — verify result integrity
+    ShotValidator: verify result integrity
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ GATE_REGISTRY: dict[str, GateInfo] = {
     "OptGate": GateInfo(
         name="OptGate",
         headline="Adaptive QAOA shot reduction",
-        validated_claim="117-208x shot reduction",
+        validated_claim="adaptive shot allocation",
         qualifier="on validated QAOA workloads",
         phase="during",
         circuit_types=("qaoa",),
@@ -121,7 +121,7 @@ GATE_REGISTRY: dict[str, GateInfo] = {
         name="SafetyGate",
         headline="QEC trust scoring and doom detection",
         validated_claim="QEC trust scoring",
-        qualifier="hardware-validated at d=7",
+        qualifier="for QEC workloads",
         phase="pre",
         circuit_types=("qec",),
         requires_high_confidence=True,
@@ -230,7 +230,7 @@ class GateRecommendation:
     phase: str
 
     def __str__(self) -> str:
-        line = f"{self.gate:14s}  {self.status} — {self.headline}"
+        line = f"{self.gate:14s}  {self.status}: {self.headline}"
         if self.validated_claim:
             line += f"\n{'':14s}  Hardware-validated: {self.validated_claim} {self.qualifier}"
         return line
@@ -338,7 +338,7 @@ class QubitBoostExecutor:
     def execute_optgate(self, circuit: Any, **kwargs: Any) -> Any:
         """Execute QAOA circuit through OptGate (adaptive shot reduction).
 
-        Hardware-validated: 117-208x shot reduction on supported QAOA
+        Adaptive shot allocation on supported QAOA
         workloads. Actual reduction depends on circuit structure,
         backend, and calibration state.
         """
@@ -375,7 +375,7 @@ class QubitBoostExecutor:
         distance: int = 5,
         **kwargs: Any,
     ) -> Any:
-        """QEC trust scoring via SafetyGate (hardware-validated at d=7)."""
+        """QEC trust scoring via SafetyGate."""
         return self._qb.safety_gate.check(
             syndrome_history=syndrome_history,
             distance=distance,

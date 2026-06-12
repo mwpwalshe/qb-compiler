@@ -73,7 +73,7 @@ class CorrelationResult:
 class TemporalCorrelationAnalyzer:
     """Detect temporal error correlations from multiple calibration snapshots.
 
-    Works with public calibration data only — no proprietary API needed.
+    Works with public calibration data only: no proprietary API needed.
     For real-time correlation monitoring, see ``LiveCalibrationProvider``
     with QubitBoost SafetyGate (requires ``qubitboost-sdk``).
 

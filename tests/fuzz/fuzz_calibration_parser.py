@@ -103,13 +103,13 @@ def test_one_input(data: bytes) -> None:
             if fdp.ConsumeBool():
                 cal_dict["provider"] = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 20))
 
-            # Qubit properties — may have missing "qubit" key
+            # Qubit properties: may have missing "qubit" key
             qprops = []
             for _ in range(n_qubits_entries):
                 qprops.append(_make_qubit_dict(fdp))
             cal_dict["qubit_properties"] = qprops
 
-            # Gate properties — may have missing "gate" key
+            # Gate properties: may have missing "gate" key
             gprops = []
             for _ in range(n_gate_entries):
                 gprops.append(_make_gate_dict(fdp))
