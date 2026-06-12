@@ -67,7 +67,7 @@ against hardware yourself.
 | Backend discovery | rank whatever backends your own credentials expose |
 | NVIDIA Ising onramp | the only Qiskit-side bridge to the Ising decoder family, with telemetry |
 
-**How good is the fidelity estimate? Here is the data.**
+**Fidelity estimate accuracy, measured on hardware**
 
 Predicted vs measured on IBM Fez (GHZ family, 4096 shots, March 2026):
 
@@ -84,18 +84,23 @@ Median absolute error 0.045; the model runs optimistic by about +0.05 (it prices
 error, not crosstalk or idle decoherence). That is why every estimate prints with a +-0.05 band and
 why `qbc verify` exists: check it on your own circuits, the log stays on your machine.
 
-**And here is why the caveats are not boilerplate.**
+**Example: a real run vs the projection**
 
-A real 50,000-shot distance-3 surface-code run on IBM Fez measured a logical error rate of 0.245.
-A uniform gate-error proxy at the calibration values projects 0.005 to 0.059 for that experiment,
-5 to 50x lower. The gap is real device physics the proxy cannot see, and most of it arrived
-mid-run: the first 25k shots measured 0.129, the second 25k measured 0.361, a 2.8x drift inside one
-job. Projections are floors, not promises. That is exactly what the calibration-age warning, the
-regression watch, and verify mode are for: the tools that tell you when the floor and the building
-have parted company.
+50,000-shot distance-3 surface code memory run on ibm_fez, April 2026:
 
-Notebooks 19 and 20 walk the whole surface with live outputs. All of it is signals: nothing here
-gates, blocks, or decides for you.
+| | LER |
+|---|---|
+| projected (uniform gate-error proxy at the day's calibration) | 0.005 to 0.059 |
+| measured, full run | 0.245 |
+| measured, first 25k shots | 0.129 |
+| measured, second 25k shots | 0.361 |
+
+The device drifted 2.8x inside the job, and the proxy doesn't model crosstalk, leakage or drift, so
+the projection undershoots by 5-50x. This is the case the calibration age warning, the regression
+watch and verify mode exist for.
+
+Notebooks 19 and 20 walk through everything with live outputs. Everything here is signals only,
+nothing gates or blocks your jobs.
 
 ## CLI
 
