@@ -8,7 +8,7 @@ rounds, p_error, basis)`` and writes the results to
 
 This script is the reference the NVIDIA Ising pre-decoder must beat.
 Users with the NVIDIA weights can run
-``benchmarks/ising/run_ising_sweep.py`` (not included — requires
+``benchmarks/ising/run_ising_sweep.py`` (not included: requires
 gated HuggingFace weights) on the same grid and diff the two
 JSON files to quantify the pre-decoder's marginal win.
 
@@ -96,7 +96,7 @@ def main() -> None:
     args = parser.parse_args()
 
     print(
-        f"# qb-compiler Ising integration — PyMatching baseline sweep\n"
+        f"# qb-compiler Ising integration: PyMatching baseline sweep\n"
         f"# shots={args.shots}, distances={args.distances}, "
         f"p_errors={args.p_errors}, bases={args.bases}, seed={args.seed}"
     )

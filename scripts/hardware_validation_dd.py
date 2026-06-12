@@ -2,8 +2,8 @@
 """Hardware validation: Qiskit alone vs Qiskit + DD on IBM Fez.
 
 For each circuit, submits TWO jobs to the QPU:
-  1. Qiskit transpile (opt_level=3, best of 20 seeds) — baseline
-  2. Same circuit + Dynamical Decoupling — enhanced
+  1. Qiskit transpile (opt_level=3, best of 20 seeds): baseline
+  2. Same circuit + Dynamical Decoupling: enhanced
 
 Compares output distribution quality (heavy output probability for GHZ,
 or ground state overlap for QAOA/QFT).
@@ -161,7 +161,7 @@ def main():
         delay_param = Parameter("t")
         target.add_instruction(Delay(delay_param), {(q,): None for q in range(n_q)}, name="delay")
 
-        print(f"DRY RUN — Synthetic target ({n_q} qubits)")
+        print(f"DRY RUN: Synthetic target ({n_q} qubits)")
 
     # Prepare all circuits
     prepared = {}

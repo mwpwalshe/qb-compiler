@@ -40,7 +40,7 @@ Options:
    Path to write the compiled QASM output. If omitted, prints to stdout.
 
 ``--optimization-level``
-   Optimization level 0–3. Default: 2.
+   Optimization level 0-3. Default: 2.
 
 ``--budget``
    Budget constraint in USD. Raises error if estimated cost exceeds this.

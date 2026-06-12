@@ -101,7 +101,7 @@ class RecommendationReport:
             return "No backends configured."
 
         lines = [
-            f"Backend Recommendation Report — {self.circuit_name} ({self.n_qubits}q)",
+            f"Backend Recommendation Report: {self.circuit_name} ({self.n_qubits}q)",
             "",
         ]
 
@@ -278,7 +278,7 @@ class BackendRecommender:
             if a.status == "NOT VIABLE":
                 warnings.append(
                     f"{a.backend}: fidelity {a.estimated_fidelity:.4f} is below "
-                    f"noise floor — results will be random noise."
+                    f"noise floor: results will be random noise."
                 )
 
         total_ms = (time.perf_counter() - t0) * 1000

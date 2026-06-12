@@ -129,7 +129,7 @@ def build_target_from_cal(props: BackendProperties) -> Target:
     meas_props = {(q,): InstructionProperties(duration=meas_duration) for q in range(n_q)}
     target.add_instruction(Measure(), meas_props)
 
-    # Delay instruction — required for PadDynamicalDecoupling to work
+    # Delay instruction: required for PadDynamicalDecoupling to work
     delay_param = Parameter("t")
     target.add_instruction(
         Delay(delay_param),
@@ -246,7 +246,7 @@ def main():
         enh_2q = count_2q(enhanced)
 
         # DD fidelity improvement estimate
-        # DD doesn't change gate errors — it suppresses T2 dephasing
+        # DD doesn't change gate errors: it suppresses T2 dephasing
         # during idle periods. The improvement is from reduced decoherence.
         enh_fid = estimate_routed_fidelity(enhanced, props)
         # Note: routed fidelity from gate errors won't change (same 2Q gates).
@@ -293,7 +293,7 @@ def main():
     print()
     print("Note: DD improvement (2-5%) comes from suppressing T2 dephasing during")
     print("idle periods, which is NOT captured by the gate-error fidelity model above.")
-    print("Qiskit does NOT enable DD at any optimization level — this is our value-add.")
+    print("Qiskit does NOT enable DD at any optimization level: this is our value-add.")
 
     # Save results
     out = Path("results/benchmark_qiskit_vs_dd.json")

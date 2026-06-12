@@ -4,7 +4,7 @@ Extracts numeric feature vectors from circuits and backend calibration
 data.  These features are used by :class:`MLLayoutPredictor` to score
 physical qubits without running VF2.
 
-No ML dependencies required — this module uses only numpy.
+No ML dependencies required: this module uses only numpy.
 """
 
 from __future__ import annotations

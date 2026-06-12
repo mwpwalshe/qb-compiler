@@ -33,12 +33,12 @@ Per-qubit hardware characteristics:
 
 Key properties:
 
-- **T1** — energy relaxation time. Limits how long a qubit can hold |1⟩ state.
-  Higher is better. IBM Heron: 150–400 μs typical.
-- **T2** — dephasing time. Limits how long superposition states survive.
+- **T1**: energy relaxation time. Limits how long a qubit can hold |1⟩ state.
+  Higher is better. IBM Heron: 150-400 μs typical.
+- **T2**: dephasing time. Limits how long superposition states survive.
   Higher is better. Always T2 ≤ 2×T1.
-- **Readout error** — probability of reading 0 when state is 1 or vice versa.
-  Lower is better. IBM Heron: 0.5–9% typical.
+- **Readout error**: probability of reading 0 when state is 1 or vice versa.
+  Lower is better. IBM Heron: 0.5-9% typical.
 
 GateProperties
 ^^^^^^^^^^^^^^
@@ -58,9 +58,9 @@ Per-gate error and timing for a specific qubit pair:
 
 Key properties:
 
-- **Error rate** — probability that the gate introduces an error.
+- **Error rate**: probability that the gate introduces an error.
   Lower is better. On IBM Heron, CZ errors range from 0.15% to 11.3%.
-- **Gate time** — duration of the gate operation. Longer gates mean more
+- **Gate time**: duration of the gate operation. Longer gates mean more
   decoherence during execution.
 
 BackendProperties
@@ -195,9 +195,9 @@ CalibrationMapper
 The ``CalibrationMapper`` uses calibration data to find the best physical
 qubit placement. It builds a weighted graph where edge weights combine:
 
-- **Gate error** (weight=10.0) — CZ/ECR error for each physical connection
-- **Coherence** (weight=0.3) — inverse of T1×T2 product for each qubit
-- **Readout error** (weight=5.0) — readout assignment error for each qubit
+- **Gate error** (weight=10.0): CZ/ECR error for each physical connection
+- **Coherence** (weight=0.3): inverse of T1×T2 product for each qubit
+- **Readout error** (weight=5.0): readout assignment error for each qubit
 
 The mapper uses VF2 subgraph isomorphism (via ``rustworkx``) to enumerate
 candidate layouts and scores each one. The lowest-score layout wins.

@@ -153,7 +153,7 @@ What Stays the Same
 What You Gain
 ^^^^^^^^^^^^^
 
-- **+2–5% estimated fidelity** from calibration-aware mapping on IBM backends
+- **+2-5% estimated fidelity** from calibration-aware mapping on IBM backends
 - **Cost estimation** before execution
 - **Budget enforcement** to prevent surprise bills
 - **Multi-vendor support** from a single API

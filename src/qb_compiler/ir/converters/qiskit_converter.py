@@ -64,7 +64,7 @@ def from_qiskit(qc: QuantumCircuit) -> QBCircuit:
             if hasattr(op, "condition") and op.condition is not None:
                 cond_clbit, cond_val = op.condition
                 if hasattr(cond_clbit, "__iter__"):
-                    # ClassicalRegister — use first bit index
+                    # ClassicalRegister: use first bit index
                     cond_idx = clbit_map.get(next(iter(cond_clbit)), 0)
                 else:
                     cond_idx = clbit_map.get(cond_clbit, 0)

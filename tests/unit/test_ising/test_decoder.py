@@ -23,7 +23,7 @@ class TestPyMatchingBaseline:
     def test_decode_shape(self) -> None:
         spec = SurfaceCodePatchSpec(distance=5, rounds=5, basis="Z")
         decoder = PyMatchingDecoder(spec)
-        # Build a synthetic zero-syndrome batch — should decode to no flip
+        # Build a synthetic zero-syndrome batch: should decode to no flip
         import stim
 
         circuit = stim.Circuit.generated(
@@ -45,7 +45,7 @@ class TestPyMatchingBaseline:
 
     @pytest.mark.parametrize("d", [3, 5])
     def test_ler_decreases_with_distance_at_low_p(self, d: int) -> None:
-        """Classic error-suppression check — deeper code → lower LER."""
+        """Classic error-suppression check: deeper code → lower LER."""
         p = 0.002
         results = {}
         for dist in (d, d + 2):
@@ -72,7 +72,7 @@ class TestIsingDecoderWrapperRequirements:
         spec = SurfaceCodePatchSpec(distance=3, rounds=3, basis="X")
         # torch may or may not be importable on this system; if torch is
         # missing the wrapper raises ImportError before reaching the
-        # build_model check.  Either error type is acceptable — both
+        # build_model check.  Either error type is acceptable: both
         # convey "you haven't supplied enough to run NVIDIA's model".
         try:
             IsingDecoderWrapper(

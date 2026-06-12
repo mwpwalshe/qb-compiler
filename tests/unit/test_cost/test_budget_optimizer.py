@@ -27,8 +27,8 @@ class TestBudgetOptimizer:
             budget_usd=10.0,
             target_shots=1000,
         )
-        # IonQ Aria: $0.30/shot, budget $10 -> max 33 shots
-        assert result.recommended_shots <= 33
+        # IonQ Aria: $0.03/shot, budget $10 -> max 333 shots
+        assert result.recommended_shots <= 333
         assert result.recommended_shots >= 10
         assert result.estimated_cost_usd <= 10.0
 
@@ -37,7 +37,7 @@ class TestBudgetOptimizer:
         optimizer = BudgetOptimizer(min_shots=100)
         with pytest.raises(BudgetExceededError):
             optimizer.optimize("ionq_aria", budget_usd=1.0)
-            # 100 shots * $0.30 = $30 > $1
+            # 100 shots * $0.03 = $3 > $1
 
     def test_optimize_raises_on_zero_budget(self) -> None:
         """Zero budget should raise BudgetExceededError."""
@@ -48,7 +48,7 @@ class TestBudgetOptimizer:
     def test_optimize_strategy_recommendation(self) -> None:
         """Expensive backends should recommend fidelity_optimal."""
         optimizer = BudgetOptimizer(min_shots=1)
-        result = optimizer.optimize("ionq_aria", budget_usd=100.0)
+        result = optimizer.optimize("quantinuum_h2", budget_usd=100.0)
         assert result.strategy == "fidelity_optimal"
 
     def test_optimize_cheap_backend_strategy(self) -> None:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Example 13: Circuit viability checking.
 
-Know before you run — check whether your circuit is worth
+Know before you run: check whether your circuit is worth
 executing on a given backend before spending QPU time.
 """
 from __future__ import annotations

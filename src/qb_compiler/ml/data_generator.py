@@ -5,7 +5,7 @@ each (circuit, backend) pair, scoring them with the calibration-aware
 scorer, and labelling the physical qubits that appear in top-scoring
 layouts as positive examples.
 
-No ML dependencies required — this module only needs numpy and rustworkx.
+No ML dependencies required: this module only needs numpy and rustworkx.
 """
 
 from __future__ import annotations
@@ -125,7 +125,7 @@ class TrainingDataGenerator:
             n_logical = circuit.n_qubits
             if n_logical > len(self._all_qubits):
                 logger.warning(
-                    "Circuit needs %d qubits but backend has %d — skipping",
+                    "Circuit needs %d qubits but backend has %d: skipping",
                     n_logical,
                     len(self._all_qubits),
                 )

@@ -157,9 +157,9 @@ class TestQubitPermutationTracking:
 
     def test_permutation_after_swap(self):
         # Linear chain: 0 - 1 - 2
-        # Gate 1: CX(0, 2) — requires SWAP(0,1), then CX(1,2)
+        # Gate 1: CX(0, 2): requires SWAP(0,1), then CX(1,2)
         # After SWAP: logical 0 is at physical 1, logical 1 is at physical 0.
-        # Gate 2: CX(0, 1) — logical 0 at phys 1, logical 1 at phys 0 => CX(1,0), adjacent.
+        # Gate 2: CX(0, 1): logical 0 at phys 1, logical 1 at phys 0 => CX(1,0), adjacent.
         coupling = _linear_chain(3)
         router = NoiseAwareRouter(coupling_map=coupling)
 

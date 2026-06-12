@@ -57,7 +57,7 @@ gnn = [
 ]
 ising = [
     "stim>=1.14",
-    "pymatching>=2.2",
+    "pymatching>=2.3",
 ]
 ising-nvidia = [
     "qb-compiler[ising]",

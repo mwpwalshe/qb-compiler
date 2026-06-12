@@ -128,7 +128,7 @@ class NoiseAwareRouter(TransformationPass):
                     phys1 = log_to_phys[op.qubits[1]]
 
                     if self._are_adjacent(phys0, phys1):
-                        # Already adjacent — emit directly.
+                        # Already adjacent: emit directly.
                         routed.add_gate(
                             QBGate(
                                 name=op.name,
@@ -222,7 +222,7 @@ class NoiseAwareRouter(TransformationPass):
             qubit_to_node[q] = nid
             node_to_qubit[nid] = q
 
-        # Add edges (undirected — deduplicate).
+        # Add edges (undirected: deduplicate).
         seen_edges: set[tuple[int, int]] = set()
         for q0, q1 in self._coupling_map:
             key = (min(q0, q1), max(q0, q1))

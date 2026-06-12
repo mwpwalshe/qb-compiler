@@ -2,8 +2,8 @@
 
 qb-compiler is the first Qiskit-side onramp to NVIDIA's
 ``Ising-Decoder-SurfaceCode-1`` model family (released 2026-04-14).
-This package turns a rotated surface-code memory experiment — defined
-either via a Qiskit circuit or a :class:`SurfaceCodePatchSpec` — into
+This package turns a rotated surface-code memory experiment: defined
+either via a Qiskit circuit or a :class:`SurfaceCodePatchSpec`: into
 the 4-channel input tensor the decoder consumes, and provides a
 PyMatching baseline so users can directly compare decoder variants.
 
@@ -23,7 +23,7 @@ Quick start
     result = evaluate_logical_error_rate(spec, decoder, shots=10_000, seed=42)
     print(f"LER = {result.rate:.4e} ± {result.standard_error:.1e}")
 
-Run the NVIDIA pre-decoder (optional — users supply their own gated-HF
+Run the NVIDIA pre-decoder (optional: users supply their own gated-HF
 weights and a ``build_model`` callable from the NVIDIA repo)::
 
     from qb_compiler.ising import IsingDecoderConfig, IsingDecoderWrapper
@@ -45,7 +45,9 @@ NVIDIA Open Model License; qb-compiler does not redistribute them.
 from __future__ import annotations
 
 from qb_compiler.ising.decoder import (
+    EvaluationTelemetry,
     IsingDecoderConfig,
+    IsingDecodeResult,
     IsingDecoderWrapper,
     LogicalErrorRate,
     PyMatchingDecoder,
@@ -62,6 +64,8 @@ from qb_compiler.ising.stim_adapter import (
 )
 
 __all__ = [
+    "EvaluationTelemetry",
+    "IsingDecodeResult",
     "IsingDecoderConfig",
     "IsingDecoderWrapper",
     "LogicalErrorRate",

@@ -1,9 +1,9 @@
 """XGBoost-based layout prediction for calibration-aware qubit mapping.
 
-v1: binary classification — predicts per-qubit probability of appearing
+v1: binary classification: predicts per-qubit probability of appearing
     in a high-quality layout.  Trained on pre-routing calibration scores.
 
-v2: regression — predicts post-routing 2Q gate count for a given layout.
+v2: regression: predicts post-routing 2Q gate count for a given layout.
     Trained on actual trial-transpilation outcomes.  Scores layouts
     directly instead of individual qubits.  For candidate qubit filtering,
     samples random layouts and aggregates which qubits appear in the

@@ -45,7 +45,7 @@ def _make_5q_backend(
             )
         )
 
-    # All CX gates have the same error — only asymmetry differs
+    # All CX gates have the same error: only asymmetry differs
     gates = []
     coupling = [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 2), (3, 4), (4, 3)]
     for q0, q1 in coupling:
@@ -115,7 +115,7 @@ class TestQubitPropertiesAsymmetry:
         assert qp.t1_asymmetry_penalty == pytest.approx(0.0055 * math.log(10), rel=1e-6)
 
     def test_inverted_ratio_penalty_is_zero(self):
-        """Ratio < 1 means qubit is BETTER at holding |1⟩ — no penalty."""
+        """Ratio < 1 means qubit is BETTER at holding |1⟩: no penalty."""
         qp = QubitProperties(
             qubit_id=0,
             readout_error_0to1=0.010,
@@ -137,7 +137,7 @@ class TestCalibrationMapperAsymmetry:
         circ = QBCircuit(n_qubits=2, n_clbits=0)
         circ.add_gate(QBGate("cx", (0, 1)))
 
-        # WITH asymmetry awareness — should avoid Q2
+        # WITH asymmetry awareness: should avoid Q2
         mapper_asym = CalibrationMapper(
             backend,
             config=CalibrationMapperConfig(

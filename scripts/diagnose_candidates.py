@@ -164,7 +164,7 @@ def main() -> None:
         raw_candidates = mapper._find_top_k_layouts(circ, interactions)
 
         console.print(
-            f"\n[bold yellow]STEP 1 — Raw candidates from _find_top_k_layouts():[/bold yellow] "
+            f"\n[bold yellow]STEP 1: Raw candidates from _find_top_k_layouts():[/bold yellow] "
             f"{len(raw_candidates)} returned"
         )
 
@@ -206,7 +206,7 @@ def main() -> None:
         diverse_candidates = mapper._diversify_candidates(raw_candidates)
 
         console.print(
-            f"\n[bold yellow]STEP 2 — After _diversify_candidates():[/bold yellow] "
+            f"\n[bold yellow]STEP 2: After _diversify_candidates():[/bold yellow] "
             f"{len(raw_candidates)} -> {len(diverse_candidates)} candidates"
         )
 
@@ -219,7 +219,7 @@ def main() -> None:
         )
         console.print(
             f"  Did diversity filter change anything? "
-            f"[{'green' if changed else 'red'}]{'YES' if changed else 'NO — identical set'}[/]"
+            f"[{'green' if changed else 'red'}]{'YES' if changed else 'NO: identical set'}[/]"
         )
 
         div_table = Table(
@@ -249,7 +249,7 @@ def main() -> None:
 
         # ── Step 3: post-routing rescore ──────────────────────────────────
         console.print(
-            f"\n[bold yellow]STEP 3 — _post_routing_rescore() analysis:[/bold yellow] "
+            f"\n[bold yellow]STEP 3: _post_routing_rescore() analysis:[/bold yellow] "
             f"trial-transpiling {len(diverse_candidates)} candidates"
         )
 
@@ -310,7 +310,7 @@ def main() -> None:
         console.print(
             f"  All identical? "
             f"[{'red' if len(unique_2q_counts) <= 1 else 'green'}]"
-            f"{'YES — rescore cannot differentiate candidates!' if len(unique_2q_counts) <= 1 else 'NO — rescore has signal'}"
+            f"{'YES: rescore cannot differentiate candidates!' if len(unique_2q_counts) <= 1 else 'NO: rescore has signal'}"
             f"[/]"
         )
 
@@ -334,7 +334,7 @@ def main() -> None:
             f"distinct regions: {distinct_div_regions}"
         )
         console.print(
-            f"  Post-routing 2Q counts: {sorted(unique_2q_counts)} — "
+            f"  Post-routing 2Q counts: {sorted(unique_2q_counts)}: "
             f"{'SAME (no signal)' if len(unique_2q_counts) <= 1 else 'DIFFERENT (rescore works)'}"
         )
         console.print()

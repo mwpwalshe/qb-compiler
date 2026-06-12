@@ -59,7 +59,7 @@ class CachedCalibrationProvider(CalibrationProvider):
         Thread-safe: only one thread performs the refresh; others wait.
         """
         now = time.monotonic()
-        # Fast path — no lock needed for read if still fresh
+        # Fast path: no lock needed for read if still fresh
         if self._inner is not None and (now - self._fetched_at) < self._max_age:
             return self._inner
 
@@ -86,7 +86,7 @@ class CachedCalibrationProvider(CalibrationProvider):
                         age_hours=age_h,
                         max_hours=self._hard_limit_hours,
                     ) from None
-                raise  # No cached data at all — propagate original error
+                raise  # No cached data at all: propagate original error
 
     # ── CalibrationProvider interface ────────────────────────────────
 

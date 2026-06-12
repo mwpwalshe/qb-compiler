@@ -1,4 +1,4 @@
-"""ML-powered noise model — uses QubitBoost V13 multi-vendor models.
+"""ML-powered noise model: uses QubitBoost V13 multi-vendor models.
 
 This is a **proprietary integration stub**.  Full functionality requires
 the ``qubitboost-sdk`` package (``pip install qb-compiler[qubitboost]``).
