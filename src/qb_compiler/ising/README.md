@@ -68,7 +68,7 @@ nvidia = IsingDecoderWrapper(spec, config)
 nvidia_result = evaluate_logical_error_rate(spec, nvidia, shots=50_000, seed=42)
 ```
 
-## Telemetry surface (designed v0.5.0, shipped v0.6.0)
+## Telemetry surface (designed v0.5.0, shipped v0.7.0)
 
 Both decoders now expose `decode_full()`, which returns a frozen
 `IsingDecodeResult` instead of the bare bool array. Design doc:

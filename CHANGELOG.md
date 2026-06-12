@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.6.0 (unreleased)
+## 0.7.0 (unreleased)
+
+(folds the planned 0.5.3, 0.6, and 0.7 roadmap buckets into one release, plus the qec experiment
+preflight pulled forward from 0.8)
 
 the trust-layer release: every number qb-compiler prints now carries its uncertainty, its provenance,
 or both, and the package gets a memory.
