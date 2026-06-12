@@ -1,4 +1,5 @@
 """Shot-budget estimator tests."""
+
 import pytest
 
 from qb_compiler.cost.shot_budget import shots_for_expectation, shots_for_rate

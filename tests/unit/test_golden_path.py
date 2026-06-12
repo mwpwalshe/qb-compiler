@@ -1,4 +1,5 @@
 """Golden path: every v0.6 capability chained end to end in one flow."""
+
 import glob
 
 import pytest
@@ -47,7 +48,7 @@ def test_full_surface_end_to_end():
     assert "Error budget" in rendered and "+-" in rendered
 
     # 2. best-of-N with the fidelity-scored path engaged
-    best, cands = qb_transpile(
+    _best, cands = qb_transpile(
         qc, backend="ibm_fez", calibration_path=CAL, n_seeds=3, return_candidates=True
     )
     assert len(cands) == 3 and all(0 < c["score"] <= 1 for c in cands)

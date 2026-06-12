@@ -43,9 +43,7 @@ def _sample_events(spec: SurfaceCodePatchSpec, shots: int, seed: int = 11) -> np
         before_measure_flip_probability=spec.p_error,
         before_round_data_depolarization=spec.p_error,
     )
-    events, _ = circuit.compile_detector_sampler(seed=seed).sample(
-        shots, separate_observables=True
-    )
+    events, _ = circuit.compile_detector_sampler(seed=seed).sample(shots, separate_observables=True)
     return np.asarray(events)
 
 
@@ -286,9 +284,7 @@ class TestHarnessTelemetry:
     def test_aggregates_consistent(
         self, spec: SurfaceCodePatchSpec, decoder: PyMatchingDecoder
     ) -> None:
-        r = evaluate_logical_error_rate(
-            spec, decoder, shots=200, seed=5, collect_telemetry=True
-        )
+        r = evaluate_logical_error_rate(spec, decoder, shots=200, seed=5, collect_telemetry=True)
         t = r.telemetry
         assert t is not None
         assert 0 <= t.predicted_flip_shots <= t.shots_seen

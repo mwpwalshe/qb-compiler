@@ -247,9 +247,7 @@ class IsingDecodeResult:
                     None if self.residual_syndrome is None else list(self.residual_syndrome.shape)
                 ),
                 "pre_decoder_logits": (
-                    None
-                    if self.pre_decoder_logits is None
-                    else list(self.pre_decoder_logits.shape)
+                    None if self.pre_decoder_logits is None else list(self.pre_decoder_logits.shape)
                 ),
             },
         }
@@ -488,11 +486,12 @@ class IsingDecoderWrapper:
                 ) from exc
             state = st.load_file(path, device=self.config.device)
         else:
-            state = torch.load(path, map_location=self.device, weights_only=False)
-            if isinstance(state, dict) and "model_state_dict" in state:
-                state = state["model_state_dict"]
-            elif isinstance(state, dict) and "state_dict" in state:
-                state = state["state_dict"]
+            loaded = torch.load(path, map_location=self.device, weights_only=False)
+            if isinstance(loaded, dict) and "model_state_dict" in loaded:
+                loaded = loaded["model_state_dict"]
+            elif isinstance(loaded, dict) and "state_dict" in loaded:
+                loaded = loaded["state_dict"]
+            state = loaded
             # Strip DDP 'module.' prefix if present
             if any(k.startswith("module.") for k in state):
                 state = {k[len("module.") :]: v for k, v in state.items()}
@@ -792,9 +791,7 @@ def evaluate_logical_error_rate(
             if n:
                 weight_min = min(weight_min, float(weights.min()))
                 weight_max = max(weight_max, float(weights.max()))
-            _reservoir_update(
-                reservoir, seen, telemetry_max_shots, rng, preds, weights, mismatched
-            )
+            _reservoir_update(reservoir, seen, telemetry_max_shots, rng, preds, weights, mismatched)
             seen += n
         else:
             preds = decoder.decode(det_events)

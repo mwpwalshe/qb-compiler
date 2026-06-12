@@ -43,7 +43,7 @@ def test_single_seed_back_compat():
 def test_best_never_worse_than_median_on_two_q():
     _best, cands = qb_transpile(_ghz(6), backend="ibm_fez", n_seeds=4, return_candidates=True)
     best_two_q = min(c["two_q"] for c in cands)
-    chosen = [c for c in cands if c["score"] == max(x["score"] for x in cands)][0]
+    chosen = next(c for c in cands if c["score"] == max(x["score"] for x in cands))
     # when scoring by fidelity the chosen candidate may trade 2q for better edges,
     # but it must never be the strictly worst candidate by score construction
     assert chosen["score"] >= sorted(x["score"] for x in cands)[0]
