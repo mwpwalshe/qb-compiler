@@ -49,7 +49,7 @@ class VendorPricing:
 
 # Last manual review of the price table. Update this whenever the numbers are re-checked
 # against vendor pricing pages; get_pricing() warns when the table has gone stale.
-PRICING_AS_OF = "2026-02-15"
+PRICING_AS_OF = "2026-06-12"
 _PRICING_STALE_DAYS = 90
 _stale_warned = False
 
@@ -96,14 +96,14 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
         backend="ionq_aria",
         cost_per_task_usd=0.30,
         provider="ionq",
-        cost_per_shot_usd=0.30,
-        notes="Aria-2, 25q, Braket pricing",
+        cost_per_shot_usd=0.03,
+        notes="Aria-2, 25q, Braket per-shot + per-task",
     ),
     "ionq_forte": VendorPricing(
         backend="ionq_forte",
         cost_per_task_usd=0.30,
         provider="ionq",
-        cost_per_shot_usd=0.30,
+        cost_per_shot_usd=0.08,
         notes="Forte-1, 36q, Braket pricing",
     ),
     # IQM (AWS Braket)
@@ -140,12 +140,12 @@ VENDOR_PRICING: dict[str, VendorPricing] = {
 
 
 def get_pricing(backend: str) -> VendorPricing | None:
-    _warn_if_stale()
     """Look up pricing for *backend*, returning *None* if unknown."""
+    _warn_if_stale()
     return VENDOR_PRICING.get(backend)
 
 
-def cost_per_shot(backend: str) -> float:
+def _cost_per_shot_impl(backend: str) -> float:
     """Return cost-per-shot in USD, raising :class:`KeyError` if unknown."""
     entry = VENDOR_PRICING.get(backend)
     if entry is None:
@@ -154,3 +154,9 @@ def cost_per_shot(backend: str) -> float:
             f"Known backends: {sorted(VENDOR_PRICING.keys())}"
         )
     return entry.cost_per_shot_usd
+
+
+def cost_per_shot(backend: str) -> float:
+    """Per-shot price for *backend* (USD). Emits the staleness warning."""
+    _warn_if_stale()
+    return _cost_per_shot_impl(backend)

@@ -31,9 +31,20 @@ def read_jsonl(name: str) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     out: list[dict[str, Any]] = []
+    skipped = 0
     with path.open(encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 out.append(json.loads(line))
+            except json.JSONDecodeError:
+                skipped += 1
+    if skipped:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "%s: skipped %d unparseable line(s)", path.name, skipped
+        )
     return out

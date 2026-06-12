@@ -1,10 +1,12 @@
-"""Best-of-N qb_transpile (v0.7)."""
+"""Best-of-N qb_transpile (v0.6)."""
+
 import glob
 
-CAL = sorted(glob.glob("tests/fixtures/calibration_snapshots/ibm_fez_*.json"))[-1]
 from qiskit import QuantumCircuit
 
 from qb_compiler.qiskit_plugin.transpiler_plugin import qb_transpile
+
+CAL = sorted(glob.glob("tests/fixtures/calibration_snapshots/ibm_fez_*.json"))[-1]
 
 
 def _ghz(n=4):
@@ -16,14 +18,20 @@ def _ghz(n=4):
     return qc
 
 
-def test_best_of_n_returns_circuit_and_candidates():
-    best, cands = qb_transpile(_ghz(), backend="ibm_fez", n_seeds=3, return_candidates=True)
-    assert best is not None
-    assert len(cands) == 3
+def test_best_of_n_returns_the_argmax_candidate():
+    best, cands = qb_transpile(
+        _ghz(), backend="ibm_fez", calibration_path=CAL, n_seeds=3, return_candidates=True
+    )
     assert {c["seed"] for c in cands} == {0, 1, 2}
-    best_score = max(c["score"] for c in cands)
-    # the returned circuit corresponds to the best score
-    assert any(c["score"] == best_score for c in cands)
+    winner = max(cands, key=lambda c: c["score"])
+    # the returned circuit matches the argmax candidate's recorded properties
+    two_q = sum(
+        1
+        for inst in best.data
+        if len(inst.qubits) == 2 and inst.operation.name not in ("barrier", "measure", "reset")
+    )
+    assert two_q == winner["two_q"]
+    assert best.depth() == winner["depth"]
 
 
 def test_single_seed_back_compat():

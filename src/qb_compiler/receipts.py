@@ -277,6 +277,10 @@ def regression_check(receipt: CompilationReceipt) -> RegressionReport:
     baseline_2q = int(baseline.get("post_2q_count", 0))
     baseline_ts = str(baseline.get("timestamp", "unknown time"))
 
+    band_missing = (
+        receipt.fidelity_typical_abs_error is None
+        and (baseline.get("fidelity_typical_abs_error") if baseline else None) is None
+    )
     band = (receipt.fidelity_typical_abs_error or 0.0) + (
         float(baseline.get("fidelity_typical_abs_error") or 0.0)
     )
@@ -284,10 +288,10 @@ def regression_check(receipt: CompilationReceipt) -> RegressionReport:
     two_q_delta = receipt.post_2q_count - baseline_2q
 
     if fidelity_delta < -band:
-        status = "REGRESSION"
+        status = "NO_BAND" if band_missing else "REGRESSION"
         verdict = "dropped beyond the combined typical-error band"
     elif fidelity_delta > band:
-        status = "IMPROVEMENT"
+        status = "NO_BAND" if band_missing else "IMPROVEMENT"
         verdict = "rose beyond the combined typical-error band"
     else:
         status = "STABLE"

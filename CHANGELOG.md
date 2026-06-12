@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.6.0 (unreleased)
+
+the trust-layer release: every number qb-compiler prints now carries its uncertainty, its provenance,
+or both, and the package gets a memory.
+
+### added
+- error budget on preflight: viability results break fidelity loss down by source (two-qubit gates vs
+  readout) with pct-of-loss rendering
+- honest fidelity band: estimates print with a typical-abs-error band derived from the committed Fez
+  hardware validation pairs (n=6, GHZ family, model runs optimistic; provenance comment in code)
+- calibration snapshot age on preflight, with a suggestion when the snapshot is stale
+- verify mode: build_mirror / run_mirror / verify_viability compare the prediction against a
+  mirror-circuit measurement (success proxy, honestly disclaimed), `qbc verify` runs it on aer;
+  records grow a local predicted-vs-actual accuracy log (ideal-sim runs are tagged and excluded from
+  accuracy_summary by default)
+- compilation receipts: a passport per compile (predicted fidelity + band, error budget, calibration
+  age, versions, seed, layout) in a local jsonl store, plus regression_check that flags a drop only
+  beyond the combined error bands and never blocks anything
+- best-of-n qb_transpile: n_seeds sweeps the transpiler and returns the candidate with the best
+  calibration-aware fidelity score, return_candidates exposes the per-seed evidence (fallback path
+  returns a tagged single candidate)
+- fidelity-per-dollar ranking (`qbc when` / rank_value) with a naive calibration trend per backend,
+  explicitly no forecasting
+- shot-budget estimators (shots_for_expectation, shots_for_rate)
+- backend auto-discovery from the user's own runtime service + pub-aware preflight
+- qec memory-experiment preflight (projected ler band, detector fraction, shots-for-confidence) on
+  stim + pymatching, unique to this package
+- ising telemetry surface (IsingDecodeResult, bounded opt-in harness telemetry, provenance hashes),
+  closing the v0.5.0 design doc
+- small bundled calibration snapshot set ships in the wheel so `qbc when` and fixture-based preflight
+  work from a pip install (point QBC_CALIBRATION_DIR at your own snapshots for fresh data)
+- py.typed marker (the typing claim in pyproject is now true)
+
+### fixed
+- heron basis gates corrected to cz in BACKEND_CONFIGS (fez, torino, marrakesh); note: the 0.5.2
+  changelog entry below says heron r2 uses ecr, that was wrong, heron's native two-qubit gate is cz
+- stale marketing claims removed from the gate registry (the old optgate multiplier was retracted in
+  april and should not have still been shipping; safetygate qualifier neutralised)
+- ionq per-shot prices corrected (aria 0.03, forte 0.08 usd; 0.30 is braket's per-task fee, now
+  modelled separately), price table gains a last-reviewed stamp and a staleness warning
+- corrupt lines in the local store no longer brick reads (skipped with a logged count)
+
+### changed
+- ci tests qiskit 1.4 and 2.3
+- ising extra requires pymatching >= 2.3 (enable_correlations)
+
+
 All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-source quantum circuit compiler by [QubitBoost](https://qubitboost.io), will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

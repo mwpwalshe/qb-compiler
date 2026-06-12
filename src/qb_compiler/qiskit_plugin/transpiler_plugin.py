@@ -132,7 +132,8 @@ def _resolve_backend(
     a Qiskit ``BackendV1`` / ``BackendV2`` instance. The object path
     queries ``.configuration()`` / ``.target`` / ``.basis_gates`` at
     runtime so the registry's cached gate set can't go stale on the
-    real device (e.g. Heron r2 went from ``cx`` to ``ecr``).
+    real device (e.g. a registry basis-gate staleness incident
+        (Heron's native two-qubit gate is ``cz``)).
 
     The returned ``name`` is forwarded to :func:`_provider_to_dict` for
     snapshot labelling when a calibration provider is also passed.
@@ -709,8 +710,10 @@ def qb_transpile(
 
     Returns
     -------
-    QuantumCircuit
-        The transpiled circuit.
+    QuantumCircuit or (QuantumCircuit, list of dict)
+        The transpiled circuit; with ``return_candidates=True`` a tuple of the
+        best circuit and the per-seed candidate evidence (a single
+        ``{"fallback": True}`` entry when the custom pipeline degraded).
     """
     from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
@@ -831,4 +834,7 @@ def qb_transpile(
             kwargs["basis_gates"] = basis_gates
         if coupling_map is not None:
             kwargs["coupling_map"] = coupling_map
-        return transpile(circuit, **kwargs)
+        fallback_circuit = transpile(circuit, **kwargs)
+        if return_candidates:
+            return fallback_circuit, [{"seed": None, "fallback": True, "score": None}]
+        return fallback_circuit
