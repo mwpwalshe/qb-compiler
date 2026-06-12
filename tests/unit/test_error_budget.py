@@ -1,4 +1,5 @@
 """Error-budget breakdown + fidelity band + pricing staleness (v0.5.3 additions)."""
+
 import warnings
 
 import pytest
@@ -45,6 +46,8 @@ def test_pricing_staleness_warns_once():
         pricing.get_pricing("ibm_torino")
     msgs = [x for x in w if "price table" in str(x.message)]
     assert len(msgs) <= 1  # warn at most once per process
-    if (pytest.importorskip("datetime").date.today()
-            - __import__("datetime").date.fromisoformat(pricing.PRICING_AS_OF)).days > 90:
+    if (
+        pytest.importorskip("datetime").date.today()
+        - __import__("datetime").date.fromisoformat(pricing.PRICING_AS_OF)
+    ).days > 90:
         assert len(msgs) == 1
