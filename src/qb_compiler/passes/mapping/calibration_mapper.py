@@ -4,11 +4,11 @@ Maps logical qubits to physical qubits using live calibration data.
 Unlike topology-only approaches (e.g. Qiskit SabreLayout), this pass
 scores candidate mappings by combining:
 
-- **Gate error rates** — prefer lower-error 2Q links
-- **Qubit coherence** — prefer higher T1/T2 qubits
-- **Readout error** — prefer lower-error measurement qubits for output qubits
-- **T1 asymmetry** — penalise qubits where |1⟩ decays disproportionately
-- **Temporal correlation** — penalise qubit pairs with correlated error drift
+- **Gate error rates**: prefer lower-error 2Q links
+- **Qubit coherence**: prefer higher T1/T2 qubits
+- **Readout error**: prefer lower-error measurement qubits for output qubits
+- **T1 asymmetry**: penalise qubits where |1⟩ decays disproportionately
+- **Temporal correlation**: penalise qubit pairs with correlated error drift
 - **Weighted scoring** combining all factors
 
 The pass uses ``rustworkx.vf2_mapping`` for subgraph isomorphism search
@@ -20,8 +20,8 @@ T1 Asymmetry
 On superconducting qubits, the probability of reading ``0`` when the qubit
 is in ``|1⟩`` (relaxation, P(0|1)) can be 10-25x higher than reading ``1``
 when the qubit is in ``|0⟩`` (thermal excitation, P(1|0)).  This asymmetry
-means circuits that hold qubits in ``|1⟩`` — after X gates, as CNOT
-targets, or in long-lived entangled states — lose fidelity faster on
+means circuits that hold qubits in ``|1⟩``: after X gates, as CNOT
+targets, or in long-lived entangled states: lose fidelity faster on
 high-asymmetry qubits.
 
 Standard transpilers use the *symmetrised* readout error and miss this
@@ -204,7 +204,7 @@ class CalibrationMapper(TransformationPass):
 
         # Step 2: find the best mapping
         if not interactions:
-            # No 2Q gates — pick the best individual qubits
+            # No 2Q gates: pick the best individual qubits
             layout = self._best_individual_qubits(circuit)
         elif n_logical <= 2 and len(interactions) == 1:
             layout = self._best_edge_direct(circuit, interactions)
@@ -226,7 +226,7 @@ class CalibrationMapper(TransformationPass):
             )
 
             # Inject Qiskit seed layouts into the candidate pool.
-            # This guarantees we never lose to Qiskit — their best
+            # This guarantees we never lose to Qiskit: their best
             # layout is always in our candidate set.
             qiskit_injected = 0
             if self._qiskit_target is not None:
@@ -1009,7 +1009,7 @@ class CalibrationMapper(TransformationPass):
         For each 2-qubit gate in the routed circuit, multiply
         ``(1 - gate_error)`` for the physical qubits that gate actually
         lands on.  This uses the *real* calibration errors of the routed
-        circuit — not the pre-routing estimate — so it differentiates
+        circuit: not the pre-routing estimate: so it differentiates
         regions that have the same gate count but different error rates.
         """
         fidelity = 1.0

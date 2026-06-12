@@ -317,7 +317,7 @@ def check_viability(
             qiskit_target = _build_target_from_props(loaded_props)
 
     if qiskit_target is None:
-        # Can't transpile — estimate from circuit structure alone
+        # Can't transpile: estimate from circuit structure alone
         return _estimate_without_transpile(
             circuit,
             backend or "unknown",
@@ -385,7 +385,7 @@ def check_viability(
             viable = True
             reason = (
                 f"Estimated fidelity {fidelity:.3f} is above noise floor but low. "
-                f"Results will be noisy — consider error mitigation."
+                f"Results will be noisy: consider error mitigation."
             )
     else:
         status = "NOT VIABLE"
@@ -447,7 +447,7 @@ def _estimate_without_transpile(
     n_qubits = circuit.num_qubits
     ops = circuit.count_ops()
 
-    # Count 2Q gates from the unrouted circuit (underestimate — routing adds SWAPs)
+    # Count 2Q gates from the unrouted circuit (underestimate: routing adds SWAPs)
     cx_count = sum(v for k, v in ops.items() if k in ("cx", "cz", "cp", "swap", "ecr"))
     # Routing typically adds 30-100% more 2Q gates
     estimated_2q = int(cx_count * 1.5)
@@ -518,7 +518,7 @@ def _build_suggestions(
     if status == "NOT VIABLE":
         suggestions.append(
             "Circuit output will be indistinguishable from noise. "
-            "Do not submit — you will waste QPU time and money."
+            "Do not submit: you will waste QPU time and money."
         )
         if two_q_count > 20:
             suggestions.append(
@@ -534,7 +534,7 @@ def _build_suggestions(
         )
         if fidelity < 0.1:
             suggestions.append(
-                "Fidelity below 10% — error mitigation may not be sufficient. "
+                "Fidelity below 10%: error mitigation may not be sufficient. "
                 "Consider reducing circuit depth."
             )
 
@@ -542,7 +542,7 @@ def _build_suggestions(
         suggestions.append("Good candidate for error mitigation to further improve results.")
 
     if not suggestions:
-        suggestions.append("Circuit looks good — proceed with execution.")
+        suggestions.append("Circuit looks good: proceed with execution.")
 
     return suggestions
 

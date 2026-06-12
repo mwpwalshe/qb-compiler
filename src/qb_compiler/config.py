@@ -215,7 +215,7 @@ class CompilerConfig:
 
     @property
     def effective_basis_gates(self) -> tuple[str, ...] | None:
-        """Basis gates to target — explicit override wins, else from backend."""
+        """Basis gates to target: explicit override wins, else from backend."""
         if self.target_basis_gates is not None:
             return self.target_basis_gates
         spec = self.backend_spec

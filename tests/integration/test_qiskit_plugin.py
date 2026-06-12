@@ -146,7 +146,7 @@ class TestQBTranspile:
         qc.h(0)
         qc.cx(0, 1)
 
-        # No calibration, no backend — should still transpile
+        # No calibration, no backend: should still transpile
         compiled = qb_transpile(qc, optimization_level=1)
         assert isinstance(compiled, QuantumCircuit)
 
@@ -160,7 +160,7 @@ class TestQBTranspile:
         qc = QuantumCircuit(3, 3)
         qc.h(0)
         qc.h(1)
-        qc.ccx(0, 1, 2)  # Toffoli — definitely not native
+        qc.ccx(0, 1, 2)  # Toffoli: definitely not native
         qc.measure([0, 1, 2], [0, 1, 2])
 
         compiled = qb_transpile(

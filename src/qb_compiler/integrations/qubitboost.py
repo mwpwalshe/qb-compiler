@@ -1,27 +1,27 @@
 """QubitBoost SDK integration for qb-compiler.
 
 This bridges qb-compiler (open source) with the QubitBoost SDK
-(proprietary).  The integration is **optional** — qb-compiler works
+(proprietary).  The integration is **optional**: qb-compiler works
 standalone without the SDK.
 
 When the SDK is installed, the compile pipeline gains access to all
 seven QubitBoost gates:
 
 Pre-execution:
-    TomoGate     — pre-flight state fidelity certification
-    SafetyGate   — QEC trust scoring and doom detection
+    TomoGate    : pre-flight state fidelity certification
+    SafetyGate  : QEC trust scoring and doom detection
 
 During execution:
     OptGate      : adaptive QAOA shot allocation (see qubitboost.io for
                    reduction on supported workloads)
-    ChemGate     — VQE operator preselection (hardware-validated:
+    ChemGate    : VQE operator preselection (hardware-validated:
                    32-42% fewer evaluations on supported workflows)
-    GuardGate    — QAOA quality assurance on validated workloads
-    LiveGate     — real-time doom detection on supported backends
-    ShotValidator — redundant syndrome verification
+    GuardGate   : QAOA quality assurance on validated workloads
+    LiveGate    : real-time doom detection on supported backends
+    ShotValidator: redundant syndrome verification
 
 Post-execution:
-    ShotValidator — verify result integrity
+    ShotValidator: verify result integrity
 """
 
 from __future__ import annotations
@@ -230,7 +230,7 @@ class GateRecommendation:
     phase: str
 
     def __str__(self) -> str:
-        line = f"{self.gate:14s}  {self.status} — {self.headline}"
+        line = f"{self.gate:14s}  {self.status}: {self.headline}"
         if self.validated_claim:
             line += f"\n{'':14s}  Hardware-validated: {self.validated_claim} {self.qualifier}"
         return line

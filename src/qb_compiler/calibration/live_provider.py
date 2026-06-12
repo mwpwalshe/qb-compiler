@@ -1,4 +1,4 @@
-"""Live calibration provider — connects to the QubitBoost calibration_hub API.
+"""Live calibration provider: connects to the QubitBoost calibration_hub API.
 
 This is a **proprietary integration stub**.  Full functionality requires
 the ``qubitboost-sdk`` package (``pip install qb-compiler[qubitboost]``).

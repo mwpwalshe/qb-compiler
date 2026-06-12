@@ -26,7 +26,7 @@ class QBGate:
         Continuous parameters (rotation angles, etc.).  Empty for non-parametric
         gates.
     condition : tuple[int, float] | None
-        Optional classical condition ``(clbit, value)`` — the gate fires only
+        Optional classical condition ``(clbit, value)``: the gate fires only
         when ``clbit == value``.
     """
 
@@ -86,7 +86,7 @@ class QBMeasure:
 
 @dataclass(frozen=True, slots=True)
 class QBBarrier:
-    """Scheduling barrier — prevents reordering of ops across it."""
+    """Scheduling barrier: prevents reordering of ops across it."""
 
     qubits: tuple[int, ...]
 

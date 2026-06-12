@@ -131,7 +131,7 @@ class QBDag:
                 from qb_compiler.exceptions import CompilationError
 
                 raise CompilationError(
-                    "DAG contains a cycle — this indicates a bug in DAG construction"
+                    "DAG contains a cycle: this indicates a bug in DAG construction"
                 ) from exc
             raise
 

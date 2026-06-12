@@ -193,7 +193,7 @@ def main() -> None:
         "description": (
             f"qb-compiler (windowed VF2 + post-routing rescoring) vs "
             f"Qiskit opt_level=3 BEST of {len(QISKIT_SEEDS)} seeds. "
-            "No QPU time — estimated fidelity from calibration data."
+            "No QPU time: estimated fidelity from calibration data."
         ),
         "snapshots": [],
     }
@@ -264,7 +264,7 @@ def main() -> None:
             if len(unique_2q_counts) <= 1:
                 console.print(
                     f"  [yellow]WARNING: All candidates have identical 2Q count "
-                    f"({unique_2q_counts}) — rescore provides no signal![/yellow]"
+                    f"({unique_2q_counts}): rescore provides no signal![/yellow]"
                 )
             else:
                 console.print(

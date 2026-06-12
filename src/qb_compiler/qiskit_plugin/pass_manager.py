@@ -36,7 +36,7 @@ class QBPassManager:
     optimization_level:
         Qiskit optimization level (0-3).
     calibration_data:
-        Calibration dict or path — used for layout at level >= 2.
+        Calibration dict or path: used for layout at level >= 2.
     basis_gates:
         Target basis gate set (e.g. ``["cx", "rz", "sx", "x", "id"]``).
     coupling_map:

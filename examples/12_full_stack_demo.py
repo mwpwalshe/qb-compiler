@@ -1,4 +1,4 @@
-"""QubitBoost Full Stack Demo — Compiler + Gate Integration.
+"""QubitBoost Full Stack Demo: Compiler + Gate Integration.
 
 Shows the complete pipeline:
 1. Circuit viability check
@@ -72,7 +72,7 @@ def main() -> None:
     print("=" * 60)
     recs = recommend_gates(circuit_type, confidence)
     for r in recs:
-        print(f"  * {r.gate:14s} {r.status} — {r.headline}")
+        print(f"  * {r.gate:14s} {r.status}: {r.headline}")
         if r.validated_claim:
             print(
                 f"    {'':14s} Hardware-validated: "

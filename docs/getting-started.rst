@@ -189,7 +189,7 @@ See :doc:`cli-reference` for the full CLI reference.
 Next Steps
 ----------
 
-- :doc:`optimization-guide` — choosing the right optimization level and strategy
-- :doc:`calibration-guide` — deep dive on the calibration system
-- :doc:`custom-passes` — writing your own compiler passes
-- :doc:`tutorials/01-basic-compilation` — comprehensive interactive tutorial
+- :doc:`optimization-guide`: choosing the right optimization level and strategy
+- :doc:`calibration-guide`: deep dive on the calibration system
+- :doc:`custom-passes`: writing your own compiler passes
+- :doc:`tutorials/01-basic-compilation`: comprehensive interactive tutorial

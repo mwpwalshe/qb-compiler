@@ -2,14 +2,14 @@
 
 Uses a dual-graph neural network architecture:
 
-1. **Device graph encoder** — GCN over the device coupling graph, with
+1. **Device graph encoder**: GCN over the device coupling graph, with
    per-qubit calibration features (T1, T2, readout error, gate error,
    connectivity, T1 asymmetry).
-2. **Circuit graph encoder** — GCN over the circuit interaction graph,
+2. **Circuit graph encoder**: GCN over the circuit interaction graph,
    with per-qubit interaction features (degree, weight, depth).
-3. **Cross-attention** — aligns circuit qubit needs with device qubit
+3. **Cross-attention**: aligns circuit qubit needs with device qubit
    capabilities, producing a relevance-weighted device embedding.
-4. **Scoring head** — MLP that scores each physical qubit as a
+4. **Scoring head**: MLP that scores each physical qubit as a
    candidate for the layout.
 
 The GNN captures *structural* information (local connectivity patterns,

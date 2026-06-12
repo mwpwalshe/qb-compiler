@@ -1,7 +1,7 @@
 Optimization Level Guide
 ========================
 
-qb-compiler provides four optimization levels (0–3) and three compilation
+qb-compiler provides four optimization levels (0-3) and three compilation
 strategies. This guide helps you choose the right settings.
 
 Optimization Levels
@@ -106,13 +106,13 @@ modern laptop:
      - Baseline
    * - 1
      - ~ 20 ms
-     - +0.5–1%
+     - +0.5-1%
    * - 2
      - ~ 100 ms
-     - +2–4%
+     - +2-4%
    * - 3
      - ~ 500 ms
-     - +3–5%
+     - +3-5%
 
 These are approximate. Actual performance depends on circuit structure,
 backend size, and available calibration data.
@@ -126,15 +126,15 @@ improvement over topology-only mapping.
 
 This improvement increases with:
 
-- **More qubits** — larger devices have more variation in qubit quality
-- **More 2Q gates** — each CX/CZ gate accumulates error
-- **Higher error variance** — devices with large error spreads benefit most
+- **More qubits**: larger devices have more variation in qubit quality
+- **More 2Q gates**: each CX/CZ gate accumulates error
+- **Higher error variance**: devices with large error spreads benefit most
 
 The improvement decreases when:
 
-- **Circuits use most qubits** — fewer layout choices available
-- **All qubits are similar quality** — calibration adds less signal
-- **Circuits are very shallow** — readout error dominates
+- **Circuits use most qubits**: fewer layout choices available
+- **All qubits are similar quality**: calibration adds less signal
+- **Circuits are very shallow**: readout error dominates
 
 Combining Level and Strategy
 -----------------------------

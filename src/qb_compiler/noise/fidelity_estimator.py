@@ -40,12 +40,12 @@ class FidelityEstimator:
 
     The estimation works in two stages:
 
-    1. **Gate fidelity product** — multiply ``(1 - error)`` for every gate
+    1. **Gate fidelity product**: multiply ``(1 - error)`` for every gate
        in the circuit.
-    2. **Decoherence penalty** — for each qubit, compute the total time it
+    2. **Decoherence penalty**: for each qubit, compute the total time it
        is active (sum of gate durations on its critical path) and apply
        the T1/T2 decoherence factor.
-    3. **Readout penalty** — multiply by ``(1 - readout_error)`` for every
+    3. **Readout penalty**: multiply by ``(1 - readout_error)`` for every
        measured qubit.
     """
 
@@ -128,7 +128,7 @@ class FidelityEstimator:
         n_one_qubit_gates: int = 0,
         avg_one_qubit_error: float = 0.001,
     ) -> float:
-        """Quick estimate without a full circuit — useful for planning.
+        """Quick estimate without a full circuit: useful for planning.
 
         Parameters
         ----------

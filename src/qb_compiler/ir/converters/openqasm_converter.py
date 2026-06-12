@@ -122,7 +122,7 @@ def from_qasm(qasm_str: str) -> QBCircuit:
 
     Supports: ``qreg``, ``creg``, standard gates, ``measure``, ``barrier``,
     ``if(c==val)`` conditions.  Gate definitions (``gate ... { }``) are
-    skipped — only applications matter for the IR.
+    skipped: only applications matter for the IR.
     """
     lines = _strip_comments(qasm_str)
 

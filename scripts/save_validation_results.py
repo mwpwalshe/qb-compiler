@@ -138,7 +138,7 @@ def main() -> None:
         "description": (
             "Local validation comparing OLD mapper (single-region VF2, pre-routing scoring) "
             "vs NEW mapper (windowed VF2 + post-routing rescoring) vs Qiskit opt_level=3. "
-            "No QPU time used — estimated fidelity from calibration data."
+            "No QPU time used: estimated fidelity from calibration data."
         ),
         "method": {
             "old_mapper": "Single VF2 run, top_k=1, pre-routing calibration scoring only",

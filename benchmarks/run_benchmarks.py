@@ -85,7 +85,7 @@ def run() -> None:
     circuits = [bell(), ghz(4), ghz(8), ghz(16), qft(4), qft(8), qaoa_random(6), vqe_h2()]
 
     for backend in BACKENDS:
-        table = Table(title=f"qb-compiler benchmarks — {backend}", show_lines=True)
+        table = Table(title=f"qb-compiler benchmarks: {backend}", show_lines=True)
         table.add_column("Circuit", style="cyan", min_width=18)
         table.add_column("Orig Depth", justify="right")
         table.add_column("Compiled Depth", justify="right")
