@@ -68,6 +68,7 @@ all = [
     "qb-compiler[qubitboost,rigetti,ionq,iqm,ml,gnn,ising]",
 ]
 dev = [
+    "qiskit-aer>=0.15",
     "pytest>=8.0",
     "pytest-cov>=4.1",
     "pytest-benchmark>=4.0",
