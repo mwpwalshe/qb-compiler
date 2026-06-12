@@ -659,7 +659,9 @@ def qb_transpile(
     calibration_data: dict | None = None,
     calibration_provider: object | None = None,
     optimization_level: int = 2,
-) -> QuantumCircuit:
+    n_seeds: int = 1,
+    return_candidates: bool = False,
+) -> QuantumCircuit | tuple[QuantumCircuit, list[dict[str, Any]]]:
     """Transpile a Qiskit circuit with calibration-aware layout.
 
     This is the easiest way to use qb-compiler from Qiskit.  It builds a
@@ -676,8 +678,8 @@ def qb_transpile(
         instance. The object path reads ``basis_gates`` and
         ``coupling_map`` from the live backend at runtime via
         ``.configuration()`` / ``.target``, so the registry can't go
-        stale on the real device. Added in v0.5.2 after Heron r2 went
-        from ``cx`` to ``ecr``.
+        stale on the real device (added in v0.5.2 after a registry
+        basis-gate staleness incident).
     calibration_path:
         Path to a QubitBoost ``calibration_hub`` JSON file.
     calibration_data:
@@ -692,6 +694,18 @@ def qb_transpile(
         a static fixture file.
     optimization_level:
         Qiskit optimization level (0-3).  Default is 2.
+    n_seeds:
+        When greater than 1, the pipeline is run once per transpiler seed
+        and the candidate with the best score is returned: scored by the
+        calibration-aware fidelity estimate when calibration data is
+        available, else by fewest two-qubit gates.  Deletes seed-to-seed
+        variance for the cost of N transpiles; the estimate carries the
+        validated typical-error band documented in
+        :mod:`qb_compiler.viability`.
+    return_candidates:
+        When True, returns ``(best_circuit, candidates)`` where candidates
+        is a per-seed list of ``{"seed", "two_q", "depth", "score"}``
+        dicts (the evidence trail for a compilation receipt).
 
     Returns
     -------
@@ -742,8 +756,64 @@ def qb_transpile(
                 pm.pre_layout = _PassManager()
             pm.pre_layout.append(cal_layout)
 
-        result = pm.run(circuit)
-        return result
+        def _score(tc: QuantumCircuit) -> tuple[float, dict[str, Any]]:
+            two_q = sum(
+                1
+                for inst in tc.data
+                if len(inst.qubits) == 2
+                and inst.operation.name not in ("barrier", "measure", "reset")
+            )
+            entry: dict[str, Any] = {"two_q": two_q, "depth": tc.depth()}
+            if cal_dict is not None:
+                try:
+                    from qb_compiler.calibration.models.backend_properties import (
+                        BackendProperties,
+                    )
+                    from qb_compiler.viability import _estimate_routed_fidelity
+
+                    props = BackendProperties.from_dict(cal_dict)
+                    fid = _estimate_routed_fidelity(tc, props, 0.005, 0.01)
+                    entry["score"] = fid
+                    return fid, entry
+                except Exception:  # estimator unavailable: fall through to 2q count
+                    pass
+            entry["score"] = -float(two_q)
+            return -float(two_q), entry
+
+        if n_seeds <= 1:
+            result = pm.run(circuit)
+            if return_candidates:
+                _, entry = _score(result)
+                entry["seed"] = None
+                return result, [entry]
+            return result
+
+        best: QuantumCircuit | None = None
+        best_score = -float("inf")
+        candidates: list[dict[str, Any]] = []
+        for seed in range(n_seeds):
+            pm_seed = generate_preset_pass_manager(
+                optimization_level=optimization_level,
+                basis_gates=basis_gates,
+                coupling_map=coupling_map,
+                seed_transpiler=seed,
+            )
+            if cal_dict is not None:
+                from qiskit.transpiler import PassManager as _PassManager
+
+                pre = _PassManager()
+                pre.append(QBCalibrationLayout(cal_dict))
+                pm_seed.pre_layout = pre
+            tc = pm_seed.run(circuit)
+            score, entry = _score(tc)
+            entry["seed"] = seed
+            candidates.append(entry)
+            if score > best_score:
+                best_score, best = score, tc
+        assert best is not None
+        if return_candidates:
+            return best, candidates
+        return best
 
     except Exception as exc:
         # Graceful fallback: if anything goes wrong with the custom pipeline,
