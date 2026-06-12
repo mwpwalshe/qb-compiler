@@ -771,7 +771,7 @@ def qb_transpile(
                     )
                     from qb_compiler.viability import _estimate_routed_fidelity
 
-                    props = BackendProperties.from_dict(cal_dict)
+                    props = BackendProperties.from_qubitboost_dict(cal_dict)
                     fid = _estimate_routed_fidelity(tc, props, 0.005, 0.01)
                     entry["score"] = fid
                     return fid, entry

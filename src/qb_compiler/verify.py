@@ -179,7 +179,7 @@ def _counts_via_sampler(mirror: Any, runner: Any, shots: int) -> dict[str, int]:
             if name.startswith("_"):
                 continue
             reg = getattr(data, name, None)
-            if hasattr(reg, "get_counts"):
+            if reg is not None and hasattr(reg, "get_counts"):
                 return dict(reg.get_counts())
         raise TypeError("no field with get_counts() in pub result data")
     except Exception as exc:
