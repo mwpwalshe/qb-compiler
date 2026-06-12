@@ -590,3 +590,35 @@ def _parse_qasm_gates(
         if qubits and all(0 <= q < n_qubits for q in qubits):
             gates.append((name, qubits, params))
     return gates
+
+
+@cli.command()
+@click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
+@click.option("--shots", default=4096, type=int, help="Shots used for the cost column.")
+@click.option("--seeds", "-n", default=2, type=int, help="Transpiler seeds per backend.")
+def when(circuit: str, shots: int, seeds: int) -> None:
+    """Rank backends by predicted fidelity per dollar for this circuit."""
+    from qb_compiler.windows import format_table, rank_value
+
+    qc = _load_qasm(circuit)
+    rows = rank_value(qc, shots=shots, n_seeds=seeds)
+    click.echo(format_table(rows))
+
+
+@cli.command()
+@click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--backend", "-b", default=None, help="Backend name for the prediction (e.g. ibm_fez)."
+)
+@click.option("--shots", default=256, type=int, help="Mirror-circuit shots.")
+@click.option("--no-record", is_flag=True, help="Do not append to the local accuracy record.")
+def verify(circuit: str, backend: str | None, shots: int, no_record: bool) -> None:
+    """Check the fidelity prediction against a mirror-circuit measurement (simulator)."""
+    from qb_compiler.verify import verify_viability
+
+    qc = _load_qasm(circuit)
+    try:
+        result = verify_viability(qc, "aer", backend=backend, shots=shots, record=not no_record)
+    except ImportError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(str(result))

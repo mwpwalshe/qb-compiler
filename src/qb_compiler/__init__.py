@@ -50,8 +50,16 @@ from qb_compiler.exceptions import (
     QBCompilerError,
 )
 from qb_compiler.qec_preflight import QECPreflightResult, qec_preflight
+from qb_compiler.receipts import (
+    CompilationReceipt,
+    make_receipt,
+    record_receipt,
+    regression_check,
+)
 from qb_compiler.recommender import BackendRecommender, RecommendationReport
+from qb_compiler.verify import build_mirror, run_mirror, verify_viability
 from qb_compiler.viability import ViabilityResult, check_viability
+from qb_compiler.windows import BackendValue, calibration_trend, rank_value
 
 
 def passmanager(backend: object = None, *, optimization_level: int = 2) -> object:
@@ -130,6 +138,7 @@ __all__ = [
     "BackendNotSupportedError",
     "BackendRecommender",
     "BackendSpec",
+    "BackendValue",
     "BasePass",
     "BudgetExceededError",
     "CalibrationError",
@@ -137,6 +146,7 @@ __all__ = [
     "CalibrationProvider",
     "CalibrationStaleError",
     "CompilationError",
+    "CompilationReceipt",
     "CompileResult",
     "CompilerConfig",
     "CostEstimate",
@@ -155,12 +165,20 @@ __all__ = [
     "RecommendationReport",
     "ViabilityResult",
     "__version__",
+    "build_mirror",
+    "calibration_trend",
     "check_viability",
     "check_viability_pub",
     "discover_backends",
+    "make_receipt",
     "passmanager",
     "qec_preflight",
     "rank_discovered",
+    "rank_value",
+    "record_receipt",
+    "regression_check",
+    "run_mirror",
+    "verify_viability",
 ]
 
 
