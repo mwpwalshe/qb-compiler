@@ -47,24 +47,52 @@ compiled = compiler.compile(circuit)
 
 ## v0.7: trust the number
 
-Every estimate now tells you how much to trust it, and the tool keeps receipts.
+Every estimate now tells you how much to trust it, the tool keeps receipts, and you can check it
+against hardware yourself.
 
-```python
-from qb_compiler import check_viability, verify_viability, make_receipt, regression_check
+**What's new**
 
-res = check_viability(circuit, backend="ibm_fez")
-print(res)            # fidelity with an honest error band + WHERE the fidelity goes
-                      # (two-qubit vs readout) + calibration snapshot age
+| capability | what you get |
+|---|---|
+| Error budget | preflight shows WHERE fidelity goes: two-qubit gates vs readout, pct of loss |
+| Honest band | every fidelity estimate carries a typical-error band with stated provenance |
+| Calibration age | preflight warns when its snapshot is stale, shows the age |
+| Verify mode | `qbc verify`: mirror-circuit check of the prediction, builds a local accuracy log |
+| Receipts | a passport per compile: versions, calibration age, prediction + band, error budget |
+| Regression watch | flags when YOUR circuit compiles worse than your own history, beyond noise |
+| Best-of-N | `qb_transpile(n_seeds=5)`: seed sweep scored by calibrated fidelity, evidence attached |
+| Fidelity per dollar | `qbc when`: rank backends by predicted fidelity per dollar, with trend |
+| Shot budgets | how many shots to resolve your observable or error rate, before you pay |
+| QEC preflight | projected LER band + shot bill for a memory experiment, from calibration |
+| Backend discovery | rank whatever backends your own credentials expose |
+| NVIDIA Ising onramp | the only Qiskit-side bridge to the Ising decoder family, with telemetry |
 
-ver = verify_viability(circuit, "aer", backend="ibm_fez")   # check the prediction
-rec = make_receipt(circuit, res, backend="ibm_fez")          # passport for this compile
-print(regression_check(rec).message)                         # vs your own history
-```
+**How good is the fidelity estimate? Here is the data.**
 
-```
-$ qbc when circuit.qasm     # rank backends by predicted fidelity per dollar, with trend
-$ qbc verify circuit.qasm -b ibm_fez   # mirror-check the prediction on a simulator
-```
+Predicted vs measured on IBM Fez (GHZ family, 4096 shots, March 2026):
+
+| circuit | predicted | measured | delta |
+|---|---|---|---|
+| GHZ-5 (qb layout) | 0.948 | 0.931 | +0.017 |
+| GHZ-5 (qiskit layout) | 0.947 | 0.920 | +0.027 |
+| GHZ-8 (qb layout) | 0.905 | 0.856 | +0.049 |
+| GHZ-8 (qiskit layout) | 0.905 | 0.863 | +0.042 |
+| GHZ-10 (qb layout) | 0.874 | 0.793 | +0.081 |
+| GHZ-10 (qiskit layout) | 0.874 | 0.808 | +0.067 |
+
+Median absolute error 0.045; the model runs optimistic by about +0.05 (it prices gate and readout
+error, not crosstalk or idle decoherence). That is why every estimate prints with a +-0.05 band and
+why `qbc verify` exists: check it on your own circuits, the log stays on your machine.
+
+**And here is why the caveats are not boilerplate.**
+
+A real 50,000-shot distance-3 surface-code run on IBM Fez measured a logical error rate of 0.245.
+A uniform gate-error proxy at the calibration values projects 0.005 to 0.059 for that experiment,
+5 to 50x lower. The gap is real device physics the proxy cannot see, and most of it arrived
+mid-run: the first 25k shots measured 0.129, the second 25k measured 0.361, a 2.8x drift inside one
+job. Projections are floors, not promises. That is exactly what the calibration-age warning, the
+regression watch, and verify mode are for: the tools that tell you when the floor and the building
+have parted company.
 
 Notebooks 19 and 20 walk the whole surface with live outputs. All of it is signals: nothing here
 gates, blocks, or decides for you.
