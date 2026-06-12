@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.0 (unreleased)
+## 0.7.0 - 2026-06-12
 
 (folds the planned 0.5.3, 0.6, and 0.7 roadmap buckets into one release, plus the qec experiment
 preflight pulled forward from 0.8)
