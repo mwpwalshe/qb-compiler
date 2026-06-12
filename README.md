@@ -45,6 +45,30 @@ compiled = compiler.compile(circuit)
 
 ---
 
+## v0.6: trust the number
+
+Every estimate now tells you how much to trust it, and the tool keeps receipts.
+
+```python
+from qb_compiler import check_viability, verify_viability, make_receipt, regression_check
+
+res = check_viability(circuit, backend="ibm_fez")
+print(res)            # fidelity with an honest error band + WHERE the fidelity goes
+                      # (two-qubit vs readout) + calibration snapshot age
+
+ver = verify_viability(circuit, "aer", backend="ibm_fez")   # check the prediction
+rec = make_receipt(circuit, res, backend="ibm_fez")          # passport for this compile
+print(regression_check(rec).message)                         # vs your own history
+```
+
+```
+$ qbc when circuit.qasm     # rank backends by predicted fidelity per dollar, with trend
+$ qbc verify circuit.qasm -b ibm_fez   # mirror-check the prediction on a simulator
+```
+
+Notebooks 19 and 20 walk the whole surface with live outputs. All of it is signals: nothing here
+gates, blocks, or decides for you.
+
 ## CLI
 
 ### `qbc preflight`. Should I run this?

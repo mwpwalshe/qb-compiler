@@ -26,6 +26,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,10 @@ class BackendValue:
     notes: list[str] = field(default_factory=list)
 
 
+def _bundled_snapshot_dir() -> Path:
+    return Path(__file__).resolve().parent / "calibration" / "snapshots"
+
+
 def _snapshot_dirs() -> list[str]:
     """Calibration snapshot directories, in the same priority order as
     :func:`qb_compiler.compiler._load_calibration_fixture`."""
@@ -87,6 +92,9 @@ def _snapshot_dirs() -> list[str]:
             "calibration_snapshots",
         ),
     )
+    bundled = str(_bundled_snapshot_dir())
+    if os.path.isdir(bundled):
+        dirs.append(bundled)
     return dirs
 
 
@@ -328,6 +336,14 @@ def rank_value(
     return rows
 
 
+def _no_backends_hint() -> str:
+    return (
+        "No backends assessed. Point QBC_CALIBRATION_DIR at a directory of calibration "
+        "snapshots named <backend>_YYYY_MM_DD.json, or pass backends explicitly; a small "
+        "bundled snapshot set ships with the package for ibm_fez and ibm_torino."
+    )
+
+
 def format_table(rows: list[BackendValue]) -> str:
     """Render *rows* as an aligned text table for CLI use."""
     if not rows:
@@ -341,7 +357,7 @@ def format_table(rows: list[BackendValue]) -> str:
                 r.backend,
                 f"{r.predicted_fidelity:.4f}",
                 f"{r.cost_per_run_usd:.4f}" if r.cost_per_run_usd is not None else "N/A",
-                f"{r.fidelity_per_dollar:.1f}" if r.fidelity_per_dollar is not None else "N/A",
+                f"{r.fidelity_per_dollar:.3g}" if r.fidelity_per_dollar is not None else "N/A",
                 r.trend,
             )
         )

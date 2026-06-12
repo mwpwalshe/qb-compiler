@@ -171,18 +171,18 @@ class TestBudgetAwareStrategy:
 
     def test_reduces_shots_to_fit_budget(self) -> None:
         """Should reduce shots when they exceed budget."""
-        # IonQ Aria: $0.30/shot, 1000 shots = $300
+        # IonQ Aria: $0.03/shot, 1000 shots = $30
         strategy = BudgetAwareStrategy(budget_usd=10.0, shots=1000)
         config = _default_config(backend="ionq_aria")
         strategy.build_pass_manager(config)
-        # Budget $10 / $0.30 = 33 shots
-        assert strategy.effective_shots == 33
+        # Budget $10 / $0.03 = 333 shots
+        assert strategy.effective_shots == 333
         assert strategy.effective_shots < 1000
 
     def test_raises_on_impossible_budget(self) -> None:
         """Should raise BudgetExceededError when even 1 shot exceeds budget."""
-        # IonQ Aria: $0.30/shot, budget $0.10 -> can't even afford 1 shot
-        strategy = BudgetAwareStrategy(budget_usd=0.10, shots=100)
+        # IonQ Aria: $0.03/shot, budget $0.01 -> can't even afford 1 shot
+        strategy = BudgetAwareStrategy(budget_usd=0.01, shots=100)
         config = _default_config(backend="ionq_aria")
         with pytest.raises(BudgetExceededError):
             strategy.build_pass_manager(config)

@@ -248,6 +248,14 @@ def run_mirror(circuit: Any, runner: Any, *, shots: int = 256) -> MirrorResult:
     )
 
 
+def _runner_label(runner: object) -> str:
+    if isinstance(runner, str):
+        return "aer_ideal_sim" if runner == "aer" else runner
+    if callable(runner):
+        return "callable"
+    return type(runner).__name__
+
+
 def verify_viability(
     circuit: Any,
     runner: Any,
@@ -325,7 +333,7 @@ def verify_viability(
     return result
 
 
-def accuracy_summary() -> dict[str, Any]:
+def accuracy_summary(*, include_ideal_sim: bool = False) -> dict[str, Any]:
     """Summarise the local predicted-vs-actual verify records.
 
     Reads ``verify_records.jsonl`` from ``QBC_DATA_DIR`` and returns
@@ -342,10 +350,16 @@ def accuracy_summary() -> dict[str, Any]:
         ``n`` is 0 and the discrepancy fields are ``None``.
     """
     records = read_jsonl(_RECORDS_FILE)
+    excluded = 0
+    if not include_ideal_sim:
+        kept = [r for r in records if r.get("runner") != "aer_ideal_sim"]
+        excluded = len(records) - len(kept)
+        records = kept
     discrepancies = [float(r["discrepancy"]) for r in records if r.get("discrepancy") is not None]
     if not discrepancies:
         return {
             "n": 0,
+            "n_excluded_ideal_sim": excluded,
             "median_abs_discrepancy": None,
             "mean_signed_discrepancy": None,
             "per_backend_counts": {},

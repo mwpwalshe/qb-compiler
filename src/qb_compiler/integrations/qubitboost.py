@@ -12,7 +12,7 @@ Pre-execution:
     SafetyGate   — QEC trust scoring and doom detection
 
 During execution:
-    OptGate      — adaptive QAOA shot allocation (see qubitboost.io for
+    OptGate      : adaptive QAOA shot allocation (see qubitboost.io for
                    reduction on supported workloads)
     ChemGate     — VQE operator preselection (hardware-validated:
                    32-42% fewer evaluations on supported workflows)

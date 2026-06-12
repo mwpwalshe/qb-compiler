@@ -52,12 +52,21 @@ from qb_compiler.exceptions import (
 from qb_compiler.qec_preflight import QECPreflightResult, qec_preflight
 from qb_compiler.receipts import (
     CompilationReceipt,
+    RegressionReport,
     make_receipt,
+    receipt_history,
     record_receipt,
     regression_check,
 )
 from qb_compiler.recommender import BackendRecommender, RecommendationReport
-from qb_compiler.verify import build_mirror, run_mirror, verify_viability
+from qb_compiler.verify import (
+    MirrorResult,
+    VerifyResult,
+    accuracy_summary,
+    build_mirror,
+    run_mirror,
+    verify_viability,
+)
 from qb_compiler.viability import ViabilityResult, check_viability
 from qb_compiler.windows import BackendValue, calibration_trend, rank_value
 
@@ -155,6 +164,7 @@ __all__ = [
     "EnhancedCompileResult",
     "GateOp",
     "InvalidCircuitError",
+    "MirrorResult",
     "NoiseModel",
     "PassManager",
     "PassResult",
@@ -163,8 +173,11 @@ __all__ = [
     "QBCompilerError",
     "QECPreflightResult",
     "RecommendationReport",
+    "RegressionReport",
+    "VerifyResult",
     "ViabilityResult",
     "__version__",
+    "accuracy_summary",
     "build_mirror",
     "calibration_trend",
     "check_viability",
@@ -175,6 +188,7 @@ __all__ = [
     "qec_preflight",
     "rank_discovered",
     "rank_value",
+    "receipt_history",
     "record_receipt",
     "regression_check",
     "run_mirror",

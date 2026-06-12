@@ -1,0 +1,176 @@
+{
+  "backend_name": "ibm_fez",
+  "n_qubits": 156,
+  "timestamp": "2026-02-15T06:00:11.254874",
+  "properties_timestamp": "2026-02-15 02:38:51+00:00",
+  "basis_gates": ["id", "rz", "sx", "x", "cx", "reset"],
+  "coupling_map": [
+    [0, 1], [1, 0], [1, 2], [2, 1], [2, 3], [3, 2],
+    [3, 4], [4, 3], [4, 5], [5, 4], [5, 6], [6, 5],
+    [6, 7], [7, 6], [7, 8], [8, 7], [8, 9], [9, 8]
+  ],
+  "qubit_properties": [
+    {
+      "qubit": 0,
+      "T1": 156.32,
+      "T2": 160.85,
+      "frequency": 5.1,
+      "readout_error_0to1": 0.00049,
+      "readout_error_1to0": 0.046
+    },
+    {
+      "qubit": 1,
+      "T1": 198.00,
+      "T2": 195.06,
+      "frequency": 5.05,
+      "readout_error_0to1": 0.018,
+      "readout_error_1to0": 0.029
+    },
+    {
+      "qubit": 2,
+      "T1": 259.63,
+      "T2": 165.52,
+      "frequency": 5.15,
+      "readout_error_0to1": 0.006,
+      "readout_error_1to0": 0.0095
+    },
+    {
+      "qubit": 3,
+      "T1": 191.87,
+      "T2": 196.89,
+      "frequency": 5.08,
+      "readout_error_0to1": 0.054,
+      "readout_error_1to0": 0.043
+    },
+    {
+      "qubit": 4,
+      "T1": 299.74,
+      "T2": 222.57,
+      "frequency": 5.12,
+      "readout_error_0to1": 0.0076,
+      "readout_error_1to0": 0.012
+    },
+    {
+      "qubit": 5,
+      "T1": 182.72,
+      "T2": 103.57,
+      "frequency": 5.03,
+      "readout_error_0to1": 0.045,
+      "readout_error_1to0": 0.053
+    },
+    {
+      "qubit": 6,
+      "T1": 199.33,
+      "T2": 170.01,
+      "frequency": 5.09,
+      "readout_error_0to1": 0.018,
+      "readout_error_1to0": 0.021
+    },
+    {
+      "qubit": 7,
+      "T1": 282.04,
+      "T2": 139.28,
+      "frequency": 5.11,
+      "readout_error_0to1": 0.017,
+      "readout_error_1to0": 0.040
+    },
+    {
+      "qubit": 8,
+      "T1": 178.41,
+      "T2": 154.98,
+      "frequency": 5.07,
+      "readout_error_0to1": 0.002,
+      "readout_error_1to0": 0.010
+    },
+    {
+      "qubit": 9,
+      "T1": 256.99,
+      "T2": 123.63,
+      "frequency": 5.14,
+      "readout_error_0to1": 0.010,
+      "readout_error_1to0": 0.013
+    }
+  ],
+  "gate_properties": [
+    {
+      "gate": "cx",
+      "qubits": [0, 1],
+      "parameters": {
+        "gate_error": 0.0042,
+        "gate_length": 348.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [1, 0],
+      "parameters": {
+        "gate_error": 0.0042,
+        "gate_length": 348.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [1, 2],
+      "parameters": {
+        "gate_error": 0.0058,
+        "gate_length": 392.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [2, 1],
+      "parameters": {
+        "gate_error": 0.0058,
+        "gate_length": 392.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [2, 3],
+      "parameters": {
+        "gate_error": 0.0073,
+        "gate_length": 420.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [3, 2],
+      "parameters": {
+        "gate_error": 0.0073,
+        "gate_length": 420.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [3, 4],
+      "parameters": {
+        "gate_error": 0.0035,
+        "gate_length": 310.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [4, 3],
+      "parameters": {
+        "gate_error": 0.0035,
+        "gate_length": 310.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [4, 5],
+      "parameters": {
+        "gate_error": 0.0091,
+        "gate_length": 460.0
+      }
+    },
+    {
+      "gate": "cx",
+      "qubits": [5, 4],
+      "parameters": {
+        "gate_error": 0.0091,
+        "gate_length": 460.0
+      }
+    }
+  ]
+}

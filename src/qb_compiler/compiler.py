@@ -700,6 +700,11 @@ def _load_calibration_fixture(backend_name: str) -> BackendProperties | None:
     if env_cal_dir and os.path.isdir(env_cal_dir):
         search_dirs.append(env_cal_dir)
 
+    # Bundled package snapshots (shipped in the wheel)
+    search_dirs.append(
+        os.path.join(os.path.dirname(__file__), "calibration", "snapshots")
+    )
+
     # Bundled test fixture snapshots
     search_dirs.append(
         os.path.join(
