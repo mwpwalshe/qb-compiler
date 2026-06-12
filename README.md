@@ -45,7 +45,7 @@ compiled = compiler.compile(circuit)
 
 ---
 
-## v0.6: trust the number
+## v0.7: trust the number
 
 Every estimate now tells you how much to trust it, and the tool keeps receipts.
 
