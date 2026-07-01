@@ -63,6 +63,11 @@ def create_hardened_http_client(**overrides: Any) -> httpx.Client:
         redirect policy, and a descriptive User-Agent header.
     """
     defaults: dict[str, Any] = {
+        # SECURITY: TLS certificate verification is pinned on.  httpx
+        # verifies by default, but stating it explicitly means the hardened
+        # baseline never silently depends on that default and any caller
+        # disabling it has to do so visibly via an override.
+        "verify": True,
         "timeout": httpx.Timeout(connect=10.0, read=30.0, write=10.0, pool=5.0),
         "limits": httpx.Limits(max_connections=10, max_keepalive_connections=5),
         "follow_redirects": True,

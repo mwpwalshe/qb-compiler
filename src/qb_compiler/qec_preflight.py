@@ -44,6 +44,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .observable_gate import ObservableAuditResult, audit_dem
+
 #: Relative CI half-widths the preflight sizes shot budgets for.
 _REL_CI_WIDTHS: tuple[float, ...] = (0.5, 0.2, 0.1)
 
@@ -113,6 +115,7 @@ class QECPreflightResult:
     projected_detector_fraction: float
     shots_for_rel_ci: dict[str, int]
     notes: list[str] = field(default_factory=list)
+    observable_audit: ObservableAuditResult | None = None
 
     def __str__(self) -> str:
         lo, hi = self.projected_ler_band
@@ -128,6 +131,12 @@ class QECPreflightResult:
             f"rel {width} -> {self.shots_for_rel_ci[width]}" for width in self.shots_for_rel_ci
         ]
         lines.append(f"  shots for rel. CI    : {', '.join(shot_parts)}")
+        if self.observable_audit is not None:
+            audit = self.observable_audit
+            lines.append(
+                f"  observable-mask audit: {audit.status} "
+                f"(mixed groups {audit.mixed_groups}, mass {audit.mixed_mass:.4f})"
+            )
         if self.notes:
             lines.append("  notes:")
             lines.extend(f"    - {note}" for note in self.notes)
@@ -265,6 +274,15 @@ def qec_preflight(
     detector_events, observable_flips = sampler.sample(shots_sim, separate_observables=True)
 
     dem = circuit.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
+    # Audit the RAW (non-decomposed) mechanisms: that is where a genuine observable-mask collapse
+    # lives.  Decomposition-induced mixed groups are XOR-benign and would only add WARN noise.
+    observable_audit = audit_dem(circuit.detector_error_model(decompose_errors=False))
+    if observable_audit.status != "PASS":
+        notes.append(
+            f"observable-mask audit {observable_audit.status}: "
+            f"{observable_audit.mixed_groups} detector-identical/logical-distinct group(s) "
+            f"({observable_audit.mixed_mass:.4f} mass); {observable_audit.recommendation()}"
+        )
     matching = pymatching.Matching.from_detector_error_model(dem)
     predictions = matching.decode_batch(detector_events.astype(np.uint8)).astype(bool)
 
@@ -296,4 +314,5 @@ def qec_preflight(
         projected_detector_fraction=detector_fraction,
         shots_for_rel_ci=shots_for_rel_ci,
         notes=notes,
+        observable_audit=observable_audit,
     )

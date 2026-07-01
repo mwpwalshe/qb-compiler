@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from datetime import datetime
 
+    from qb_compiler.calibration.models.backend_properties import BackendProperties
     from qb_compiler.calibration.models.coupling_properties import GateProperties
     from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
@@ -109,6 +110,10 @@ class CachedCalibrationProvider(CalibrationProvider):
     @property
     def timestamp(self) -> datetime:
         return self._ensure_fresh().timestamp
+
+    @property
+    def backend_properties(self) -> BackendProperties | None:
+        return self._ensure_fresh().backend_properties
 
     # ── manual control ───────────────────────────────────────────────
 

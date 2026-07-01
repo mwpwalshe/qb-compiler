@@ -486,7 +486,23 @@ class IsingDecoderWrapper:
                 ) from exc
             state = st.load_file(path, device=self.config.device)
         else:
-            loaded = torch.load(path, map_location=self.device, weights_only=False)
+            # SECURITY: weights_only=True restricts unpickling to tensors and
+            # a small allowlist of safe primitives, so a malicious checkpoint
+            # cannot execute arbitrary code via pickle reduction.  Model
+            # checkpoints downloaded from third parties (e.g. HuggingFace) are
+            # untrusted input; the unrestricted unpickling mode is an RCE sink
+            # and must never be used here.
+            try:
+                loaded = torch.load(path, map_location=self.device, weights_only=True)
+            except Exception as exc:
+                raise ValueError(
+                    f"Failed to safely load checkpoint {path!r} with "
+                    "weights_only=True.  qb-compiler only loads tensor "
+                    "state-dict checkpoints; pickled checkpoints containing "
+                    "arbitrary Python objects are rejected as a security "
+                    "measure.  Re-export the model as a plain state_dict or "
+                    "use the .safetensors format."
+                ) from exc
             if isinstance(loaded, dict) and "model_state_dict" in loaded:
                 loaded = loaded["model_state_dict"]
             elif isinstance(loaded, dict) and "state_dict" in loaded:

@@ -189,6 +189,37 @@ Compilation time: 142.3 ms
 Receipt saved to circuit.receipt.json
 ```
 
+### `qbc dem-audit`. QEC decoder-input correctness preflight (ObservableGate)
+
+A stim Detector Error Model (DEM) error mechanism carries detectors, logical-observable masks, and a
+probability. If a DEM-to-matrix step merges mechanisms by detector signature alone, two mechanisms that
+are detector-identical but logical-distinct collapse and the logical mask is lost — which can inflate the
+logical error rate. `dem-audit` detects this before decoding (CI-safe exit codes), and `dem-canonicalize`
+writes an observable-preserving canonical form.
+
+```
+$ qbc dem-audit model.dem
+ObservableGate DEM audit
+  raw mechanisms             : 2
+  unique detector signatures : 1
+  unique detector+obs masks  : 2
+  mixed detector groups      : 1
+  status: FAIL
+  recommendation: detector-identical mechanisms carry conflicting masks; canonicalize by
+  (detectors, observables) or preserve P(L|H) — never merge by detector alone.
+# exit code: 0 = PASS, 1 = WARN (--strict), 2 = FAIL
+
+$ qbc dem-canonicalize model.dem -o safe.dem
+```
+
+Scope (honest): standard production paths are safe — surface/repetition and the full bivariate-bicycle /
+Gross family ([[72,12,6]] … [[144,12,12]] … [[288,12,18]], X and Z basis) audit PASS; decomposed DEMs are
+XOR-benign. The hazard is real and measured on graphlike DEMs with genuine detector-identical /
+logical-distinct mechanisms. See [docs/observablegate.md](docs/observablegate.md).
+
+ObservableGate and its `--json` receipts are free and open source. Signed receipts, batch reports, shared
+dashboards, and CI policy bundles are part of QubitBoost Pro — see [docs/open-core.md](docs/open-core.md).
+
 ---
 
 ## Feature Comparison
