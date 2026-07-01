@@ -62,6 +62,10 @@ class StaticCalibrationProvider(CalibrationProvider):
     def timestamp(self) -> datetime:
         return self._ts
 
+    @property
+    def backend_properties(self) -> BackendProperties:
+        return self._props
+
     # ── convenience constructors ─────────────────────────────────────
 
     @classmethod
@@ -108,8 +112,12 @@ def _parse_timestamp(ts: str) -> datetime:
     try:
         dt = datetime.fromisoformat(cleaned)
     except ValueError:
-        # Last resort: try a common format without microseconds
-        dt = datetime.strptime(cleaned, "%Y-%m-%d %H:%M:%S")
+        try:
+            # Common format without microseconds
+            dt = datetime.strptime(cleaned, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            # Non-timestamp marker (e.g. "synthetic"): unknown age, never raise.
+            return datetime.min.replace(tzinfo=timezone.utc)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt

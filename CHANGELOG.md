@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.8.0 - 2026-06-27
+
+the correctness-preflight release: qb-compiler gains **ObservableGate**, a QEC decoder-input correctness
+audit. A stim DEM error mechanism carries detectors, logical-observable masks, and a probability; a
+decoder-input canonicalization that merges by detector signature alone can collapse detector-identical
+but logical-distinct mechanisms and erase the logical frame — which can inflate the logical error rate.
+ObservableGate detects this condition before decoding and offers an observable-preserving canonical form.
+
+### added
+- `observable_gate` module: `audit_matrices` (pure-numpy invariant, no stim), `audit_dem`,
+  `canonicalize_dem`, `preflight_dem_gate`, and `ObservableAuditResult` (a PASS/WARN/FAIL receipt with
+  mixed-group count, mixed probability mass, and worst-mask ratio)
+- `qbc dem-audit model.dem` — CI-safe exit codes (0 PASS, 1 WARN with `--strict`, 2 FAIL); `--json`
+  emits a machine-readable community-tier receipt
+- `qbc dem-canonicalize model.dem -o safe.dem` — observable-preserving canonical form (merges only exact
+  (detectors, observables) duplicates; keeps detector-identical / logical-distinct mechanisms separate)
+- `qec_preflight` now attaches an `observable_audit` receipt to its result and prints its status
+- unit tests; the pure-numpy core runs in base CI without the `[ising]` extra
+
+### scope (honest)
+- standard production paths audit PASS: surface/repetition and the full bivariate-bicycle / Gross family
+  ([[72,12,6]] … [[144,12,12]] … [[288,12,18]], X and Z basis); decomposed DEMs are XOR-benign
+- the hazard is real and measured (color_code:memory_xyz d3, ~60% relative LER inflation under naive
+  detector-only merging) on graphlike DEMs with genuine detector-identical / logical-distinct mechanisms
+
+### note
+- ObservableGate and its receipts are free and open source. Signed receipts, batch reports, shared
+  dashboards, and CI policy bundles are part of QubitBoost Pro (see `docs/open-core.md`).
+
+### hardened
+- security + adversarial pass: fixed an unsafe-deserialization path in the optional ML-decoder checkpoint
+  loader (`torch.load(weights_only=True)`) with a CI guard against future regressions; bounded a
+  resource-exhaustion case in `qbc compile`; clean errors + exit codes for malformed / wrong-type inputs
+  and bad output paths across the CLI. 709 tests (unit + security + adversarial); ruff + mypy clean.
+
 ## 0.7.0 - 2026-06-12
 
 (folds the planned 0.5.3, 0.6, and 0.7 roadmap buckets into one release, plus the qec experiment

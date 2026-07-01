@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
+    from qb_compiler.calibration.models.backend_properties import BackendProperties
     from qb_compiler.calibration.models.coupling_properties import GateProperties
     from qb_compiler.calibration.models.qubit_properties import QubitProperties
 
@@ -90,3 +91,12 @@ class CalibrationProvider(abc.ABC):
         """Hours elapsed since the calibration was taken."""
         delta = datetime.now(timezone.utc) - self.timestamp
         return delta.total_seconds() / 3600.0
+
+    @property
+    def backend_properties(self) -> BackendProperties | None:
+        """The underlying calibration snapshot, if this provider has one (``None`` otherwise).
+
+        Lets a caller (e.g. the registry, ``check_viability``) obtain the full
+        :class:`BackendProperties` uniformly without knowing the concrete provider type.
+        """
+        return None

@@ -12,6 +12,7 @@ Usage
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,7 +47,15 @@ def cli() -> None:
     help="Target backend (e.g. ibm_fez). One backend only in open-source tier.",
 )
 @click.option("--seeds", "-n", default=2, type=int, help="Number of transpiler seeds.")
-def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
+@click.option(
+    "--live",
+    is_flag=True,
+    help="Use live device calibration (IBM via [ibm]; IonQ/Rigetti/IQM via [ionq]/Braket). "
+    "Falls back to static specs if unavailable.",
+)
+# deprecated alias for --live (kept for back-compat; hidden)
+@click.option("--braket", is_flag=True, hidden=True)
+def preflight(circuit: str, backend: tuple[str, ...], seeds: int, live: bool, braket: bool) -> None:
     """Quick viability check: VIABLE / CAUTION / DO NOT RUN."""
     if len(backend) > 1:
         click.echo("Multi-backend comparison requires QubitBoost.")
@@ -54,12 +63,18 @@ def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
         sys.exit(1)
 
     backend_name = backend[0]
-    qc = _load_qasm(circuit)
+    qc = _load_circuit(circuit)
 
     from qb_compiler.viability import check_viability
 
+    backend_props = None
+    if live or braket:
+        backend_props = _load_live_calibration(backend_name)
+
     try:
-        result = check_viability(qc, backend=backend_name, n_seeds=seeds)
+        result = check_viability(
+            qc, backend=backend_name, backend_props=backend_props, n_seeds=seeds
+        )
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -104,7 +119,7 @@ def preflight(circuit: str, backend: tuple[str, ...], seeds: int) -> None:
 @click.option("--seeds", "-n", default=2, type=int, help="Number of transpiler seeds.")
 def analyze(circuit: str, backend: str, seeds: int) -> None:
     """Analyze circuit viability with suggestions for a single backend."""
-    qc = _load_qasm(circuit)
+    qc = _load_circuit(circuit)
     n_qubits = qc.num_qubits
     ops = qc.count_ops()
     total_gates = sum(ops.values())
@@ -170,7 +185,7 @@ def analyze(circuit: str, backend: str, seeds: int) -> None:
 @click.option("--seeds", "-n", default=2, type=int, help="Transpiler seeds per backend.")
 def diff(circuit: str, backend: str, vs: str, seeds: int) -> None:
     """Compare circuit performance on two backends side by side."""
-    qc = _load_qasm(circuit)
+    qc = _load_circuit(circuit)
 
     from qb_compiler.viability import check_viability
 
@@ -395,19 +410,34 @@ def compile(
     from qb_compiler.compiler import QBCircuit, QBCompiler
 
     path = Path(circuit)
-    content = path.read_text()
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError) as e:
+        click.echo(f"Error: could not read '{circuit}' as a UTF-8 QASM file: {e}", err=True)
+        sys.exit(1)
 
     n_qubits = _parse_qasm_n_qubits(content)
     if n_qubits < 1:
         click.echo("Error: could not determine qubit count from QASM file.", err=True)
+        sys.exit(1)
+    if n_qubits > _MAX_QUBITS:
+        click.echo(
+            f"Error: qubit count {n_qubits} exceeds the supported maximum "
+            f"({_MAX_QUBITS}). Refusing to compile a pathologically large circuit.",
+            err=True,
+        )
         sys.exit(1)
 
     qbc = QBCircuit(n_qubits)
     for gate_name, qubits, params in _parse_qasm_gates(content, n_qubits):
         qbc.add(gate_name, qubits, params)
 
-    compiler = QBCompiler(backend=backend, strategy=strategy)
-    result = compiler.compile(qbc)
+    try:
+        compiler = QBCompiler(backend=backend, strategy=strategy)
+        result = compiler.compile(qbc)
+    except Exception as e:
+        click.echo(f"Error: compilation failed: {e}", err=True)
+        sys.exit(1)
 
     click.echo(
         f"Compiled: depth {result.original_depth} -> {result.compiled_depth} "
@@ -417,12 +447,16 @@ def compile(
     click.echo(f"Compilation time: {result.compilation_time_ms:.1f} ms")
 
     if output:
-        Path(output).write_text(
-            f"// Compiled by qb-compiler {__version__}\n"
-            f"// Original depth: {result.original_depth}, "
-            f"Compiled depth: {result.compiled_depth}\n"
-            f"// Gates: {result.compiled_circuit.gate_count}\n"
-        )
+        try:
+            Path(output).write_text(
+                f"// Compiled by qb-compiler {__version__}\n"
+                f"// Original depth: {result.original_depth}, "
+                f"Compiled depth: {result.compiled_depth}\n"
+                f"// Gates: {result.compiled_circuit.gate_count}\n"
+            )
+        except (OSError, ValueError) as e:
+            click.echo(f"Error: could not write output to '{output}': {e}", err=True)
+            sys.exit(1)
         click.echo(f"Written to {output}")
 
     if receipt:
@@ -430,7 +464,11 @@ def compile(
         receipt_path = path.with_suffix(".receipt.json")
         import json
 
-        receipt_path.write_text(json.dumps(receipt_data, indent=2))
+        try:
+            receipt_path.write_text(json.dumps(receipt_data, indent=2))
+        except OSError as e:
+            click.echo(f"Error: could not write receipt to '{receipt_path}': {e}", err=True)
+            sys.exit(1)
         click.echo(f"Receipt saved to {receipt_path}")
         click.echo("View execution history and trends at https://qubitboost.io/dashboard")
 
@@ -449,6 +487,168 @@ def info() -> None:
             f"  {name:20s}  {spec.provider:8s}  {spec.n_qubits:>4d}q  "
             f"${spec.cost_per_shot:.5f}/shot"
         )
+
+
+# ── qbc backends ─────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.option("--json", "json_out", is_flag=True, help="Emit machine-readable JSON.")
+def backends(json_out: bool) -> None:
+    """List backends and their honest live-calibration status.
+
+    `live_status`: live = live data validated on real hardware; live-unvalidated = adapter exists,
+    not yet smoke-tested; static = static specs only; none = no live adapter. `deps` = the live SDK
+    is importable now; `fixture` = a real (non-synthetic) calibration snapshot is bundled.
+    """
+    from qb_compiler.calibration.registry import all_backend_statuses
+
+    statuses = all_backend_statuses()
+    if json_out:
+        click.echo(json.dumps([s.as_dict() for s in statuses], indent=2))
+        return
+
+    click.echo(f"{'BACKEND':<18} {'PROVIDER':<11} {'LIVE STATUS':<17} {'DEPS':<6} {'FIXTURE'}")
+    click.echo("-" * 62)
+    for s in sorted(statuses, key=lambda x: (x.provider, x.backend)):
+        click.echo(
+            f"{s.backend:<18} {s.provider:<11} {s.live_status.value:<17} "
+            f"{'yes' if s.live_deps_available else 'no':<6} "
+            f"{'yes' if s.static_available else 'no'}"
+        )
+
+
+# ── qbc dem-audit ────────────────────────────────────────────────────
+
+
+@cli.command(name="dem-audit")
+@click.argument("dem_file", type=click.Path(exists=True, dir_okay=False))
+@click.option("--strict", is_flag=True, help="Exit nonzero on WARN as well as FAIL.")
+@click.option(
+    "--json", "json_out", is_flag=True, help="Emit a machine-readable JSON receipt instead of text."
+)
+@click.option(
+    "--canonicalize",
+    "-o",
+    "out_path",
+    default=None,
+    type=click.Path(),
+    help="Write an observable-preserving canonicalized DEM to this path.",
+)
+def dem_audit(dem_file: str, strict: bool, json_out: bool, out_path: str | None) -> None:
+    """Audit a stim .dem file for observable-mask collapse.
+
+    Detector-identical error mechanisms are not necessarily observable-identical; a decoder-input
+    canonicalization that merges by detector signature alone can erase logical-frame information and
+    inflate the logical error rate.  Exit 0 = PASS, 1 = WARN (with --strict), 2 = FAIL.  Suitable
+    as a CI gate before decoder benchmarking or hardware submission.
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("stim") is None:
+        click.echo(
+            "dem-audit requires stim. Install with: pip install 'qb-compiler[ising]'", err=True
+        )
+        sys.exit(3)
+
+    from qb_compiler.observable_gate import audit_dem, canonicalize_dem
+
+    dem = _load_dem(dem_file)
+    result = audit_dem(dem)
+
+    if out_path:
+        safe = canonicalize_dem(dem)
+        _write_dem(safe, out_path)
+        canonical_path: str | None = out_path
+    else:
+        canonical_path = None
+
+    if json_out:
+        receipt = _observable_receipt(dem_file, result, canonical_path)
+        click.echo(json.dumps(receipt, indent=2))
+    else:
+        click.echo(str(result))
+        if canonical_path:
+            click.echo(
+                f"\nobservable-preserving DEM written to {canonical_path} "
+                f"({audit_dem(_load_dem(canonical_path)).n_mechanisms} mechanisms)"
+            )
+
+    if result.status == "FAIL":
+        sys.exit(2)
+    if result.status == "WARN" and strict:
+        sys.exit(1)
+
+
+def _observable_receipt(dem_file: str, result: Any, canonical_path: str | None) -> dict[str, Any]:
+    """Build a community-tier ObservableGate receipt (machine-readable, unsigned).
+
+    Signed receipts, batch reports, and CI policy bundles are part of QubitBoost Pro
+    (https://qubitboost.io/compiler).
+    """
+    return {
+        "schema": "observablegate.receipt/1",
+        "tool": "qb-compiler",
+        "tool_version": __version__,
+        "tier": "community",
+        "dem_file": dem_file,
+        "status": result.status,
+        "audit": {
+            "n_mechanisms": result.n_mechanisms,
+            "unique_detector_sigs": result.unique_detector_sigs,
+            "unique_detector_obs_sigs": result.unique_detector_obs_sigs,
+            "mixed_groups": result.mixed_groups,
+            "mixed_mass": result.mixed_mass,
+            "worst_mask_ratio": result.worst_mask_ratio,
+            "max_group": result.max_group,
+            "decomposed": result.decomposed,
+        },
+        "recommendation": result.recommendation(),
+        "canonicalized_to": canonical_path,
+    }
+
+
+# ── qbc dem-canonicalize ─────────────────────────────────────────────
+
+
+@cli.command(name="dem-canonicalize")
+@click.argument("dem_file", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--output",
+    "-o",
+    "out_path",
+    required=True,
+    type=click.Path(),
+    help="Path to write the observable-preserving canonical DEM.",
+)
+def dem_canonicalize(dem_file: str, out_path: str) -> None:
+    """Write an observable-preserving canonical form of a stim .dem file.
+
+    Merges only exact (detectors, observables) duplicates; keeps detector-identical but
+    logical-distinct mechanisms separate, so no logical-frame information is erased.
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("stim") is None:
+        click.echo(
+            "dem-canonicalize requires stim. Install with: pip install 'qb-compiler[ising]'",
+            err=True,
+        )
+        sys.exit(3)
+
+    from qb_compiler.observable_gate import audit_dem, canonicalize_dem
+
+    dem = _load_dem(dem_file)
+    before = audit_dem(dem)
+    safe = canonicalize_dem(dem)
+    _write_dem(safe, out_path)
+    after = audit_dem(safe)
+    click.echo(
+        f"observable-preserving DEM written to {out_path}\n"
+        f"  mechanisms: {before.n_mechanisms} -> {safe.num_errors}\n"
+        f"  status:     {before.status} -> {after.status} "
+        f"(distinct (detector, mask) pairs preserved)"
+    )
 
 
 # ── qbc calibration ──────────────────────────────────────────────────
@@ -511,17 +711,126 @@ def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
     click.echo()
 
 
-def _load_qasm(circuit_path: str) -> Any:
-    """Load a QASM file as a Qiskit QuantumCircuit."""
+# Guard against pathological qubit counts that would make compilation hang / OOM.
+# Real hardware tops out in the low thousands; nothing legitimate needs more.
+_MAX_QUBITS = 100_000
 
+
+def _load_dem(dem_file: str) -> Any:
+    """Load a stim DEM file, exiting cleanly on malformed input (never a traceback)."""
+    import stim
+
+    try:
+        return stim.DetectorErrorModel.from_file(dem_file)
+    except Exception as e:
+        click.echo(
+            f"Error: could not parse '{dem_file}' as a stim detector error model: {e}",
+            err=True,
+        )
+        click.echo(
+            "Hint: dem-audit expects a stim .dem file, not a stim circuit or other format.",
+            err=True,
+        )
+        sys.exit(2)
+
+
+def _write_dem(dem: Any, out_path: str) -> None:
+    """Write a stim DEM to disk, exiting cleanly on bad output paths."""
+    try:
+        dem.to_file(out_path)
+    except (OSError, ValueError) as e:
+        click.echo(f"Error: could not write DEM to '{out_path}': {e}", err=True)
+        sys.exit(1)
+
+
+def _load_live_calibration(backend_name: str) -> Any:
+    """Resolve the best calibration for *backend_name* via the multi-platform registry.
+
+    Routes to the platform's live provider (IBM / Braket / …) with a never-failing static fallback,
+    and reports the data's freshness honestly. Returns a ``BackendProperties`` snapshot (live, real
+    fixture, or synthetic) or ``None``. Never aborts preflight.
+    """
+    try:
+        from qb_compiler.calibration.registry import get_calibration_provider
+
+        provider = get_calibration_provider(backend_name, prefer_live=True)
+        props = provider.backend_properties
+    except Exception as e:
+        click.echo(f"  Note: live calibration unavailable ({e}); using static.", err=True)
+        return None
+    if props is None:
+        return None
+    ts = props.timestamp
+    if ts == "synthetic":
+        click.echo(
+            "  Note: no live or fixture calibration available; using synthetic static specs.",
+            err=True,
+        )
+    else:
+        click.echo(f"  Calibration snapshot: {ts}", err=True)
+    return props
+
+
+def _looks_like_qasm3(text: str) -> bool:
+    """Heuristic: does this source declare OpenQASM 3?"""
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("//"):
+            continue
+        if line.startswith("OPENQASM"):
+            return "3" in line.split(";")[0]
+        # Stop scanning once real content starts.
+        break
+    return False
+
+
+def _load_circuit(circuit_path: str) -> Any:
+    """Load a circuit file as a Qiskit ``QuantumCircuit``, dispatching by format.
+
+    Dispatch rules:
+
+    * ``.qasm3`` (or any file whose header declares ``OPENQASM 3``) is parsed
+      via ``qiskit.qasm3.loads`` (needs the ``qb-compiler[qasm3]`` extra).
+    * ``.qasm`` / ``.qasm2`` and everything else falls back to the OpenQASM 2
+      path (``QuantumCircuit.from_qasm_str``).
+    """
     from qiskit import QuantumCircuit
 
     path = Path(circuit_path)
     try:
-        return QuantumCircuit.from_qasm_file(str(path))
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        click.echo(f"Error loading circuit: {e}", err=True)
+        sys.exit(1)
+
+    is_qasm3 = path.suffix.lower() == ".qasm3" or _looks_like_qasm3(text)
+
+    try:
+        if is_qasm3:
+            try:
+                import qiskit_qasm3_import  # noqa: F401
+            except ImportError:
+                click.echo(
+                    "Error: parsing OpenQASM 3 requires the 'qiskit_qasm3_import' "
+                    "package. Install it with: pip install 'qb-compiler[qasm3]'",
+                    err=True,
+                )
+                sys.exit(1)
+            from qiskit.qasm3 import loads
+
+            return loads(text)
+        return QuantumCircuit.from_qasm_str(text)
+    except SystemExit:
+        raise
     except Exception as e:
         click.echo(f"Error loading circuit: {e}", err=True)
         sys.exit(1)
+
+
+# Back-compat alias: existing call sites / tests may still import this name.
+def _load_qasm(circuit_path: str) -> Any:
+    """Deprecated alias for :func:`_load_circuit`."""
+    return _load_circuit(circuit_path)
 
 
 def _build_receipt(
@@ -600,7 +909,7 @@ def when(circuit: str, shots: int, seeds: int) -> None:
     """Rank backends by predicted fidelity per dollar for this circuit."""
     from qb_compiler.windows import format_table, rank_value
 
-    qc = _load_qasm(circuit)
+    qc = _load_circuit(circuit)
     rows = rank_value(qc, shots=shots, n_seeds=seeds)
     click.echo(format_table(rows))
 
@@ -616,7 +925,7 @@ def verify(circuit: str, backend: str | None, shots: int, no_record: bool) -> No
     """Check the fidelity prediction against a mirror-circuit measurement (simulator)."""
     from qb_compiler.verify import verify_viability
 
-    qc = _load_qasm(circuit)
+    qc = _load_circuit(circuit)
     try:
         result = verify_viability(qc, "aer", backend=backend, shots=shots, record=not no_record)
     except ImportError as exc:
