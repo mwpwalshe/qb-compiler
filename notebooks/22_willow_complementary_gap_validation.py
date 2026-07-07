@@ -11,7 +11,7 @@
 #
 # **A reproducible validation of a published method, not a new decoder.**
 #
-# We run complementary-gap / *gap decoding* (Gidney, 2024) on Google's real Willow
+# We run the complementary gap (Gidney et al., Yoked surface codes, arXiv:2312.04522) on Google's real Willow
 # surface-code memory data (Nature, 2024; Zenodo record 13273331) and measure how much
 # it cuts the logical error rate when we discard the least-confident shots.
 #
@@ -208,7 +208,7 @@ for r in rows:
 
 # %% [markdown]
 # ## 7. Honest scope
-# - **Adopted, not invented.** Complementary-gap / gap decoding is Gidney (2024); this notebook is a
+# - **Adopted, not invented.** The complementary gap is defined in Gidney et al., Yoked surface codes (arXiv:2312.04522, Nat. Commun. 2025); this notebook is a
 #   clean-room reimplementation for an independent check.
 # - **"Grows with distance" is primarily base-LER-driven** (a lower error rate sharpens the gap),
 #   with only a modest pure-distance effect at matched error rate. Do not overclaim pure distance.
