@@ -6,8 +6,7 @@ measurements can reduce circuit depth, minimise idle time (reducing
 decoherence), and avoid hook errors that arise from particular gate
 orderings.
 
-This pass requires the QubitBoost SDK (>= 2.5) for access to code
-definitions, hook-error analysis, and scheduling heuristics.
+This pass is available only in a QubitBoost commercial build.
 """
 
 from __future__ import annotations
@@ -58,4 +57,4 @@ class SyndromeScheduler(TransformationPass):
         return "syndrome_scheduler"
 
     def transform(self, circuit: QBCircuit, context: dict) -> PassResult:
-        raise NotImplementedError("QEC passes require qubitboost-sdk >= 2.5")
+        raise NotImplementedError("This pass is available only in a QubitBoost commercial build.")

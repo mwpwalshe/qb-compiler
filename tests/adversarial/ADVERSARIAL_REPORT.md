@@ -1,8 +1,8 @@
-# Adversarial Hardening Report — qb-compiler
+# Adversarial Hardening Report: qb-compiler
 
 Offensive/adversarial pass over every CLI command, the ObservableGate API, and the
 QASM/DEM parsers. Goal: hostile inputs must degrade gracefully (clean error + nonzero
-exit for CLI, typed exception for API) — never a raw traceback, hang, or unbounded
+exit for CLI, typed exception for API), never a raw traceback, hang, or unbounded
 resource use.
 
 Tests live in `tests/adversarial/`. Source fixes are minimal input-validation /
@@ -17,7 +17,7 @@ Tests live in `tests/adversarial/`. Source fixes are minimal input-validation /
 | `compile` | `qreg q[999999999]` (pathological qubit count) | **HANG / OOM** (timed out >30s building the circuit) | `_MAX_QUBITS=100_000` guard after parse → clean error + exit 1 in <0.01s. FIXED |
 | `compile -o <dir>` | output path is an existing directory | **Uncaught `IsADirectoryError`** | output write wrapped → "could not write output to …" + exit 1. FIXED |
 | `compile -o <nodir>/x` | output parent dir missing | **Uncaught `FileNotFoundError`** | same wrapper. FIXED |
-| `compile` (compile stage) | inputs that make the compiler raise | unwrapped — would traceback | `compiler.compile` wrapped → clean error + exit 1. FIXED (defensive) |
+| `compile` (compile stage) | inputs that make the compiler raise | unwrapped, would traceback | `compiler.compile` wrapped → clean error + exit 1. FIXED (defensive) |
 | `compile --receipt` | receipt dir not writable | unwrapped `write_text` | wrapped → clean error + exit 1. FIXED (defensive) |
 | `dem-audit` / `dem-canonicalize` | malformed DEM text | **Uncaught `IndexError: Unrecognized instruction`** | `_load_dem` wraps `from_file` → "could not parse … as a stim DEM" + exit 2. FIXED |
 | `dem-audit` / `dem-canonicalize` | a stim **circuit** passed as a `.dem` | **Uncaught `IndexError`** | same `_load_dem` guard + hint. FIXED |

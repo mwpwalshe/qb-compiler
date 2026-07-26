@@ -3,7 +3,7 @@
 These commands take a stim ``.dem`` path and an output path. Hostile inputs:
 malformed DEM text, a stim *circuit* masquerading as a DEM, binary/non-UTF8 files,
 and output paths that are directories or have missing parents. Each must exit
-nonzero with a clean message — never a raw traceback.
+nonzero with a clean message, never a raw traceback.
 """
 
 from __future__ import annotations

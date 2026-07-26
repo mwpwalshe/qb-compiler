@@ -1,6 +1,6 @@
 # Open core: qb-compiler vs QubitBoost Pro
 
-qb-compiler is **open source and free**. It is the preflight layer for quantum execution — circuit
+qb-compiler is **open source and free**. It is the preflight layer for quantum execution, circuit
 viability, backend recommendation, cost estimation, calibration-aware compilation, and QEC decoder-input
 correctness (**ObservableGate**). You can run all of it, in CI, forever, for free.
 
@@ -19,7 +19,7 @@ depend on the receipts.
 | **ObservableGate: QEC DEM correctness audit** | `qbc dem-audit` (text or `--json` receipt) |
 | **Observable-preserving DEM canonicalization** | `qbc dem-canonicalize` |
 | CI-safe exit codes (0 / 1 / 2) | all of the above |
-| Python API, notebooks, docs | — |
+| Python API, notebooks, docs |, |
 
 The `--json` receipt is an unsigned, machine-readable community-tier artifact you can store and diff
 yourself.
@@ -35,7 +35,7 @@ yourself.
 | **DriftGate / SafetyGate / QEC-preflight bundle** | the governance stack |
 | **Result Passport** | end-to-end provenance for a quantum result |
 | **Deep QEC audit (services)** | private DEM/decoder audit + report + recommendations |
-| Custom vendor/backend adapters, private support | — |
+| Custom vendor/backend adapters, private support |, |
 
 Pro is in development at <https://qubitboost.io/compiler>.
 

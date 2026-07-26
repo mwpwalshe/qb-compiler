@@ -1,7 +1,7 @@
 """QEC (Quantum Error Correction) compiler passes.
 
-These passes require the QubitBoost SDK (>= 2.5) and will raise
-``NotImplementedError`` until that dependency is available.
+These passes are available only in a QubitBoost commercial build and raise
+``NotImplementedError`` otherwise.
 """
 
 from __future__ import annotations

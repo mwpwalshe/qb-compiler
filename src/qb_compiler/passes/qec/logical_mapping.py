@@ -4,8 +4,7 @@ Maps logical QEC qubits (data qubits + ancillas for a given error-correcting
 code) to physical hardware qubits, taking into account code distance,
 stabiliser structure, and hardware connectivity.
 
-This pass requires the QubitBoost SDK (>= 2.5) for access to code
-definitions and hardware-aware placement algorithms.
+This pass is available only in a QubitBoost commercial build.
 """
 
 from __future__ import annotations
@@ -56,4 +55,4 @@ class LogicalQubitMapper(TransformationPass):
         return "logical_qubit_mapper"
 
     def transform(self, circuit: QBCircuit, context: dict) -> PassResult:
-        raise NotImplementedError("QEC passes require qubitboost-sdk >= 2.5")
+        raise NotImplementedError("This pass is available only in a QubitBoost commercial build.")

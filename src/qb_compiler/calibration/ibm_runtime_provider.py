@@ -1,7 +1,7 @@
 """Live calibration provider backed by IBM Quantum (qiskit-ibm-runtime).
 
-Fetches *live* device calibration straight from IBM via ``qiskit-ibm-runtime`` — qubit
-T1/T2/frequency, per-gate error/duration, and readout error — from the backend's qiskit ``Target``.
+Fetches *live* device calibration straight from IBM via ``qiskit-ibm-runtime``, qubit
+T1/T2/frequency, per-gate error/duration, and readout error: from the backend's qiskit ``Target``.
 This is the open-source IBM live path: it needs only ``qiskit-ibm-runtime`` + a saved IBM Quantum
 account, with no proprietary QubitBoost hub.
 

@@ -1,4 +1,4 @@
-"""Calibration provider registry — the central dispatcher that makes qb-compiler multi-platform.
+"""Calibration provider registry: the central dispatcher that makes qb-compiler multi-platform.
 
 Maps a backend name to the best available calibration provider via ``BackendSpec.provider`` and
 an ordered per-platform strategy, wraps it in a TTL cache, and **always degrades to static**
@@ -139,7 +139,7 @@ def get_calibration_provider(
 ) -> CalibrationProvider:
     """Return the best available calibration provider for *backend*.
 
-    Tries the platform's live factories in order (skipping any that raise — missing SDK, no
+    Tries the platform's live factories in order (skipping any that raise, missing SDK, no
     credentials, network/device error), then **always** falls back to static (real fixture, else
     synthetic). Wrapped in a :class:`CachedCalibrationProvider` (TTL). Never raises for a known
     backend; raises ``BackendNotSupportedError`` only for an unknown one.

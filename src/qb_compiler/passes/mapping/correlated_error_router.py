@@ -1,9 +1,9 @@
 """Correlated-error-aware SWAP router.
 
-Extends the standard noise-aware routing strategy by penalising qubit pairs
-that exhibit high temporal error correlation (as measured by SafetyGate /
-QubitBoost).  When correlation data is unavailable, falls back to standard
-error-weighted routing.
+Extends the standard noise-aware routing strategy: when per-pair correlation
+weights are supplied as input, the flagged pairs are penalised during routing.
+When no correlation data is available, it falls back to standard error-weighted
+routing.
 """
 
 from __future__ import annotations

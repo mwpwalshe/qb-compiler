@@ -1,5 +1,13 @@
 """RL-based SWAP routing using PPO (Phase 4).
 
+STATUS (2026-07-08): NOT PRODUCTION-WIRED. This module has zero references anywhere in the codebase
+outside its own unit test, and the bundled weights (rl_router_v1) are undertrained (100 episodes,
+final average reward -1.96, i.e. worse than neutral). It is neither used by any compile path nor
+validated against the SABRE/heuristic SWAP baseline. Do NOT auto-load it. Pending a deliberate
+finish-or-delete decision: either train it properly and wire it with the same no-harm-fallback
+pattern as the XGBoost layout predictor (deterministic scorer + full fallback), or remove it.
+The default compile path correctly loads only the XGBoost layout predictor, not this.
+
 Reinforcement learning agent that learns optimal SWAP insertion
 decisions during circuit routing.  The agent observes the current
 routing state (partially routed circuit + device calibration) and

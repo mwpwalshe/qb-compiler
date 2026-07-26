@@ -1,4 +1,4 @@
-# ObservableGate — QEC decoder-input correctness preflight
+# ObservableGate: QEC decoder-input correctness preflight
 
 ObservableGate audits a quantum-error-correction **Detector Error Model (DEM)** for *observable-mask
 collapse* before it is handed to a decoder, and can rewrite it into an observable-preserving canonical
@@ -43,9 +43,9 @@ Status:
 
 | Status | Meaning |
 |--------|---------|
-| `PASS` | no mixed groups — detector-only canonicalization is observable-safe |
+| `PASS` | no mixed groups, detector-only canonicalization is observable-safe |
 | `WARN` | mixed groups present but the DEM is decomposed (likely XOR-benign; review) |
-| `FAIL` | genuine detector-identical / logical-distinct mechanisms — do **not** merge by detector alone |
+| `FAIL` | genuine detector-identical / logical-distinct mechanisms, do **not** merge by detector alone |
 
 ## CLI
 
@@ -85,7 +85,7 @@ if not result.ok:                       # FAIL
 
 ## The fix
 
-Canonicalize by `(H, L)` — keep distinct `(detectors, observables)` pairs as separate columns, merging
+Canonicalize by `(H, L)`: keep distinct `(detectors, observables)` pairs as separate columns, merging
 only **exact** `(H, L)` duplicates (XOR-combining their probabilities). The detector-identical /
 logical-distinct ambiguity is *intrinsic* and is preserved, never erased; the actionable signal is "do
 not feed this DEM to a detector-signature-only merge path." If you must merge by `H`, carry the logical
@@ -96,10 +96,10 @@ mixture `P(L | H)` rather than a single mask.
 Standard production paths audit **PASS**:
 
 - `surface_code` and `repetition_code` (raw DEMs have no mixed groups);
-- the full **bivariate-bicycle / Gross family** — `[[72,12,6]]`, `[[90,8,10]]`, `[[108,8,10]]`,
+- the full **bivariate-bicycle / Gross family**, `[[72,12,6]]`, `[[90,8,10]]`, `[[108,8,10]]`,
   `[[144,12,12]]` (the Gross code), `[[288,12,18]]`, in both X and Z basis (20 configs swept, all PASS);
 - decomposed DEMs show mixed groups but are XOR-benign and are handled correctly by standard converters.
 
 The hazard is real and measured on **graphlike DEMs with genuine detector-identical / logical-distinct
 mechanisms** (e.g. `color_code:memory_xyz`, hand-built witnesses). ObservableGate's job is to detect that
-condition and offer the observable-preserving fix — not to claim any specific decoder is broken.
+condition and offer the observable-preserving fix, not to claim any specific decoder is broken.
