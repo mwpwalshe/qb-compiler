@@ -31,3 +31,10 @@ docs/_build/
 *.ipynb_checkpoints/
 *:Zone.Identifier
 *.parquet
+
+# internal only, never publish: commercial verdicts, strategy, unfiled-IP notes
+docs/commercial/
+
+# Quarantined / superseded code. Never publish: this is where retired work is parked before
+# deletion, and it is not reviewed for release.
+junk/

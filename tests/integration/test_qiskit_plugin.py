@@ -170,8 +170,13 @@ class TestQBTranspile:
             optimization_level=2,
         )
 
-        # IBM Fez native gates
-        ibm_native = {"id", "rz", "sx", "x", "cx", "reset", "measure", "barrier", "delay"}
+        # ibm_fez is a Heron r2 device: its native 2Q gate is cz, not cx.
+        # Derive the allowed set from the codebase's own basis definition so this
+        # can't drift from the transpiler target, plus the non-gate directives the
+        # transpiler may leave in place.
+        from qb_compiler.backends.ibm.native_gates import IBM_HERON_BASIS
+
+        ibm_native = set(IBM_HERON_BASIS) | {"reset", "measure", "barrier", "delay"}
         ops_in_circuit = compiled.count_ops()
         for gate_name in ops_in_circuit:
             assert gate_name in ibm_native, (

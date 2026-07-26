@@ -1,7 +1,7 @@
 """Live calibration provider backed by AWS Braket device properties.
 
-Fetches *live* device data from an Amazon Braket QPU — qubit count, connectivity, native gates, and
-(where the provider publishes it) per-qubit/per-gate fidelities, T1/T2, readout error — plus the
+Fetches *live* device data from an Amazon Braket QPU: qubit count, connectivity, native gates, and
+(where the provider publishes it) per-qubit/per-gate fidelities, T1/T2, readout error, plus the
 device's online/offline status and queue depth.  The AWS-Braket analogue of the IBM live-calibration
 path.
 

@@ -109,7 +109,7 @@ class TestAuditDemHostile:
         assert time.monotonic() - start < 10.0
 
     def test_huge_dem_does_not_hang_or_oom(self) -> None:
-        # 30k mechanisms — a size/time sanity check, capped to keep the suite fast.
+        # 30k mechanisms: a size/time sanity check, capped to keep the suite fast.
         dem = stim.DetectorErrorModel()
         for i in range(30_000):
             dem.append("error", 0.001, [stim.target_relative_detector_id(i % 50)])

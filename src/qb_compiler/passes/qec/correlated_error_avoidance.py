@@ -1,16 +1,9 @@
 """Correlated error avoidance pass for QEC circuits.
 
-Uses temporal correlation data from SafetyGate / QubitBoost to identify
-qubit pairs that exhibit correlated errors over time and restructures
-QEC circuits to avoid scheduling critical operations on those pairs
-simultaneously.
+Given per-pair correlation weights as input, restructures QEC circuits to
+avoid scheduling critical operations on flagged pairs simultaneously.
 
-Correlated errors are particularly damaging to QEC because decoders
-(e.g. MWPM, union-find) assume independent error models.  When errors
-are correlated, the effective code distance is reduced.
-
-This pass requires the QubitBoost SDK (>= 2.5) for access to
-SafetyGate temporal correlation analysis.
+This pass is available only in a QubitBoost commercial build.
 """
 
 from __future__ import annotations
@@ -65,4 +58,4 @@ class CorrelatedErrorAvoidance(TransformationPass):
         return "correlated_error_avoidance"
 
     def transform(self, circuit: QBCircuit, context: dict) -> PassResult:
-        raise NotImplementedError("QEC passes require qubitboost-sdk >= 2.5")
+        raise NotImplementedError("This pass is available only in a QubitBoost commercial build.")

@@ -193,7 +193,7 @@ Receipt saved to circuit.receipt.json
 
 A stim Detector Error Model (DEM) error mechanism carries detectors, logical-observable masks, and a
 probability. If a DEM-to-matrix step merges mechanisms by detector signature alone, two mechanisms that
-are detector-identical but logical-distinct collapse and the logical mask is lost — which can inflate the
+are detector-identical but logical-distinct collapse and the logical mask is lost, which can inflate the
 logical error rate. `dem-audit` detects this before decoding (CI-safe exit codes), and `dem-canonicalize`
 writes an observable-preserving canonical form.
 
@@ -206,19 +206,19 @@ ObservableGate DEM audit
   mixed detector groups      : 1
   status: FAIL
   recommendation: detector-identical mechanisms carry conflicting masks; canonicalize by
-  (detectors, observables) or preserve P(L|H) — never merge by detector alone.
+  (detectors, observables) or preserve P(L|H), never merge by detector alone.
 # exit code: 0 = PASS, 1 = WARN (--strict), 2 = FAIL
 
 $ qbc dem-canonicalize model.dem -o safe.dem
 ```
 
-Scope (honest): standard production paths are safe — surface/repetition and the full bivariate-bicycle /
+Scope (honest): standard production paths are safe: surface/repetition and the full bivariate-bicycle /
 Gross family ([[72,12,6]] … [[144,12,12]] … [[288,12,18]], X and Z basis) audit PASS; decomposed DEMs are
 XOR-benign. The hazard is real and measured on graphlike DEMs with genuine detector-identical /
 logical-distinct mechanisms. See [docs/observablegate.md](docs/observablegate.md).
 
 ObservableGate and its `--json` receipts are free and open source. Signed receipts, batch reports, shared
-dashboards, and CI policy bundles are part of QubitBoost Pro — see [docs/open-core.md](docs/open-core.md).
+dashboards, and CI policy bundles are part of QubitBoost Pro, see [docs/open-core.md](docs/open-core.md).
 
 ---
 
@@ -429,3 +429,23 @@ pytest
 Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
 Copyright 2026 QubitBoost.
+
+## Selection receipts
+
+`CalibrationMapper` already chooses a layout from live calibration by scoring candidates on gate
+error, coherence (T1/T2), readout error, T1 asymmetry, and temporal correlation, then picking the
+best via VF2 subgraph search. `selection_receipt()` turns that choice into an auditable record: the
+chosen layout, its score, the per-signal breakdown, and a stable calibration fingerprint. The check
+is free; the signed, stored receipt is the product.
+
+```python
+from qb_compiler.passes.mapping import CalibrationMapper, selection_receipt
+
+mapper = CalibrationMapper(backend)          # backend: BackendProperties (live calibration)
+result = mapper.run(circuit, {})
+receipt = selection_receipt(result, calibration=backend)   # unsigned dict
+```
+
+`sign=True` produces an Ed25519-signed receipt when the QubitBoost SDK is installed, and otherwise
+degrades to an unsigned receipt with a pointer, never raising. Signing lives in the paid layer; the
+receipt itself is Apache-2.0 with zero paid-SDK dependency.

@@ -1,12 +1,12 @@
 """Calibration / device-info provider for Azure Quantum.
 
 Azure Quantum is an aggregator: it brokers access to IonQ, Quantinuum, Rigetti (and others) and
-exposes per-target *metadata* — name, provider, current availability/queue, and capability info
+exposes per-target *metadata*, name, provider, current availability/queue, and capability info
 (qubit count, native gate set). It does **not** publish rich per-qubit error calibration the way IBM
 or Braket do. So this provider is honest about scope: it captures device capabilities + availability
 and leaves per-qubit/per-gate error fields sparse (read only when a target actually publishes them).
 
-It is registered as a *secondary* access path in the calibration registry — a redundant route to
+It is registered as a *secondary* access path in the calibration registry, a redundant route to
 IonQ/Quantinuum/Rigetti used only if the primary (Braket / pytket) provider is unavailable.
 
 ``parse_azure_target`` is a pure function over a target-metadata dict, so it is fully unit-testable

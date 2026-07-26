@@ -1,4 +1,4 @@
-# qb-compiler 0.8.0 — ObservableGate
+# qb-compiler 0.8.0: ObservableGate
 
 **The correctness-preflight release.** qb-compiler gains **ObservableGate**, a QEC decoder-input
 correctness audit, and ships a hardened, security-reviewed core.
@@ -7,14 +7,14 @@ correctness audit, and ships a hardened, security-reviewed core.
 
 ---
 
-## ✨ New: ObservableGate — QEC decoder-input correctness preflight
+## ✨ New: ObservableGate: QEC decoder-input correctness preflight
 
 A quantum-error-correction **Detector Error Model (DEM)** error mechanism carries three things: the
 detectors it flips, the **logical-observable masks** it flips, and a probability. A decoder predicts the
 logical *frame* from the detector *symptom*.
 
 The hazard: if a DEM-to-matrix step merges mechanisms by **detector signature alone**, two mechanisms
-that are *detector-identical but logical-distinct* collapse into one — and the logical mask is lost or
+that are *detector-identical but logical-distinct* collapse into one, and the logical mask is lost or
 arbitrarily chosen. That is not a semantics-preserving operation, and it can inflate the logical error
 rate. (Measured: ~60% relative LER inflation on a `color_code:memory_xyz` distance-3 DEM under naive
 detector-only merging.)
@@ -34,8 +34,8 @@ qbc dem-audit model.dem --json        # machine-readable community-tier receipt
 qbc dem-canonicalize model.dem -o safe.dem
 ```
 
-> ObservableGate and its receipts are **free and open source**. Team/enterprise receipt workflows —
-> signed receipts, batch reports, shared dashboards, and CI policy bundles — are coming under
+> ObservableGate and its receipts are **free and open source**. Team/enterprise receipt workflows, 
+> signed receipts, batch reports, shared dashboards, and CI policy bundles, are coming under
 > **QubitBoost Pro** (see [`docs/open-core.md`](../open-core.md)). Adopt the free CLI now; Pro is
 > additive and never blocks the open-source path.
 
@@ -59,11 +59,11 @@ safe = canonicalize_dem(dem)          # observable-preserving canonical form
 ### Honest scope
 
 Standard production paths audit **PASS** and are unaffected: `surface_code`, `repetition_code`, and the
-full **bivariate-bicycle / Gross family** — `[[72,12,6]]` … `[[144,12,12]]` (the Gross code) …
+full **bivariate-bicycle / Gross family**, `[[72,12,6]]` … `[[144,12,12]]` (the Gross code) …
 `[[288,12,18]]`, in both X and Z basis (20 configs swept, all PASS). Decomposed DEMs are XOR-benign and
 handled correctly by standard converters. The hazard is real and measured on **graphlike DEMs with
 genuine detector-identical / logical-distinct mechanisms**. ObservableGate's job is to *detect* that
-condition and offer the fix — **not** to claim any specific decoder is broken.
+condition and offer the fix, **not** to claim any specific decoder is broken.
 
 Docs: [`docs/observablegate.md`](../observablegate.md).
 

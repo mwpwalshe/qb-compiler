@@ -1,7 +1,7 @@
 # qb-compiler multi-platform audit (exact state)
 
 **Date:** 2026-06-28. Source of truth: `qbc backends --json`, `BACKEND_CONFIGS`, `VENDOR_PRICING`,
-`calibration/`, `ir/converters/`, `backends/`. Honest snapshot — no claims, only what runs.
+`calibration/`, `ir/converters/`, `backends/`. Honest snapshot, no claims, only what runs.
 
 ## The 7 layers that make a tool "multi-platform"
 1. Backend specs (qubits / topology / basis)  2. Live calibration  3. Static calibration fixtures
@@ -21,14 +21,14 @@ Legend: ✅ works · ⚠ code exists, not proven on a real device · ✗ absent.
 
 ## Cross-cutting layers (apply to ALL vendors)
 
-- **Circuit input (layer 6) — BROADENED (P4).** OpenQASM 2 + Qiskit (core), plus **OpenQASM 3**
+- **Circuit input (layer 6), BROADENED (P4).** OpenQASM 2 + Qiskit (core), plus **OpenQASM 3**
   (`qasm3_converter`, via `qiskit-qasm3-import`), **Cirq** (`cirq_converter`), and **PennyLane**
   (`pennylane_converter`). CLI `_load_circuit` dispatches by extension/header (`.qasm3` / `OPENQASM 3`).
   Converters lazy-import their SDK; tests run for cirq + qasm3, skip for pennylane when absent.
-- **Transpilation (layer 4) — multi-platform output, qiskit-centric engine.** `qiskit.transpile`
+- **Transpilation (layer 4), multi-platform output, qiskit-centric engine.** `qiskit.transpile`
   + per-vendor basis-gate decomposition + custom passes produces **vendor-native compiled circuits for
   all 6 vendors**. Layout/routing uses qiskit Sabre (no native pyQuil/IonQ transpilers).
-- **Execution (layer 7) — NONE, by design.** qb-compiler is **preflight/analyze/compile only**; it does
+- **Execution (layer 7), NONE, by design.** qb-compiler is **preflight/analyze/compile only**; it does
   NOT submit jobs to any QPU. (`verify` checks predictions on a simulator.) Hardware submission is the
   QubitBoost platform's role, not the OSS tool's.
 
@@ -62,6 +62,6 @@ live-but-unvalidated; Quantinuum static-only). It is **single-ecosystem on input
 | marrakesh/ionq/iqm/quantinuum lack bundled fixtures | capture real snapshots (needs creds) | P2/P3 | pending |
 | Routing is qiskit-only | native transpilers (only if fidelity gap measured) | P5 | deferred |
 
-**To finish:** the only remaining work needs **real credentials** — one AWS Braket run (flips
+**To finish:** the only remaining work needs **real credentials**, one AWS Braket run (flips
 IonQ/Rigetti/IQM → LIVE), one Quantinuum login (flips Quantinuum → LIVE), and optional snapshot capture
 for offline fixtures. All code paths are built + tested offline.

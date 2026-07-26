@@ -240,6 +240,14 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
         snapshot = getattr(provider, "_snapshot", None)
         if snapshot is not None:
             underlying = getattr(snapshot, "_props", None)
+    if underlying is None:
+        # IBMRuntimeCalibrationProvider (and other live providers) wrap a
+        # StaticCalibrationProvider under ``_delegate``; its ``_props`` carries the
+        # coupling_map. Without this the live path fell through to the fallback below
+        # and dropped the topology, silently disabling calibration-aware layout.
+        delegate = getattr(provider, "_delegate", None)
+        if delegate is not None:
+            underlying = getattr(delegate, "_props", None)
     if underlying is not None:
         return {
             "backend_name": getattr(underlying, "backend", backend_hint or "unknown"),
@@ -273,9 +281,25 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
         }
 
     # Fallback path: walk the abstract provider interface
+    gate_props = [
+        {
+            "gate": g.gate_type,
+            "qubits": list(g.qubits),
+            "parameters": {
+                "gate_error": g.error_rate,
+                "gate_length": g.gate_time_ns,
+            },
+        }
+        for g in provider.get_all_gate_properties()  # type: ignore[attr-defined]
+    ]
+    # Reconstruct the coupling map from 2Q gate pairs so a provider that exposes no
+    # underlying BackendProperties still yields topology; without it VF2 layout has no
+    # connectivity and calibration-aware placement silently degrades to the default.
+    coupling = sorted({tuple(g["qubits"]) for g in gate_props if len(g["qubits"]) == 2})
     return {
         "backend_name": getattr(provider, "backend_name", backend_hint or "unknown"),
         "timestamp": str(getattr(provider, "timestamp", "")),
+        "coupling_map": [list(e) for e in coupling],
         "qubit_properties": [
             {
                 "qubit": q.qubit_id,
@@ -287,17 +311,7 @@ def _provider_to_dict(provider: object, backend_hint: str | None = None) -> dict
             }
             for q in provider.get_all_qubit_properties()  # type: ignore[attr-defined]
         ],
-        "gate_properties": [
-            {
-                "gate": g.gate_type,
-                "qubits": list(g.qubits),
-                "parameters": {
-                    "gate_error": g.error_rate,
-                    "gate_length": g.gate_time_ns,
-                },
-            }
-            for g in provider.get_all_gate_properties()  # type: ignore[attr-defined]
-        ],
+        "gate_properties": gate_props,
     }
 
 

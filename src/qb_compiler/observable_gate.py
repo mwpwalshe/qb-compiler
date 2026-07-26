@@ -1,4 +1,4 @@
-"""ObservableGate — observable-mask-collapse preflight for QEC decoder inputs.
+"""ObservableGate: observable-mask-collapse preflight for QEC decoder inputs.
 
 A stim Detector Error Model (DEM) error mechanism carries ``(detectors, logical-observables,
 probability)``.  A decoder predicts the observable *frame* from the detector *symptom*.  If a
@@ -7,7 +7,7 @@ detector-identical but logical-distinct collapse and the logical mask is lost or
 
 That is **not** a semantics-preserving operation.  Measured harm (research): on
 ``color_code:memory_xyz`` d3, naive detector-only merging inflates the logical error rate
-8.2% -> 13.1% (~60% relative).  Standard production paths are safe — surface/repetition and the full
+8.2% -> 13.1% (~60% relative).  Standard production paths are safe, surface/repetition and the full
 bivariate-bicycle / Gross family ([[72,12,6]] .. [[144,12,12]] .. [[288,12,18]], X and Z basis) have
 no detector-identical / logical-distinct mechanisms; decomposed DEMs are XOR-benign.  This module
 detects the unsafe condition before decoding and offers an observable-preserving canonicalization.
@@ -60,7 +60,7 @@ class ObservableAuditResult:
             "WARN": "mixed groups exist but the DEM is decomposed (likely XOR-benign); "
             "review before merging by detector signature.",
             "FAIL": "detector-identical mechanisms carry conflicting masks; canonicalize by "
-            "(detectors, observables) or preserve P(L|H) — never merge by detector alone.",
+            "(detectors, observables) or preserve P(L|H), never merge by detector alone.",
         }[self.status]
 
     def __str__(self) -> str:
@@ -114,7 +114,7 @@ def audit_matrices(
         raise ValueError(
             "column-count mismatch: check_matrix has "
             f"{n} mechanism column(s), obs_matrix has {obs_matrix.shape[1]}, "
-            f"priors has {priors.shape[0]} — all three must agree on the mechanism count"
+            f"priors has {priors.shape[0]}, all three must agree on the mechanism count"
         )
 
     by_detector: dict[bytes, list[int]] = {}

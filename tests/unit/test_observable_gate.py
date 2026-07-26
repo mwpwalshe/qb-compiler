@@ -1,4 +1,4 @@
-"""Tests for ObservableGate — the observable-mask-collapse decoder-input preflight.
+"""Tests for ObservableGate: the observable-mask-collapse decoder-input preflight.
 
 The core invariant (:func:`audit_matrices`) is pure-numpy and runs in base CI without stim. The DEM
 helpers are exercised only when stim is available (the ``[ising]`` extra).

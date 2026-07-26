@@ -1,20 +1,37 @@
 # Changelog
 
+## 0.9.0 - unreleased
+
+**Selection receipts for calibration-aware layout** (`qb_compiler.passes.mapping.selection_receipt`):
+a signed-passport-ready record of the layout `CalibrationMapper` chose and why (its layout, score,
+and per-signal breakdown: gate error, coherence, readout, T1 asymmetry, temporal correlation) plus
+a stable calibration fingerprint. The receipt is derived purely from the mapper's `PassResult`, so
+it never re-implements the layout objective. Unsigned by default; `sign=True` uses the QubitBoost
+SDK's Ed25519 signer, soft-imported only if present, and degrades to an unsigned receipt with a
+pointer otherwise. Apache-2.0, zero paid-SDK dependency.
+
+`CalibrationMapper` and `CalibrationMapperConfig` are now exported from
+`qb_compiler.passes.mapping` (previously importable only by full module path).
+
+**Fix:** `test_qb_transpile_reduces_to_native_gates` asserted `cx` as the IBM Fez native 2Q gate;
+Fez is a Heron r2 device whose native 2Q gate is `cz`. The test now derives the allowed set from
+`IBM_HERON_BASIS` (the codebase's own basis definition) so it can't drift from the transpiler target.
+
 ## 0.8.0 - 2026-06-27
 
 the correctness-preflight release: qb-compiler gains **ObservableGate**, a QEC decoder-input correctness
 audit. A stim DEM error mechanism carries detectors, logical-observable masks, and a probability; a
 decoder-input canonicalization that merges by detector signature alone can collapse detector-identical
-but logical-distinct mechanisms and erase the logical frame — which can inflate the logical error rate.
+but logical-distinct mechanisms and erase the logical frame, which can inflate the logical error rate.
 ObservableGate detects this condition before decoding and offers an observable-preserving canonical form.
 
 ### added
 - `observable_gate` module: `audit_matrices` (pure-numpy invariant, no stim), `audit_dem`,
   `canonicalize_dem`, `preflight_dem_gate`, and `ObservableAuditResult` (a PASS/WARN/FAIL receipt with
   mixed-group count, mixed probability mass, and worst-mask ratio)
-- `qbc dem-audit model.dem` — CI-safe exit codes (0 PASS, 1 WARN with `--strict`, 2 FAIL); `--json`
+- `qbc dem-audit model.dem`, CI-safe exit codes (0 PASS, 1 WARN with `--strict`, 2 FAIL); `--json`
   emits a machine-readable community-tier receipt
-- `qbc dem-canonicalize model.dem -o safe.dem` — observable-preserving canonical form (merges only exact
+- `qbc dem-canonicalize model.dem -o safe.dem`, observable-preserving canonical form (merges only exact
   (detectors, observables) duplicates; keeps detector-identical / logical-distinct mechanisms separate)
 - `qec_preflight` now attaches an `observable_audit` receipt to its result and prints its status
 - unit tests; the pure-numpy core runs in base CI without the `[ising]` extra
