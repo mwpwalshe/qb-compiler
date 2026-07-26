@@ -7,7 +7,7 @@ correctness audit, and ships a hardened, security-reviewed core.
 
 ---
 
-## ✨ New: ObservableGate: QEC decoder-input correctness preflight
+## New: ObservableGate: QEC decoder-input correctness preflight
 
 A quantum-error-correction **Detector Error Model (DEM)** error mechanism carries three things: the
 detectors it flips, the **logical-observable masks** it flips, and a probability. A decoder predicts the

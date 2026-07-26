@@ -86,8 +86,9 @@ def build_model(spec: SurfaceCodePatchSpec):
     # via --nvidia-repo (prepended to sys.path in main()).
     from model.predecoder import PreDecoderModelMemory_v1  # type: ignore[import-not-found]
 
-    # TODO(you): match these to NVIDIA's cfg dataclass / namespace.  The
-    # values are derived from the patch spec; the KEYS are theirs.
+    # Note: these keys mirror NVIDIA's cfg dataclass / namespace, so they must
+    # track upstream. The values are derived from the patch spec; the KEYS are
+    # theirs, and will need updating if upstream renames them.
     cfg = dict(
         distance=spec.distance,
         rounds=spec.rounds,
