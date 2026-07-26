@@ -32,7 +32,7 @@ Notebooks that depend on an optional extra guard the import and print a clear
 | 17_nvidia_ising_integration.ipynb | PASS | 27s | none, needs `[ising]`; NVIDIA-weights path already guarded (raises/handles `NotImplementedError`) |
 | 18_ising_pymatching_baseline_sweep.ipynb | PASS | 17s | none, reads a precomputed benchmark JSON; no extra needed at runtime |
 | 19_know_before_you_run.ipynb | PASS | 21s | none, `qec_preflight` needs `[ising]` |
-| 20_proof_not_promises.ipynb | PASS | 33s | none |
+| 20_receipts_not_claims.ipynb | PASS | 33s | none |
 | 21_observablegate_qec_preflight.ipynb | PASS (new) | ~15s | **New notebook** demoing the v0.8.0 ObservableGate feature. Every stim/CLI cell guards on `HAVE_STIM` / `shutil.which("qbc")` and skips gracefully if the `[ising]` extra or console script is absent. |
 
 **Result: all 21 notebooks execute cleanly** (or skip-gracefully when an optional extra is
