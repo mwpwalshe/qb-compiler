@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.10.0 - 2026-07-27
+
+First release published to PyPI since 0.7.0, so installing it brings everything in 0.8.0
+(ObservableGate, the QEC decoder-input correctness audit, and its `qbc dem-audit` /
+`qbc dem-canonicalize` commands) and 0.9.0 (selection receipts for calibration-aware layout) as
+well as the changes below. See those entries further down for detail.
+
+A minor rather than a patch bump: this adds public API and changes one returned value.
+`BudgetOptimizer` now recommends `budget_optimal` / `depth_optimal` where it previously returned
+`speed_optimal` / `cost_optimal`. Anything reading that string will see different values; anything
+passing it to `QBCompiler`, which is what it is for, now works where it previously raised.
+
 
 **The package root now exposes what the package actually does.** Since 0.7.0 the headline
 additions (ObservableGate, selection receipts, the multi-vendor calibration registry) were
