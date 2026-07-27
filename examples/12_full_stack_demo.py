@@ -95,18 +95,11 @@ def main() -> None:
     print()
 
     if circuit_type == "qaoa" and confidence.value in ("high", "medium"):
-        print("  With OptGate (IF circuit matches validated patterns):")
-        low_reduction, high_reduction = 117, 208
-        low_shots = shots / high_reduction
-        high_shots = shots / low_reduction
-        print(f"  Estimated shots: {low_shots:.0f}-{high_shots:.0f} "
-              f"(based on {low_reduction}-{high_reduction}x validated range)")
-        print(f"  Estimated cost: ${low_shots * cost_per_shot:.4f}"
-              f"-${high_shots * cost_per_shot:.4f}")
-        print()
-        print("  Note: Actual reduction depends on circuit structure,")
-        print("  backend calibration, and problem instance. These estimates")
-        print("  are based on hardware-validated QAOA benchmarks.")
+        print("  Adaptive shot-reduction gates for QAOA are available in the")
+        print("  QubitBoost SDK. The achievable reduction depends on circuit")
+        print("  structure, backend calibration and problem instance, so this")
+        print("  demo projects no figure: the SDK reports the shots actually")
+        print("  used against the baseline above once the job has run.")
     print()
 
     # Step 5: SDK status

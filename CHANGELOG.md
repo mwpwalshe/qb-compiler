@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.9.0 - unreleased
+## Unreleased
+
+**Fixed: `qbc backends` failed on installs without the optional vendor SDKs.** The availability
+probes for Quantinuum and Azure passed a dotted module path to `importlib.util.find_spec`, which
+imports the parent package in order to locate a submodule and therefore raises ModuleNotFoundError
+when that parent is absent, rather than returning None. Since every vendor SDK is an optional
+extra, a default `pip install qb-compiler` has none of them, and `qbc backends` exited 1 with a
+traceback instead of listing the backends. The probes now report an absent SDK as unavailable, so
+the backend is still listed with `deps: no`. Covered by a test that simulates each vendor SDK
+being missing, so the result no longer depends on what the test machine has installed.
+
+## 0.9.0 - 2026-07-27
 
 **Selection receipts for calibration-aware layout** (`qb_compiler.passes.mapping.selection_receipt`):
 a signed-passport-ready record of the layout `CalibrationMapper` chose and why (its layout, score,

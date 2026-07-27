@@ -32,7 +32,7 @@ docs/_build/
 *:Zone.Identifier
 *.parquet
 
-# internal only, never publish: commercial verdicts, strategy, unfiled-IP notes
+# Not part of the public documentation set.
 docs/commercial/
 
 # Quarantined / superseded code. Never publish: this is where retired work is parked before

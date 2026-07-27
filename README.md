@@ -166,7 +166,7 @@ $ qbc doctor
 
 qbc doctor
 
-✔  qb-compiler 0.4.0b1
+✔  qb-compiler 0.9.0
 ✔  Python 3.11.14
 ✔  Qiskit 1.4.5
 ✔  IBM credentials configured (2 account(s))
@@ -328,12 +328,12 @@ Quantum (or other vendor APIs as they're added). Auto-refreshes every 30
 min, falls back to stale cache with a `UserWarning` on vendor outages.
 See `LiveCalibrationProvider` in `qb_compiler.calibration.live_provider`.
 
-Optional companion gates from the QubitBoost SDK (OptGate adaptive shot
-reduction for QAOA; ChemGate eval reduction for VQE; LiveGate /
-ShotValidator runtime checks) are surfaced as recommendations in
-`qbc preflight` / `qbc analyze` when circuit type is detected. Gate
-performance figures are documented separately at
-[qubitboost.io](https://qubitboost.io).
+Optional companion gates from the QubitBoost SDK (adaptive shot reduction
+for QAOA, evaluation reduction for VQE, runtime execution checks) are
+surfaced as recommendations in `qbc preflight` / `qbc analyze` when the
+circuit type is detected. qb-compiler reports which gates are eligible for a
+given circuit and attaches no performance figure to them. See
+[qubitboost.io](https://qubitboost.io) for the SDK itself.
 
 ### NVIDIA Ising Decoder onramp (v0.4.0b1, beta)
 
