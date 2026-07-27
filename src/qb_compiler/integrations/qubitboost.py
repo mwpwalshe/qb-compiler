@@ -4,16 +4,14 @@ This bridges qb-compiler (open source) with the QubitBoost SDK
 (proprietary).  The integration is **optional**: qb-compiler works
 standalone without the SDK.
 
-When the SDK is installed, the compile pipeline gains access to all
-seven QubitBoost gates:
+When the SDK is installed, the compile pipeline gains access to the
+QubitBoost gates:
 
 Pre-execution:
     TomoGate    : pre-flight state fidelity certification
     SafetyGate  : QEC trust scoring and doom detection
 
 During execution:
-    OptGate      : adaptive QAOA shot allocation (see qubitboost.io for
-                   reduction on supported workloads)
     ChemGate    : VQE operator preselection (hardware-validated:
                    32-42% fewer evaluations on supported workflows)
     GuardGate   : QAOA quality assurance on validated workloads
@@ -81,15 +79,6 @@ class GateInfo:
 
 
 GATE_REGISTRY: dict[str, GateInfo] = {
-    "OptGate": GateInfo(
-        name="OptGate",
-        headline="Adaptive QAOA shot reduction",
-        validated_claim="adaptive shot allocation",
-        qualifier="on validated QAOA workloads",
-        phase="during",
-        circuit_types=("qaoa",),
-        requires_high_confidence=True,
-    ),
     "ChemGate": GateInfo(
         name="ChemGate",
         headline="VQE operator preselection",
@@ -260,7 +249,7 @@ def recommend_gates(
         Applicable gates, ordered by phase (pre -> during -> post).
     """
     type_gates: dict[str, list[str]] = {
-        "qaoa": ["TomoGate", "OptGate", "GuardGate", "LiveGate", "ShotValidator"],
+        "qaoa": ["TomoGate", "GuardGate", "LiveGate", "ShotValidator"],
         "vqe": ["TomoGate", "ChemGate", "LiveGate", "ShotValidator"],
         "qec": ["SafetyGate", "TomoGate", "ShotValidator"],
         "general": ["TomoGate", "LiveGate", "ShotValidator"],
@@ -319,7 +308,7 @@ class QubitBoostExecutor:
         from qb_compiler.integrations.qubitboost import QubitBoostExecutor
 
         executor = QubitBoostExecutor(backend="ibm_fez")
-        result = executor.execute_optgate(compiled_circuit, problem_graph=G)
+        result = executor.execute_chemgate(compiled_circuit, hamiltonian=H)
     """
 
     def __init__(self, backend: str, **kwargs: Any) -> None:
@@ -334,20 +323,6 @@ class QubitBoostExecutor:
             **kwargs,
         )
         self._backend = backend
-
-    def execute_optgate(self, circuit: Any, **kwargs: Any) -> Any:
-        """Execute QAOA circuit through OptGate (adaptive shot reduction).
-
-        Adaptive shot allocation on supported QAOA
-        workloads. Actual reduction depends on circuit structure,
-        backend, and calibration state.
-        """
-        return self._qb.adaptive_optimizer.optimize(
-            problem_graph=kwargs.pop("problem_graph", None),
-            p=kwargs.pop("p", 3),
-            shot_budget=kwargs.pop("shots", 4096),
-            **kwargs,
-        )
 
     def execute_chemgate(self, circuit: Any, **kwargs: Any) -> Any:
         """Execute VQE circuit through ChemGate (operator preselection).

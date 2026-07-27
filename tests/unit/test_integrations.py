@@ -94,30 +94,28 @@ class TestRecommendGates:
     def test_qaoa_high_confidence(self) -> None:
         recs = recommend_gates("qaoa", Confidence.HIGH)
         gate_names = [r.gate for r in recs]
-        assert "OptGate" in gate_names
         assert "GuardGate" in gate_names
         assert "LiveGate" in gate_names
         assert "ShotValidator" in gate_names
         assert "TomoGate" in gate_names
 
-        opt = next(r for r in recs if r.gate == "OptGate")
-        assert opt.status == "Eligible"
-        assert opt.validated_claim is not None
-        assert opt.validated_claim == "adaptive shot allocation"
+        guard = next(r for r in recs if r.gate == "GuardGate")
+        assert guard.status == "Eligible"
+        assert guard.validated_claim is not None
+        assert guard.validated_claim == "QAOA quality assurance"
 
     def test_qaoa_medium_confidence(self) -> None:
         recs = recommend_gates("qaoa", Confidence.MEDIUM)
         gate_names = [r.gate for r in recs]
-        assert "OptGate" in gate_names
+        assert "GuardGate" in gate_names
 
-        opt = next(r for r in recs if r.gate == "OptGate")
-        assert opt.status == "May be eligible"
+        guard = next(r for r in recs if r.gate == "GuardGate")
+        assert guard.status == "May be eligible"
 
     def test_qaoa_low_confidence_hides_specialised(self) -> None:
-        """At LOW confidence, specialised gates like OptGate are hidden."""
+        """At LOW confidence, specialised gates like GuardGate are hidden."""
         recs = recommend_gates("qaoa", Confidence.LOW)
         gate_names = [r.gate for r in recs]
-        assert "OptGate" not in gate_names
         assert "GuardGate" not in gate_names
         # Universal gates still present
         assert "TomoGate" in gate_names
@@ -143,7 +141,6 @@ class TestRecommendGates:
         assert "TomoGate" in gate_names
         assert "LiveGate" in gate_names
         assert "ShotValidator" in gate_names
-        assert "OptGate" not in gate_names
         assert "ChemGate" not in gate_names
 
     def test_phase_ordering(self) -> None:
@@ -164,9 +161,8 @@ class TestRecommendGates:
 
 
 class TestGateRegistry:
-    def test_all_seven_gates_present(self) -> None:
+    def test_registry_contents(self) -> None:
         expected = {
-            "OptGate",
             "ChemGate",
             "TomoGate",
             "LiveGate",
@@ -175,6 +171,20 @@ class TestGateRegistry:
             "ShotValidator",
         }
         assert set(GATE_REGISTRY.keys()) == expected
+
+    def test_retired_gate_not_offered(self) -> None:
+        """OptGate was retired from the product line, so nothing may recommend it.
+
+        It previously sat in the registry and in the qaoa recommendation list, and the public
+        example advertised a shot reduction range for it that had no source in this repo. This
+        pins the removal across every circuit type and confidence level so it cannot return by
+        way of a merge.
+        """
+        assert "OptGate" not in GATE_REGISTRY
+        for circuit_type in ("qaoa", "vqe", "qec", "general"):
+            for confidence in Confidence:
+                names = [r.gate for r in recommend_gates(circuit_type, confidence)]
+                assert "OptGate" not in names, f"{circuit_type}/{confidence} still offers OptGate"
 
     def test_all_gates_have_qualifiers(self) -> None:
         for name, info in GATE_REGISTRY.items():
