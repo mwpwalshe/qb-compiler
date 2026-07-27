@@ -63,20 +63,34 @@ def _make_azure(backend: str) -> CalibrationProvider:
     return AzureQuantumCalibrationProvider(backend)
 
 
+def _has_module(name: str) -> bool:
+    """True if ``name`` is importable, without importing it and without raising.
+
+    ``importlib.util.find_spec`` imports the PARENT package to locate a dotted submodule, so it
+    raises ModuleNotFoundError when the parent is absent rather than returning None. Every vendor
+    SDK here is an optional extra, so a missing one must read as "not available", never as a crash:
+    `qbc backends` has to work on a plain install with no vendor SDKs at all.
+    """
+    try:
+        return importlib.util.find_spec(name) is not None
+    except (ModuleNotFoundError, ImportError, ValueError):
+        return False
+
+
 def _ibm_deps() -> bool:
-    return importlib.util.find_spec("qiskit_ibm_runtime") is not None
+    return _has_module("qiskit_ibm_runtime")
 
 
 def _braket_deps() -> bool:
-    return importlib.util.find_spec("braket") is not None
+    return _has_module("braket")
 
 
 def _quantinuum_deps() -> bool:
-    return importlib.util.find_spec("pytket.extensions.quantinuum") is not None
+    return _has_module("pytket.extensions.quantinuum")
 
 
 def _azure_deps() -> bool:
-    return importlib.util.find_spec("azure.quantum") is not None
+    return _has_module("azure.quantum")
 
 
 @dataclass(frozen=True)

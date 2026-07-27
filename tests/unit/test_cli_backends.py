@@ -40,3 +40,41 @@ def test_preflight_live_falls_back_gracefully(tmp_path):
     res = CliRunner().invoke(cli, ["preflight", str(p), "-b", "ionq_aria", "--live"])
     assert res.exit_code == 0
     assert "Status:" in res.output  # produced a verdict despite no live data
+
+
+@pytest.mark.parametrize("absent", ["pytket", "azure", "braket", "qiskit_ibm_runtime"])
+def test_backends_survives_absent_vendor_sdk(monkeypatch, absent):
+    """`qbc backends` must work on a bare install, with no vendor SDK present.
+
+    Every vendor SDK is an optional extra, so the common case is that none are installed. The
+    dotted probes (``pytket.extensions.quantinuum``, ``azure.quantum``) called
+    ``importlib.util.find_spec``, which imports the PARENT package to locate a submodule and so
+    RAISES ModuleNotFoundError when the parent is missing rather than returning None. The result
+    was that ``qbc backends`` exited 1 with a traceback on any install lacking the quantinuum
+    extra, which is the default.
+
+    This is parametrised over each vendor and simulates the absence rather than relying on what
+    the test machine happens to have installed, so it holds in CI and on a developer box alike.
+    """
+    import importlib.util
+
+    real_find_spec = importlib.util.find_spec
+
+    def find_spec_without(name, *args, **kwargs):
+        if name.split(".")[0] == absent:
+            raise ModuleNotFoundError(f"No module named '{absent}'")
+        return real_find_spec(name, *args, **kwargs)
+
+    monkeypatch.setattr(importlib.util, "find_spec", find_spec_without)
+
+    res = CliRunner().invoke(cli, ["backends"])
+    assert res.exit_code == 0, f"crashed with {absent} absent: {res.exception!r}"
+    assert "LIVE STATUS" in res.output
+
+    # The backend still has to be listed, reported as unavailable rather than hidden.
+    res_json = CliRunner().invoke(cli, ["backends", "--json"])
+    assert res_json.exit_code == 0
+    rows = {r["backend"]: r for r in json.loads(res_json.output)}
+    assert "quantinuum_h2" in rows
+    if absent == "pytket":
+        assert rows["quantinuum_h2"]["live_deps_available"] is False
