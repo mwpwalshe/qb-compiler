@@ -905,12 +905,39 @@ def _parse_qasm_gates(
 @click.argument("circuit", type=click.Path(exists=True, dir_okay=False))
 @click.option("--shots", default=4096, type=int, help="Shots used for the cost column.")
 @click.option("--seeds", "-n", default=2, type=int, help="Transpiler seeds per backend.")
-def when(circuit: str, shots: int, seeds: int) -> None:
-    """Rank backends by predicted fidelity per dollar for this circuit."""
+@click.option(
+    "--backend",
+    "-b",
+    "backends",
+    multiple=True,
+    help="Backend(s) to rank; repeatable. Spans vendors (e.g. -b ibm_fez -b rigetti_ankaa). "
+    "Default: all backends with a loadable calibration snapshot.",
+)
+@click.option(
+    "--json", "json_out", is_flag=True, help="Emit a machine-readable JSON advice receipt."
+)
+def when(circuit: str, shots: int, seeds: int, backends: tuple[str, ...], json_out: bool) -> None:
+    """Rank backends by predicted fidelity per dollar for this circuit.
+
+    A neutral cross-vendor advisor: unlike a single-vendor SDK, this ranks across every
+    configured vendor. The ``Data`` column states whether each number is validated on that
+    backend's real hardware or a model/fixture estimate, so unvalidated non-IBM numbers are
+    never mistaken for measurements.
+    """
+    import dataclasses
+
     from qb_compiler.windows import format_table, rank_value
 
     qc = _load_circuit(circuit)
-    rows = rank_value(qc, shots=shots, n_seeds=seeds)
+    rows = rank_value(qc, backends=list(backends) or None, shots=shots, n_seeds=seeds)
+    if json_out:
+        payload = {
+            "schema": "qb.cross_vendor_advice.v1",
+            "shots": shots,
+            "ranking": [dataclasses.asdict(r) for r in rows],
+        }
+        click.echo(json.dumps(payload, indent=2))
+        return
     click.echo(format_table(rows))
 
 

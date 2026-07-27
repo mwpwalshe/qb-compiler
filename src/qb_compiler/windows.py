@@ -60,6 +60,12 @@ class BackendValue:
         ``"improving"``, or ``"unknown"``.
     trend_detail :
         Human-readable sentence with the numbers behind the trend.
+    validation :
+        Honest provenance of the numbers: ``"validated"`` (live data validated on
+        real hardware), ``"UNVALIDATED"`` (adapter/live data but not validated on
+        that hardware), ``"fixture-only"`` (static/fixture specs), or ``"no-adapter"``.
+        Cross-vendor rankings must surface this so non-IBM estimates are never
+        mistaken for validated measurements.
     notes :
         Per-backend caveats (missing pricing, missing snapshots, ...).
     """
@@ -70,6 +76,7 @@ class BackendValue:
     fidelity_per_dollar: float | None
     trend: str
     trend_detail: str
+    validation: str = "unknown"
     notes: list[str] = field(default_factory=list)
 
 
@@ -315,6 +322,28 @@ def rank_value(
         if trend == "unknown":
             notes.append("Calibration trend unavailable; see trend_detail.")
 
+        # Honest provenance: is the fidelity model validated on THIS backend's real
+        # hardware, or is it an adapter/fixture estimate? Cross-vendor ranking must
+        # never present an unvalidated non-IBM number as a measured one.
+        validation = "unknown"
+        with contextlib.suppress(Exception):
+            from qb_compiler.calibration.registry import all_backend_statuses
+
+            st = {s.backend: s for s in all_backend_statuses()}.get(name)
+            if st is not None:
+                ls = st.live_status.value
+                validation = {
+                    "live": "validated",
+                    "live-unvalidated": "UNVALIDATED",
+                    "static": "fixture-only",
+                    "none": "no-adapter",
+                }.get(ls, ls)
+                if validation != "validated":
+                    notes.append(
+                        f"Fidelity model NOT validated on real {name} hardware "
+                        f"({ls}); numbers are model/fixture estimates."
+                    )
+
         rows.append(
             BackendValue(
                 backend=name,
@@ -323,6 +352,7 @@ def rank_value(
                 fidelity_per_dollar=round(fpd, 4) if fpd is not None else None,
                 trend=trend,
                 trend_detail=trend_detail,
+                validation=validation,
                 notes=notes,
             )
         )
@@ -349,8 +379,8 @@ def format_table(rows: list[BackendValue]) -> str:
     if not rows:
         return "No backends assessed."
 
-    headers = ("Backend", "Pred.Fid", "Cost USD", "Fid/$", "Trend")
-    cells: list[tuple[str, str, str, str, str]] = []
+    headers = ("Backend", "Pred.Fid", "Cost USD", "Fid/$", "Trend", "Data")
+    cells: list[tuple[str, str, str, str, str, str]] = []
     for r in rows:
         cells.append(
             (
@@ -359,6 +389,7 @@ def format_table(rows: list[BackendValue]) -> str:
                 f"{r.cost_per_run_usd:.4f}" if r.cost_per_run_usd is not None else "N/A",
                 f"{r.fidelity_per_dollar:.3g}" if r.fidelity_per_dollar is not None else "N/A",
                 r.trend,
+                r.validation,
             )
         )
 

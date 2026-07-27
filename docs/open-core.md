@@ -16,6 +16,7 @@ depend on the receipts.
 | Circuit viability preflight | `qbc preflight` / `qbc analyze` / `qbc diff` |
 | Calibration-aware compilation + receipt | `qbc compile --receipt` |
 | Mirror-circuit verification | `qbc verify` |
+| **Cross-vendor fidelity-per-dollar ranking** | `qbc when` (text or `--json` advice receipt) |
 | **ObservableGate: QEC DEM correctness audit** | `qbc dem-audit` (text or `--json` receipt) |
 | **Observable-preserving DEM canonicalization** | `qbc dem-canonicalize` |
 | CI-safe exit codes (0 / 1 / 2) | all of the above |
@@ -23,6 +24,11 @@ depend on the receipts.
 
 The `--json` receipt is an unsigned, machine-readable community-tier artifact you can store and diff
 yourself.
+
+`qbc when` ranks across every configured vendor rather than one, and its `Data` column states whether
+each number is validated on that backend's real hardware or a model estimate. Only IBM is validated
+today, so most rows read `UNVALIDATED`. Turning those into measurements is what the Pro custom
+vendor adapters and live calibration feeds are for.
 
 ## What's QubitBoost Pro (paid)
 

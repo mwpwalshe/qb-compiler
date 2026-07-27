@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+**`qbc when` is now a neutral cross-vendor advisor.** It ranks backends by predicted fidelity per
+dollar across every configured vendor rather than one, which is the comparison a vendor SDK cannot
+give you. Two new options: `--backend/-b`, repeatable, to name the set to rank, and `--json` for a
+machine-readable advice receipt (`qb.cross_vendor_advice.v1`), unsigned and community-tier like
+the other `--json` receipts.
+
+**Every ranked row states the provenance of its own numbers.** `BackendValue` gains a `validation`
+field, shown as a `Data` column: `validated` where the fidelity model is validated against that
+backend's real hardware, `UNVALIDATED` where an adapter exists but has not been proven on the
+device, `fixture-only`, or `no-adapter`. Unvalidated rows also carry a note saying so in words.
+Only IBM is validated today, so a cross-vendor table is mostly `UNVALIDATED`, and it says so rather
+than letting a model estimate sit next to a measurement as though they were the same kind of thing.
+
+The labels are derived from the calibration registry's live status, so they cannot drift from what
+`qbc backends` reports. Tests pin both the derivation and the fact that no vendor is currently
+labelled validated except IBM.
+
 ## 0.10.0 - 2026-07-27
 
 First release published to PyPI since 0.7.0, so installing it brings everything in 0.8.0
