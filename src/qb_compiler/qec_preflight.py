@@ -41,10 +41,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-import numpy as np
-
-from .observable_gate import ObservableAuditResult, audit_dem
+if TYPE_CHECKING:
+    from .observable_gate import ObservableAuditResult
 
 #: Relative CI half-widths the preflight sizes shot budgets for.
 _REL_CI_WIDTHS: tuple[float, ...] = (0.5, 0.2, 0.1)
@@ -220,6 +220,7 @@ def qec_preflight(
         When ``stim`` / ``pymatching`` are not installed.
     """
     try:
+        import numpy as np
         import pymatching
         import stim
     except ImportError as exc:  # pragma: no cover - exercised only without the extra
@@ -276,6 +277,8 @@ def qec_preflight(
     dem = circuit.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
     # Audit the RAW (non-decomposed) mechanisms: that is where a genuine observable-mask collapse
     # lives.  Decomposition-induced mixed groups are XOR-benign and would only add WARN noise.
+    from .observable_gate import audit_dem
+
     observable_audit = audit_dem(circuit.detector_error_model(decompose_errors=False))
     if observable_audit.status != "PASS":
         notes.append(
