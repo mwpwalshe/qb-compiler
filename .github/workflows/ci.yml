@@ -33,13 +33,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # Typecheck on the OLDEST supported interpreter, matching requires-python and
-          # tool.mypy python_version. Two reasons. It actually validates the declared floor,
-          # which checking on 3.12 does not. And mypy resolves third-party stubs from the
-          # running interpreter, so a newer stub written with syntax the target version lacks
-          # is reported as an error in that stub: on 3.12, numpy ships PEP 695 `type`
-          # statements that mypy rejects while targeting 3.10. Keep this pin and
-          # tool.mypy python_version in step.
+          # Typecheck on the OLDEST supported interpreter, matching requires-python. mypy takes
+          # its target from the interpreter it runs under (tool.mypy sets no python_version), so
+          # running here on the floor is what actually validates the floor. Checking on 3.12
+          # would silently accept syntax a 3.10 user cannot run.
           python-version: "3.10"
       - run: pip install -e ".[dev,ising]"
       - name: mypy

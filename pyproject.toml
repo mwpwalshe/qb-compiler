@@ -182,7 +182,12 @@ fail_under = 60
 show_missing = true
 
 [tool.mypy]
-python_version = "3.10"
+# Deliberately no python_version. mypy resolves third-party stubs from the interpreter it
+# runs under, so pinning a target below that interpreter makes it reject stubs written with
+# newer syntax: on 3.12, numpy ships PEP 695 `type` statements that a 3.10 target refuses,
+# which is exit code 2 rather than a finding. Letting the target follow the interpreter means
+# the CI typecheck job, which runs on the declared floor, still checks the floor, while the
+# release matrix can type check on every supported version without tripping over stubs.
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
