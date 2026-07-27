@@ -19,18 +19,24 @@ from qb_compiler.qiskit_plugin.transpiler_plugin import _provider_to_dict
 
 
 def _backend() -> BackendProperties:
-    qp = [QubitProperties(qubit_id=i, t1_us=100.0 + i, t2_us=80.0 + i, readout_error=0.01 + 0.001 * i)
-          for i in range(4)]
+    qp = [
+        QubitProperties(qubit_id=i, t1_us=100.0 + i, t2_us=80.0 + i, readout_error=0.01 + 0.001 * i)
+        for i in range(4)
+    ]
     gp = [
         GateProperties(gate_type="cz", qubits=(0, 1), error_rate=0.002, gate_time_ns=68.0),
         GateProperties(gate_type="cz", qubits=(1, 2), error_rate=0.008, gate_time_ns=68.0),
         GateProperties(gate_type="cz", qubits=(2, 3), error_rate=0.015, gate_time_ns=68.0),
     ]
     return BackendProperties(
-        backend="test_heron", provider="test", n_qubits=4,
+        backend="test_heron",
+        provider="test",
+        n_qubits=4,
         basis_gates=("cz", "rz", "sx", "x", "id"),
         coupling_map=[(0, 1), (1, 2), (2, 3)],
-        qubit_properties=qp, gate_properties=gp, timestamp="2026-07-26T00:00:00",
+        qubit_properties=qp,
+        gate_properties=gp,
+        timestamp="2026-07-26T00:00:00",
     )
 
 
@@ -75,9 +81,10 @@ def test_fallback_reconstructs_coupling_from_2q_gates():
 def test_coupling_feeds_a_nontrivial_layout():
     # end-to-end: with topology present, QBCalibrationLayout picks calibration-good qubits,
     # not the trivial 0..n-1 identity.
-    from qb_compiler.qiskit_plugin import QBCalibrationLayout
     from qiskit import QuantumCircuit
     from qiskit.transpiler import PassManager
+
+    from qb_compiler.qiskit_plugin import QBCalibrationLayout
 
     cal = _provider_to_dict(_FakeLiveProvider(_backend()), "test_heron")
     qc = QuantumCircuit(2)
