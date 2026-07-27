@@ -10,13 +10,15 @@ if TYPE_CHECKING:
     from qb_compiler.noise.noise_model import NoiseModel
 
 # ── lightweight circuit representation ───────────────────────────────
-# The full QBCircuit IR is being built in a separate module.  For now,
-# FidelityEstimator operates on the minimal contract below so it can be
-# used as soon as the IR is ready.
+# FidelityEstimator needs only gate counts and depth, not a full circuit, so it takes the
+# minimal descriptor below. This was once also called QBCircuit, which made three unrelated
+# classes share that name (the public one in qb_compiler.compiler, the IR in qb_compiler.ir,
+# and this). Since it was exported, `from qb_compiler.noise import QBCircuit` silently handed
+# back a type with none of the public circuit's methods.
 
 
 @dataclass(frozen=True, slots=True)
-class QBCircuit:
+class FidelityCircuit:
     """Minimal circuit descriptor for fidelity estimation.
 
     Parameters
@@ -52,7 +54,7 @@ class FidelityEstimator:
     def __init__(self, *, default_gate_time_ns: float = 40.0) -> None:
         self._default_gate_time_ns = default_gate_time_ns
 
-    def estimate(self, circuit: QBCircuit, noise_model: NoiseModel) -> float:
+    def estimate(self, circuit: FidelityCircuit, noise_model: NoiseModel) -> float:
         """Return estimated output fidelity in [0, 1].
 
         Parameters

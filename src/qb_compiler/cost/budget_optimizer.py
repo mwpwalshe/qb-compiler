@@ -229,17 +229,26 @@ class BudgetOptimizer:
 
     @staticmethod
     def _recommend_strategy(cost_per_shot_usd: float) -> str:
-        """Recommend strategy based on per-shot cost.
+        """Recommend a compilation strategy based on per-shot cost.
 
-        Expensive backends benefit more from fidelity-optimal strategies
-        since each wasted shot is costly.  Cheap backends can afford
-        more shots, so speed-optimal is fine.
+        Expensive backends benefit more from fidelity-optimal compilation, since every wasted
+        shot is costly. Cheap backends can afford more shots, so a lighter pipeline is fine.
+
+        The returned name is one of ``QBCompiler.STRATEGIES``, because the whole point of this
+        recommendation is to be handed straight to the compiler::
+
+            opt = optimizer.find_cheapest_backend(...)
+            comp = QBCompiler.from_backend(opt.backend, strategy=opt.strategy)
+
+        This previously returned names from the ``qb_compiler.strategies`` registry
+        (``cost_optimal``, ``speed_optimal``), which the compiler does not accept, so that call
+        raised ValueError for any backend under $0.10 per shot. That covers every IBM device.
         """
         if cost_per_shot_usd >= 0.10:
             return "fidelity_optimal"
         if cost_per_shot_usd >= 0.001:
-            return "cost_optimal"
-        return "speed_optimal"
+            return "depth_optimal"
+        return "budget_optimal"
 
     @staticmethod
     def _build_notes(

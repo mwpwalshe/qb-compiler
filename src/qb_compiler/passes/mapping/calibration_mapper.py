@@ -181,6 +181,25 @@ class CalibrationMapper(TransformationPass):
             self._n_physical = max(self._qubit_map.keys()) + 1 if self._qubit_map else 0
             self._backend_props = None  # type: ignore[assignment]
 
+        # Index the best 2Q gate error by unordered qubit pair.
+        #
+        # The layout search calls _get_two_qubit_error once per candidate edge, which reaches tens
+        # of thousands of calls even for a small circuit. Rescanning the whole gate map on each of
+        # those calls made a 4 qubit compile take about a minute on an all to all backend, because
+        # that map holds an entry per directed pair. Building the lookup once keeps the search
+        # proportional to the number of candidates instead of candidates times gate map size.
+        #
+        # The stored value folds in _DEFAULT_GATE_ERROR so a lookup miss and a recorded rate worse
+        # than the default both return the default, matching the previous min() behaviour exactly.
+        self._two_qubit_error: dict[frozenset[int], float] = {}
+        for (_gate_type, gate_qubits), gate_props in self._gate_map.items():
+            if len(gate_qubits) != 2 or gate_props.error_rate is None:
+                continue
+            pair = frozenset(gate_qubits)
+            best = min(_DEFAULT_GATE_ERROR, gate_props.error_rate)
+            if pair not in self._two_qubit_error or best < self._two_qubit_error[pair]:
+                self._two_qubit_error[pair] = best
+
     # ── BasePass interface ───────────────────────────────────────────
 
     @property
@@ -368,11 +387,7 @@ class CalibrationMapper(TransformationPass):
 
     def _get_two_qubit_error(self, phys_a: int, phys_b: int) -> float:
         """Best 2Q gate error between phys_a and phys_b in either direction."""
-        best = _DEFAULT_GATE_ERROR
-        for (_gtype, gqubits), gp in self._gate_map.items():
-            if len(gqubits) == 2 and gp.error_rate is not None and set(gqubits) == {phys_a, phys_b}:
-                best = min(best, gp.error_rate)
-        return best
+        return self._two_qubit_error.get(frozenset((phys_a, phys_b)), _DEFAULT_GATE_ERROR)
 
     # ── layout scoring ───────────────────────────────────────────────
 

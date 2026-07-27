@@ -265,7 +265,8 @@ def check_viability(
     Parameters
     ----------
     circuit :
-        A Qiskit ``QuantumCircuit`` to check.
+        The circuit to check. Accepts a Qiskit ``QuantumCircuit`` or a
+        ``qb_compiler.QBCircuit``; the latter is converted internally.
     backend :
         Target backend name (e.g. ``"ibm_fez"``).  Used for pricing
         and median error rates if *backend_props* is not given.
@@ -293,6 +294,16 @@ def check_viability(
 
     from qb_compiler.config import get_backend_spec
     from qb_compiler.cost.pricing import get_pricing
+    from qb_compiler.ir.converters.qiskit_converter import any_to_qiskit
+
+    # Accept qb-compiler's own circuit type as well as Qiskit's.
+    #
+    # Everything below hands the circuit to Qiskit's transpiler, which reads attributes that a
+    # qb_compiler.QBCircuit does not carry. Passing one used to fail with an AttributeError
+    # raised from inside Qiskit, naming neither the caller nor the real cause. It also meant
+    # check_viability and QBCompiler.compile could not be called on the same object, which is
+    # the obvious thing to want.
+    circuit = any_to_qiskit(circuit)
 
     # Resolve backend spec
     spec = None

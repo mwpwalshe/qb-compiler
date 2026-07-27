@@ -52,10 +52,34 @@ class TestBudgetOptimizer:
         assert result.strategy == "fidelity_optimal"
 
     def test_optimize_cheap_backend_strategy(self) -> None:
-        """Cheap backends should recommend speed_optimal or cost_optimal."""
+        """Cheap backends should recommend a lighter pipeline than fidelity_optimal."""
         optimizer = BudgetOptimizer(min_shots=100)
         result = optimizer.optimize("ibm_fez", budget_usd=100.0)
-        assert result.strategy in ("speed_optimal", "cost_optimal")
+        assert result.strategy in ("depth_optimal", "budget_optimal")
+
+    def test_recommended_strategy_is_accepted_by_the_compiler(self) -> None:
+        """Every recommendation must be usable as QBCompiler(strategy=...).
+
+        The recommendation exists to be passed straight to the compiler, which is what the
+        budget-aware tutorial does. The optimizer used to return names from the strategies
+        registry (speed_optimal, cost_optimal) that QBCompiler rejects, so that documented flow
+        raised ValueError on any backend under $0.10 per shot, including every IBM device. This
+        pins the two vocabularies together so they cannot drift apart again.
+        """
+        from qb_compiler.compiler import QBCompiler
+
+        optimizer = BudgetOptimizer(min_shots=1)
+        checked = 0
+        for backend in ("ibm_fez", "ibm_torino", "ionq_aria", "quantinuum_h2"):
+            try:
+                result = optimizer.optimize(backend, budget_usd=1000.0)
+            except Exception:
+                continue
+            assert result.strategy in QBCompiler.STRATEGIES, (
+                f"{backend}: optimizer recommended {result.strategy!r}, which QBCompiler rejects"
+            )
+            checked += 1
+        assert checked >= 2, "guard against a vacuous pass if backends stop resolving"
 
     def test_find_cheapest_backend(self) -> None:
         """Should find a backend that fits within budget."""

@@ -785,18 +785,30 @@ def _run_calibration_pipeline(
         coherence_weight=0.3,  # Secondary: prefer longer-lived qubits
         readout_weight=5.0,  # Readout error ~5x CZ error on IBM Heron
     )
-    # Auto-detect ML layout predictor if available
+    # Auto-detect the ML layout predictor, for the hardware it was trained on only.
+    #
+    # The only bundled weights are ibm_heron. The predictor narrows the candidate qubit set
+    # before scoring, so loading it for a non-IBM backend would let patterns learned on a fixed
+    # coupling superconducting device filter layouts on, for example, all-to-all trapped ion
+    # hardware. That is silently worse rather than obviously broken, so gate it on the provider
+    # and fall back to the full calibration-driven search everywhere else.
     layout_predictor = None
-    try:
-        from qb_compiler.ml import is_available as _ml_available
+    if getattr(spec, "provider", None) == "ibm":
+        try:
+            from qb_compiler.ml import is_available as _ml_available
 
-        if _ml_available():
-            from qb_compiler.ml.layout_predictor import MLLayoutPredictor
+            if _ml_available():
+                from qb_compiler.ml.layout_predictor import MLLayoutPredictor
 
-            layout_predictor = MLLayoutPredictor.load_bundled("ibm_heron")
-            logger.info("ML layout predictor loaded")
-    except Exception:
-        pass  # ML not available or weights missing: use standard VF2
+                layout_predictor = MLLayoutPredictor.load_bundled("ibm_heron")
+                logger.info("ML layout predictor loaded for %s", backend_name)
+        except Exception:
+            pass  # ML not available or weights missing: use standard VF2
+    else:
+        logger.debug(
+            "No layout model trained for provider %r; using the calibration-driven search",
+            getattr(spec, "provider", None),
+        )
 
     try:
         mapper = CalibrationMapper(
@@ -903,7 +915,16 @@ class QBCompiler:
             Reserve ancilla qubits for QEC syndrome extraction (future).
         """
         if not isinstance(circuit, QBCircuit):
-            raise InvalidCircuitError(f"Expected QBCircuit, got {type(circuit).__name__}")
+            # Accept a Qiskit circuit, or the IR type, rather than rejecting it outright.
+            # check_viability takes a Qiskit circuit, so a caller doing the obvious thing of
+            # checking a circuit and then compiling the same object previously had to convert by
+            # hand or hit an error naming a type they never chose.
+            from qb_compiler.ir.converters.qiskit_converter import any_to_compiler_circuit
+
+            try:
+                circuit = any_to_compiler_circuit(circuit)
+            except TypeError as exc:
+                raise InvalidCircuitError(str(exc)) from exc
         if circuit.gate_count == 0:
             raise InvalidCircuitError("Cannot compile an empty circuit")
 
