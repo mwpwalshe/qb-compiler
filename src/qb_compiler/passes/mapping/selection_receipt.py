@@ -51,9 +51,9 @@ def calibration_fingerprint(source: Any) -> str | None:
         payload = f"{backend}@{ts.isoformat() if hasattr(ts, 'isoformat') else ts}"
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
     if isinstance(source, dict):
-        return hashlib.sha256(
-            json.dumps(source, sort_keys=True, default=str).encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(json.dumps(source, sort_keys=True, default=str).encode()).hexdigest()[
+            :16
+        ]
     return None
 
 
@@ -101,14 +101,13 @@ def selection_receipt(
             from qubitboost_sdk import Ed25519PassportSigner  # type: ignore
 
             priv, pub = Ed25519PassportSigner.generate_keypair()
-            receipt["signature"] = Ed25519PassportSigner(
-                private_key=priv, key_id="qbc"
-            ).sign(receipt)
+            receipt["signature"] = Ed25519PassportSigner(private_key=priv, key_id="qbc").sign(
+                receipt
+            )
             receipt["signing"] = "ed25519 (qubitboost_sdk)"
             receipt["public_key"] = pub
         except Exception:
             receipt["signing"] = (
-                "unsigned -- signed receipts available with the QubitBoost SDK "
-                "(qubitboost.io)"
+                "unsigned -- signed receipts available with the QubitBoost SDK (qubitboost.io)"
             )
     return receipt

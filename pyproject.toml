@@ -114,10 +114,16 @@ version_scheme = "no-guess-dev"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/qb_compiler"]
+# Only published modules are packaged. hatchling collects from the filesystem rather than from git,
+# so anything present in a local working tree but not part of a release is excluded explicitly here.
+exclude = ["src/qb_compiler/topology/"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
     "*:Zone.Identifier",
+    "src/qb_compiler/topology/",
+    "tests/topology/",
+    "junk/",
     "tests/fixtures/calibration_snapshots/*.json",
     ".github/",
     "benchmarks/",
