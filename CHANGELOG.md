@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 - 2026-07-27
+
+Minor rather than patch: this adds two CLI options and a new public field on `BackendValue`.
+
 
 **`qbc when` is now a neutral cross-vendor advisor.** It ranks backends by predicted fidelity per
 dollar across every configured vendor rather than one, which is the comparison a vendor SDK cannot
