@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+**The package root now exposes what the package actually does.** Since 0.7.0 the headline
+additions (ObservableGate, selection receipts, the multi-vendor calibration registry) were
+reachable only by full module path, so `dir(qb_compiler)` showed none of them. The root now
+exports 64 names instead of 50, adding `audit_dem`, `audit_matrices`, `canonicalize_dem`,
+`preflight_dem_gate`, `ObservableAuditResult`, `CalibrationMapper`, `CalibrationMapperConfig`,
+`selection_receipt`, `calibration_fingerprint`, `get_calibration_provider`,
+`all_backend_statuses`, `get_backend_status`, `any_to_qiskit` and `any_to_compiler_circuit`.
+
+Names resolve on first use (PEP 562) rather than at import, so the larger surface costs nothing:
+`import qb_compiler` went from about 490ms to about 70ms and no longer pulls numpy or package
+metadata. A type-checking block re-states every export so editors and mypy still resolve them,
+and the test suite asserts the export map and `__all__` agree and that every entry resolves.
+
+**Fixed: `check_viability()` and `QBCompiler.compile()` would not accept the same circuit.**
+`check_viability` took a Qiskit `QuantumCircuit` and `compile` took a `qb_compiler.QBCircuit`, so
+running both on one object, which is what the tutorials describe, raised either an AttributeError
+thrown from inside Qiskit's transpiler or an InvalidCircuitError naming a type the caller never
+chose. Both entry points now accept a Qiskit circuit, the public `QBCircuit`, or the IR circuit,
+via the new `any_to_qiskit` and `any_to_compiler_circuit` converters. Unconvertible input still
+raises, with a message naming what is accepted.
+
+**Fixed: backend recommendations could not be passed to the compiler.** `BudgetOptimizer` returned
+strategy names from the `qb_compiler.strategies` registry (`speed_optimal`, `cost_optimal`) that
+`QBCompiler` does not accept, so the documented "find the cheapest backend, then compile with the
+recommended strategy" flow raised ValueError for any backend under $0.10 per shot, which is every
+IBM device. Recommendations now use the compiler's own vocabulary, mapping the three cost tiers
+onto its three optimization levels.
+
+**Fixed: the ML layout predictor was applied to hardware it was not trained on.** Only `ibm_heron`
+weights ship, but the predictor was loaded for every backend. Because it narrows the candidate
+qubit set before scoring, patterns learned on a fixed coupling superconducting device were
+filtering layouts on all to all trapped ion hardware. It is now used only for the provider it was
+trained on; everything else uses the full calibration-driven search.
+
+**Faster calibration-aware layout selection.** `_get_two_qubit_error` rescanned the whole gate map
+on every call, tens of thousands of times per compile. It is now indexed once by qubit pair, which
+cut layout selection from roughly 61s to 3s for a small circuit on an all to all backend. Results
+are unchanged: the indexed lookup was checked against the previous one across every qubit pair on
+four backends.
+
+**Renamed `qb_compiler.noise.QBCircuit` to `FidelityCircuit`.** Three unrelated classes shared the
+name `QBCircuit`, and this one was exported, so `from qb_compiler.noise import QBCircuit` returned
+a fidelity descriptor with none of the public circuit's methods.
+
+
 **Fixed: `qbc backends` failed on installs without the optional vendor SDKs.** The availability
 probes for Quantinuum and Azure passed a dotted module path to `importlib.util.find_spec`, which
 imports the parent package in order to locate a submodule and therefore raises ModuleNotFoundError
