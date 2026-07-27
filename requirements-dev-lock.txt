@@ -10,7 +10,7 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.12.1
     # via httpx
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
