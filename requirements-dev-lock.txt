@@ -173,7 +173,7 @@ pytest==9.0.2
     #   qb-compiler (pyproject.toml)
 pytest-benchmark==5.2.3
     # via qb-compiler (pyproject.toml)
-pytest-cov==7.0.0
+pytest-cov==7.1.0
     # via qb-compiler (pyproject.toml)
 pytest-mock==3.15.1
     # via qb-compiler (pyproject.toml)
