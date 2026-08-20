@@ -35,6 +35,17 @@ if TYPE_CHECKING:
         get_backend_status,
         get_calibration_provider,
     )
+    from qb_compiler.chem import (
+        Hamiltonian,
+        IntegrityCheck,
+        IntegrityVerdict,
+        MeasurementPlan,
+        audit_hamiltonian,
+        audit_hamiltonian_file,
+        load_hamiltonian,
+        measurement_plan,
+        qwc_groups,
+    )
     from qb_compiler.compiler import (
         BasePass,
         CalibrationProvider,
@@ -50,6 +61,15 @@ if TYPE_CHECKING:
         QBCompiler,
     )
     from qb_compiler.config import BACKEND_CONFIGS, BackendSpec, CompilerConfig
+    from qb_compiler.corpus import (
+        CorpusEntry,
+        CorpusVerification,
+        corpus_citation,
+        get_corpus,
+        list_corpora,
+        load_corpus,
+        verify_corpus_file,
+    )
     from qb_compiler.discovery import (
         DiscoveredBackend,
         check_viability_pub,
@@ -80,7 +100,9 @@ if TYPE_CHECKING:
     from qb_compiler.passes.mapping import (
         CalibrationMapper,
         CalibrationMapperConfig,
+        LayoutCandidate,
         calibration_fingerprint,
+        calibration_freshness,
         selection_receipt,
     )
     from qb_compiler.qec_preflight import QECPreflightResult, qec_preflight
@@ -93,6 +115,15 @@ if TYPE_CHECKING:
         regression_check,
     )
     from qb_compiler.recommender import BackendRecommender, RecommendationReport
+    from qb_compiler.signing import (
+        ReceiptVerification,
+        SigningKey,
+        export_public_key,
+        load_or_create_signing_key,
+        sign_receipt,
+        verify_receipt,
+        verify_receipt_file,
+    )
     from qb_compiler.verify import (
         MirrorResult,
         VerifyResult,
@@ -126,6 +157,32 @@ _EXPORTS: dict[str, str] = {
     "BACKEND_CONFIGS": "qb_compiler.config",
     "BackendSpec": "qb_compiler.config",
     "CompilerConfig": "qb_compiler.config",
+    # chemistry input checks and the measurement bill
+    "Hamiltonian": "qb_compiler.chem",
+    "IntegrityCheck": "qb_compiler.chem",
+    "IntegrityVerdict": "qb_compiler.chem",
+    "MeasurementPlan": "qb_compiler.chem",
+    "audit_hamiltonian": "qb_compiler.chem",
+    "audit_hamiltonian_file": "qb_compiler.chem",
+    "load_hamiltonian": "qb_compiler.chem",
+    "measurement_plan": "qb_compiler.chem",
+    "qwc_groups": "qb_compiler.chem",
+    # public QEC corpora
+    "CorpusEntry": "qb_compiler.corpus",
+    "CorpusVerification": "qb_compiler.corpus",
+    "corpus_citation": "qb_compiler.corpus",
+    "get_corpus": "qb_compiler.corpus",
+    "list_corpora": "qb_compiler.corpus",
+    "load_corpus": "qb_compiler.corpus",
+    "verify_corpus_file": "qb_compiler.corpus",
+    # receipt signing and offline verification
+    "ReceiptVerification": "qb_compiler.signing",
+    "SigningKey": "qb_compiler.signing",
+    "export_public_key": "qb_compiler.signing",
+    "load_or_create_signing_key": "qb_compiler.signing",
+    "sign_receipt": "qb_compiler.signing",
+    "verify_receipt": "qb_compiler.signing",
+    "verify_receipt_file": "qb_compiler.signing",
     # discovery and ranking
     "DiscoveredBackend": "qb_compiler.discovery",
     "check_viability_pub": "qb_compiler.discovery",
@@ -151,7 +208,9 @@ _EXPORTS: dict[str, str] = {
     # layout selection and its receipts
     "CalibrationMapper": "qb_compiler.passes.mapping",
     "CalibrationMapperConfig": "qb_compiler.passes.mapping",
+    "LayoutCandidate": "qb_compiler.passes.mapping",
     "calibration_fingerprint": "qb_compiler.passes.mapping",
+    "calibration_freshness": "qb_compiler.passes.mapping",
     "selection_receipt": "qb_compiler.passes.mapping",
     # multi-vendor calibration
     "all_backend_statuses": "qb_compiler.calibration.registry",
@@ -301,12 +360,19 @@ __all__ = [
     "CompilationReceipt",
     "CompileResult",
     "CompilerConfig",
+    "CorpusEntry",
+    "CorpusVerification",
     "CostEstimate",
     "CostEstimator",
     "DiscoveredBackend",
     "EnhancedCompileResult",
     "GateOp",
+    "Hamiltonian",
+    "IntegrityCheck",
+    "IntegrityVerdict",
     "InvalidCircuitError",
+    "LayoutCandidate",
+    "MeasurementPlan",
     "MirrorResult",
     "NoiseModel",
     "ObservableAuditResult",
@@ -316,8 +382,10 @@ __all__ = [
     "QBCompiler",
     "QBCompilerError",
     "QECPreflightResult",
+    "ReceiptVerification",
     "RecommendationReport",
     "RegressionReport",
+    "SigningKey",
     "VerifyResult",
     "ViabilityResult",
     "__version__",
@@ -326,20 +394,32 @@ __all__ = [
     "any_to_compiler_circuit",
     "any_to_qiskit",
     "audit_dem",
+    "audit_hamiltonian",
+    "audit_hamiltonian_file",
     "audit_matrices",
     "build_mirror",
     "calibration_fingerprint",
+    "calibration_freshness",
     "calibration_trend",
     "canonicalize_dem",
     "check_viability",
     "check_viability_pub",
+    "corpus_citation",
     "discover_backends",
+    "export_public_key",
     "get_backend_status",
     "get_calibration_provider",
+    "get_corpus",
+    "list_corpora",
+    "load_corpus",
+    "load_hamiltonian",
+    "load_or_create_signing_key",
     "make_receipt",
+    "measurement_plan",
     "passmanager",
     "preflight_dem_gate",
     "qec_preflight",
+    "qwc_groups",
     "rank_discovered",
     "rank_value",
     "receipt_history",
@@ -347,6 +427,10 @@ __all__ = [
     "regression_check",
     "run_mirror",
     "selection_receipt",
+    "sign_receipt",
+    "verify_corpus_file",
+    "verify_receipt",
+    "verify_receipt_file",
     "verify_viability",
 ]
 

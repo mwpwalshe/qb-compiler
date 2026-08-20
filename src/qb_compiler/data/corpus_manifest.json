@@ -1,0 +1,39 @@
+{
+  "schema": "qb.corpus_manifest.v1",
+  "note": "Public QEC datasets published by other groups. Nothing here is redistributed by qb-compiler: each entry records where the publisher put the archive, the digest of a copy fetched from that location, and the citation the publisher asks for. A digest describes the bytes at a moment; a publisher may re-release under the same DOI, in which case a mismatch is information rather than an accusation.",
+  "corpora": [
+    {
+      "name": "willow-105q-d3-d5-d7",
+      "description": "Surface code memory experiments at distances 3, 5 and 7 on a 105 qubit device, with detection events and observable flips per shot.",
+      "publisher": "Google Quantum AI",
+      "doi": "10.5281/zenodo.13273331",
+      "url": "https://zenodo.org/records/13273331/files/google_105Q_surface_code_d3_d5_d7.zip",
+      "filename": "google_105Q_surface_code_d3_d5_d7.zip",
+      "sha256": "1e8e3b4f5f35ba4fd9b4a8448473f37a7090b404fd6eff0c00188092876070dd",
+      "n_bytes": 5716907033,
+      "fetched": "2026-05-31",
+      "citation": "Google Quantum AI and Collaborators, Quantum error correction below the surface code threshold, Nature (2025). Dataset: https://doi.org/10.5281/zenodo.13273331",
+      "licence": "as stated on the Zenodo record; read it before redistributing anything derived from the data"
+    },
+    {
+      "name": "quera-surface-code",
+      "description": "Neutral atom surface code dataset released on Zenodo record 15685795.",
+      "publisher": "QuEra Computing",
+      "doi": "10.5281/zenodo.15685795",
+      "url": "https://zenodo.org/api/records/15685795/files/Zenodo.zip/content",
+      "filename": "Zenodo.zip",
+      "sha256": "51a972e292dfdbc3ed4c4f41e5fdb26332bd1f6efc5b2fc7ff247e4736c0e0e2",
+      "n_bytes": 996799635,
+      "fetched": "2026-05-31",
+      "citation": "QuEra Computing, surface code dataset, Zenodo record 15685795 (https://doi.org/10.5281/zenodo.15685795). Cite the record and the paper it accompanies, both named on the record page.",
+      "licence": "as stated on the Zenodo record; read it before redistributing anything derived from the data"
+    }
+  ],
+  "pending": [
+    {
+      "name": "qbcal-2026-02",
+      "status": "archive record and DOI to follow",
+      "note": "Listed by name only. No entry is added to 'corpora' until the archive record exists and its digest can be computed from the published file. Token: DOI_QBCAL_2026_02_PENDING"
+    }
+  ]
+}

@@ -14,6 +14,12 @@ depend on the receipts.
 | Capability | Command |
 |---|---|
 | Circuit viability preflight | `qbc preflight` / `qbc analyze` / `qbc diff` |
+| **Hamiltonian integrity checks** | `qbc chem-audit` (text or `--json` receipt) |
+| **Pre-submit measurement bill** | `qbc measure-plan` |
+| **Receipt signing with your own key** | `selection_receipt(sign=True)`, `qb_compiler.signing` |
+| **Offline receipt verification** | `qbc verify-receipt` |
+| **Hash-verified public QEC corpora** | `qbc corpus list` / `show` / `verify` |
+| **Ranked layout candidates and scores** | `CalibrationMapper.rank_layouts()` |
 | Calibration-aware compilation + receipt | `qbc compile --receipt` |
 | Mirror-circuit verification | `qbc verify` |
 | **Cross-vendor fidelity-per-dollar ranking** | `qbc when` (text or `--json` advice receipt) |
@@ -34,7 +40,7 @@ vendor adapters and live calibration feeds are for.
 
 | Capability | Notes |
 |---|---|
-| **Signed receipts** | tamper-evident, attributable ObservableGate / fidelity / drift receipts |
+| **Managed keys and countersigning** | signing with your own key is free and always will be; what Pro adds is a key you do not have to hold, a countersignature from a party that is not you, and receipts that stay checkable after the machine that made them is gone |
 | **Batch audit reports** | `dem-audit ./dems/` over a whole directory, rolled into one report |
 | **CI policy bundles** | team policy files, GitHub/GitLab gate templates |
 | **Receipt dashboard + history** | hosted, shared, searchable receipt storage over time |

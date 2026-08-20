@@ -2,6 +2,9 @@
 
 All release tags and release commits must be GPG-signed. This document covers setup for maintainers and verification for consumers.
 
+This is about **release artifacts**: tags, commits and the packages on PyPI. Signing a **receipt**,
+which is a different key for a different purpose, is covered in [receipts.md](receipts.md).
+
 ## Maintainer Setup
 
 ### 1. Generate a GPG key (if you don't have one)
@@ -88,6 +91,6 @@ When rotating keys:
 
 ## Troubleshooting
 
-- **"gpg: signing failed: No secret key"** -- Ensure `user.signingkey` matches a key in `gpg --list-secret-keys`.
-- **"gpg: signing failed: Inappropriate ioctl for device"** -- Set `export GPG_TTY=$(tty)` in your shell profile.
-- **macOS pinentry issues** -- Install `pinentry-mac`: `brew install pinentry-mac` and set it in `~/.gnupg/gpg-agent.conf`.
+- **"gpg: signing failed: No secret key"**. Ensure `user.signingkey` matches a key in `gpg --list-secret-keys`.
+- **"gpg: signing failed: Inappropriate ioctl for device"**. Set `export GPG_TTY=$(tty)` in your shell profile.
+- **macOS pinentry issues**. Install `pinentry-mac`: `brew install pinentry-mac` and set it in `~/.gnupg/gpg-agent.conf`.

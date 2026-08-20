@@ -1,39 +1,68 @@
-# Notebook Execution Status
+# Notebook execution status
 
-Release-quality execution pass. Every notebook in `notebooks/` was run headless with
+Every notebook here was executed headless, in order, with
 
 ```bash
-jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=200 <nb>
+jupyter nbconvert --to notebook --execute --inplace \
+  --ExecutePreprocessor.timeout=400 <notebook>
 ```
 
-Environment: stim 1.15.0, pymatching 2.3.1, qiskit + qiskit-aer, torch, cudaq, and
-qubitboost-sdk 0.2.0 all installed (the `[ising]`, `gnn`, and `qubitboost` extras are present).
-Notebooks that depend on an optional extra guard the import and print a clear
-`skipped: requires …` message instead of crashing when the extra is absent.
+Environment: qiskit with aer, stim, pymatching, torch and the qubitboost SDK all present, so
+the optional paths run rather than skip. Notebooks that need an extra guard the import and
+print what they skipped instead of failing when it is absent.
 
-| Notebook | Executes clean? | Time | Action taken |
-|----------|-----------------|------|--------------|
-| 01_preflight_viability.ipynb | PASS (fixed) | ~190s | **Was broken**, the GHZ 2→30 sweep cell exceeded the cell timeout (n=30 routing ≈80s at the default `n_seeds=10`). Added `n_seeds=1` to the batch-screening sweep. GHZ maps to a line so routing is trivial and the fidelity numbers are unchanged; cell now ≈25s. Re-executed in place. |
-| 02_compilation_receipts.ipynb | PASS | 61s | none |
-| 03_multi_vendor_ranking.ipynb | PASS | 109s | none |
-| 04_dynamical_decoupling.ipynb | PASS | 29s | none |
-| 05_fidelity_estimation.ipynb | PASS | 10s | none |
-| 06_cost_estimation.ipynb | PASS | 13s | none |
-| 07_calibration_data.ipynb | PASS | 19s | none |
-| 08_qiskit_integration.ipynb | PASS | 18s | none |
-| 09_ml_layout_prediction.ipynb | PASS | 59s | none |
-| 10_circuit_ir.ipynb | PASS | 13s | none |
-| 11_compilation_strategies.ipynb | PASS | 69s | none |
-| 12_error_handling.ipynb | PASS | 26s | none |
-| 13_qubitboost_integration.ipynb | PASS | 23s | none, `qubitboost` import already guarded |
-| 14_backend_deep_dive.ipynb | PASS | 8s | none |
-| 15_cli_workflows.ipynb | PASS | 172s | none |
-| 16_real_world_pipelines.ipynb | PASS | 188s | none, `qubitboost` import already guarded |
-| 17_nvidia_ising_integration.ipynb | PASS | 27s | none, needs `[ising]`; NVIDIA-weights path already guarded (raises/handles `NotImplementedError`) |
-| 18_ising_pymatching_baseline_sweep.ipynb | PASS | 17s | none, reads a precomputed benchmark JSON; no extra needed at runtime |
-| 19_know_before_you_run.ipynb | PASS | 21s | none, `qec_preflight` needs `[ising]` |
-| 20_receipts_not_claims.ipynb | PASS | 33s | none |
-| 21_observablegate_qec_preflight.ipynb | PASS (new) | ~15s | **New notebook** demoing the v0.8.0 ObservableGate feature. Every stim/CLI cell guards on `HAVE_STIM` / `shutil.which("qbc")` and skips gracefully if the `[ising]` extra or console script is absent. |
+The checks are: does it execute without an error output, and does any output contain an
+absolute home directory path. Both have to be clean.
 
-**Result: all 21 notebooks execute cleanly** (or skip-gracefully when an optional extra is
-absent). The only notebook that was broken was 01 (cell timeout), now fixed.
+| Notebook | Clean | Time | Changed this pass |
+|---|---|---|---|
+| `01_preflight_viability.ipynb` | yes | 212s | opener trimmed |
+| `02_compilation_receipts.ipynb` | yes | 48s | opener trimmed, one printed string reworded |
+| `03_multi_vendor_ranking.ipynb` | yes | 79s | opener trimmed |
+| `04_dynamical_decoupling.ipynb` | yes | 49s | opener trimmed |
+| `05_fidelity_estimation.ipynb` | yes | 19s | prose dashes removed |
+| `06_cost_estimation.ipynb` | yes | 21s | prose dashes removed |
+| `07_calibration_data.ipynb` | yes | 10s | opener trimmed, prose dashes removed, two printed strings reworded |
+| `08_qiskit_integration.ipynb` | yes | 13s | opener trimmed, prose dashes removed |
+| `09_ml_layout_prediction.ipynb` | yes | 77s |  |
+| `10_circuit_ir.ipynb` | yes | 29s | opener trimmed |
+| `11_compilation_strategies.ipynb` | yes | 47s |  |
+| `12_error_handling.ipynb` | yes | 46s |  |
+| `13_qubitboost_integration.ipynb` | yes | 17s | opener trimmed, gate registry listing re-executed against the current registry |
+| `14_backend_deep_dive.ipynb` | yes | 32s |  |
+| `15_cli_workflows.ipynb` | yes | 360s |  |
+| `16_real_world_pipelines.ipynb` | yes | 42s |  |
+| `17_nvidia_ising_integration.ipynb` | yes | 34s |  |
+| `18_ising_pymatching_baseline_sweep.ipynb` | yes | 27s |  |
+| `19_know_before_you_run.ipynb` | yes | 43s |  |
+| `20_receipts_not_claims.ipynb` | yes | 36s |  |
+| `21_observablegate_qec_preflight.ipynb` | yes | 9s |  |
+| `22_willow_complementary_gap_validation.ipynb` | yes | 174s |  |
+| `23_selection_receipts.ipynb` | yes | 10s | rewritten on a real IBM Fez snapshot: executed layout, calibration age, ranked alternatives, Qiskit head to head |
+| `24_multi_platform_calibration.ipynb` | yes | 16s |  |
+| `25_backend_discovery.ipynb` | yes | 22s |  |
+| `26_circuit_interop.ipynb` | yes | 28s |  |
+| `27_cross_vendor_advice.ipynb` | yes | 21s |  |
+| `28_signing_and_verification.ipynb` | yes | 10s | new |
+| `29_chem_audit.ipynb` | yes | 8s | new |
+| `30_qec_corpus_verification.ipynb` | yes | 7s | new |
+
+30 of 30 execute clean with no home directory paths in any output.
+
+## What changed and why
+
+**23** was rewritten. It used to assert that the receipt could not disagree with what ran,
+which was the exact defect fixed in 0.12.0: the receipt described the recommendation, not the
+executed layout. It now runs on a real IBM Fez calibration snapshot from `tests/fixtures`,
+shows the override case with its score penalty, prints the calibration age the choice was made
+from, and shows the ranked alternatives including the two that were the same physical qubits
+with the logical labels permuted. It also scores Qiskit's own calibration aware layout on the
+same objective and says plainly that scoring both with our own objective is not evidence about
+hardware.
+
+**28, 29 and 30** are new: signing and offline verification end to end, the Hamiltonian audit
+on the real H2 fixture with each check watched failing, and corpus digest verification with a
+clean pass and a clean failure. None of them needs credentials or a network.
+
+The rest of the pass removed boilerplate openers and dashes from prose, and re-executed
+everything so no output is older than the code that produced it.

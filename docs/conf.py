@@ -1,8 +1,8 @@
 """Sphinx configuration for qb-compiler documentation."""
 
 project = "qb-compiler"
-copyright = "2026, QubitBoost (https://www.qubitboost.io)"  # noqa: A001
-author = "Mike"
+copyright = "2026, QubitBoost (https://www.qubitboost.io)"
+author = "Michael William Perry Walshe"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -12,7 +12,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build"]
+exclude_patterns = ["_build", "commercial", "commercial/**"]
 
 html_theme = "qiskit-ecosystem"
 

@@ -72,3 +72,20 @@ class TestQECPreflightBackendPath:
         assert result.physical_error_proxy > 0.0
         assert any("median two-qubit gate error" in note for note in result.notes)
         assert 0.0 <= result.projected_ler <= 1.0
+
+
+class TestFaithfulnessStatement:
+    """The LER above is a PyMatching number and nothing here checks matching is the right
+    decoder for the model. A stated gap beats an assurance nobody measured."""
+
+    def test_result_declares_faithfulness_not_assessed(self) -> None:
+        result = qec_preflight(distance=3, rounds=3, physical_error=0.01, shots_sim=2_000, seed=3)
+        assert result.matching_faithfulness == "not_assessed"
+
+    def test_the_statement_is_printed(self) -> None:
+        result = qec_preflight(distance=3, rounds=3, physical_error=0.01, shots_sim=2_000, seed=3)
+        assert "matching faithfulness: not_assessed" in str(result)
+
+    def test_the_note_says_what_is_assumed(self) -> None:
+        result = qec_preflight(distance=3, rounds=3, physical_error=0.01, shots_sim=2_000, seed=3)
+        assert any("matching-based decode is faithful" in note for note in result.notes)

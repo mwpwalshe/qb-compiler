@@ -1,5 +1,73 @@
 # Changelog
 
+## 0.12.0 - 2026-08-20
+
+Full notes: `docs/release/RELEASE_NOTES_0.12.0.md`.
+
+### Fixed
+
+**Receipts described the recommended layout, not the executed one.** Up to 0.11.0
+`selection_receipt()` always named the mapper's pick, whatever the caller ran, so overriding the
+layout produced a receipt for a run that never happened. Pass `executed_layout=` and the receipt
+names what ran, keeps the recommendation in `recommended_layout`, and records
+`score_penalty_vs_recommended`. Schema stays `qb.selection_receipt.v1` and the additions are
+additive: `describes_executed_layout` is on every receipt now; `recommended_layout`,
+`recommended_score`, `executed_layout_matches_recommendation`, `score_penalty_vs_recommended` and
+`divergence_note` appear only when `executed_layout` is passed; and when the two differ,
+`score_breakdown` comes back empty with a note, because the breakdown belongs to the
+recommendation.
+
+**`sign=True` generated a fresh keypair per call and embedded its public key in the receipt it had
+just signed.** Those signatures verify against a key that travelled with them, so they attest to
+nothing about origin, and no receipt signed by 0.9.0 to 0.11.0 should be treated as evidence of who
+produced it. Signing now uses one Ed25519 key created once at `~/.qb-compiler/signing_key` with
+mode 0600, or wherever `QBC_SIGNING_KEY` points, and the receipt carries the key fingerprint rather
+than the key. `sign=True` raises if it cannot sign instead of quietly returning an unsigned
+receipt. The verifier reports the old shape as `LEGACY_SELF_SIGNED` and refuses it.
+
+**`qec_preflight` now states that it did not assess decoder faithfulness.** The projected logical
+error rate is a PyMatching number and this package never checked whether matching is faithful on the
+model it was handed. New `matching_faithfulness` field, always `not_assessed`, plus a line in the
+printed output and a note. No check was added; the gap is named.
+
+**`calibration_freshness` only understood datetime timestamps**, so snapshots carrying an ISO
+string, which is most of them, reported no age at all. It now reads strings, datetimes and epoch
+numbers, and `timestamp_status` distinguishes measured, absent, unreadable, synthetic and clock
+skew.
+
+**Badges.** Coverage no longer claims a hardcoded 60 percent behind an empty link; it names the
+enforced floor and links to it. The docs badge points at the docs site rather than the README. The
+unsigned receipt string no longer carries an SDK pitch.
+
+### Added
+
+- `qbc verify-receipt`: offline signature verification for any receipt this package emits, with
+  `VERIFIED` / `UNSIGNED` / `NO_KEY` / `INVALID_SIGNATURE` / `LEGACY_SELF_SIGNED` / `MALFORMED` and
+  a printed statement of what the receipt does not claim. Works on a base install: Ed25519 falls
+  back to a pure Python implementation when a compiled one is absent.
+- `qbc chem-audit`: five integrity checks on a qubit Hamiltonian, with ACCEPT, REFUSE and
+  INCOMPLETE verdicts, `--strict`, and `--json`. Reads grouped JSON, flat term lists, OpenFermion
+  operators and Qiskit `SparsePauliOp`.
+- `qbc measure-plan`: measurable terms, qubit-wise commuting settings, grouping factor, largest
+  group and shots at a chosen rate. Structural count, no variance weighting, no precision claim. On
+  the 14 file corpus it was built against, the setting count spans 1.79 times at 12 qubits and 1.59
+  times at 16, and qubit count does not predict where a molecule lands.
+- `qbc corpus list` / `show` / `verify`: pinned digests, publisher URL, DOI and citation for public
+  QEC datasets, and a hard refusal when your copy does not match. Nothing is redistributed.
+- `CalibrationMapper.rank_layouts()` and `CalibrationMapper.score_layout()`: the ranked trade space
+  and its scores, public at last, with a `max_overlap` control that removes the near-duplicate
+  candidate that is the same hardware with the logical labels permuted.
+- `calibration_freshness` on every selection receipt: measured age, and `tolerance_basis` saying in
+  words that the tolerance it compares against is a builtin default rather than a measurement of
+  your device.
+- `qbc doctor` names the qiskit 1.x plus qiskit-ibm-runtime 0.40 or newer pairing that raises
+  `TranspilerError: Invalid plugin name` on a plain transpile, and prints the workaround.
+- `action.yml`: a composite GitHub Action running the free checks in CI. `docs/github-action.md`.
+- `CITATION.cff`, `paper.md` and `paper.bib` so the tool can be cited. The DOI is not minted yet.
+- Docs: `receipts`, `chemistry`, `corpora` and `github-action` pages, plus the new commands in the
+  CLI reference.
+
+
 ## 0.11.0 - 2026-07-27
 
 Minor rather than patch: this adds two CLI options and a new public field on `BackendValue`.
@@ -170,7 +238,7 @@ or both, and the package gets a memory.
 - shot-budget estimators (shots_for_expectation, shots_for_rate)
 - backend auto-discovery from the user's own runtime service + pub-aware preflight
 - qec memory-experiment preflight (projected ler band, detector fraction, shots-for-confidence) on
-  stim + pymatching, unique to this package
+  stim + pymatching
 - ising telemetry surface (IsingDecodeResult, bounded opt-in harness telemetry, provenance hashes),
   closing the v0.5.0 design doc
 - small bundled calibration snapshot set ships in the wheel so `qbc when` and fixture-based preflight

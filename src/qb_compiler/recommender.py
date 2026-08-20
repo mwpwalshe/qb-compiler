@@ -1,7 +1,7 @@
 """Backend recommendation engine.
 
-Answers the question no other tool answers: **which backend should I
-use for this circuit TODAY?**
+Answers a practical question: **which backend should I use for this
+circuit today?**
 
 Analyzes a circuit across all configured backends and returns a ranked
 recommendation based on estimated fidelity, cost, and viability.

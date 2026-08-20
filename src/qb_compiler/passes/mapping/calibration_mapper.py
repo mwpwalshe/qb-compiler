@@ -121,6 +121,46 @@ class CalibrationMapperConfig:
     vf2_call_limit: int | None = 100_000
     top_k: int = 20
     max_per_region: int = 3
+    max_overlap: float | None = None
+
+
+@dataclass(frozen=True)
+class LayoutCandidate:
+    """One ranked candidate layout, as returned by :meth:`CalibrationMapper.rank_layouts`.
+
+    Attributes
+    ----------
+    rank :
+        Position in the ranking, 0 for the best-scoring candidate.
+    layout :
+        Logical qubit to physical qubit mapping.
+    score :
+        Calibration score, lower is better. Comparable only within one ranking on one
+        calibration snapshot: it is a sum of weighted penalties, not a fidelity.
+    physical_qubits :
+        The physical qubits used, sorted. Two candidates with the same set here are the same
+        hardware whatever the logical assignment.
+    """
+
+    rank: int
+    layout: dict[int, int]
+    score: float
+    physical_qubits: tuple[int, ...]
+
+    def overlap(self, other: LayoutCandidate) -> float:
+        """Fraction of this candidate's physical qubits also used by *other*, 0.0 to 1.0."""
+        mine = set(self.physical_qubits)
+        if not mine:
+            return 0.0
+        return len(mine & set(other.physical_qubits)) / len(mine)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "rank": self.rank,
+            "layout": dict(self.layout),
+            "score": self.score,
+            "physical_qubits": list(self.physical_qubits),
+        }
 
 
 class CalibrationMapper(TransformationPass):
@@ -313,6 +353,129 @@ class CalibrationMapper(TransformationPass):
             },
             modified=True,
         )
+
+    # ── public trade space ───────────────────────────────────────────
+
+    def score_layout(self, layout: dict[int, int], circuit: QBCircuit) -> float:
+        """Calibration score of *layout* for *circuit*. Lower is better.
+
+        The same scorer the pass ranks with, exposed so a caller who ran a layout of their own can
+        price it on the same scale. Pass it to
+        :func:`~qb_compiler.passes.mapping.selection_receipt.selection_receipt` as
+        ``scorer=functools.partial(mapper.score_layout, circuit=circuit)`` to get the penalty of an
+        override computed rather than left null.
+
+        The number is a sum of weighted penalties on one calibration snapshot, so it compares
+        layouts against each other on that snapshot and means nothing on its own. It is not a
+        fidelity and does not convert to one.
+        """
+        return self._score_layout(dict(layout), self._extract_interactions(circuit), circuit)
+
+    def rank_layouts(
+        self,
+        circuit: QBCircuit,
+        *,
+        top_k: int | None = None,
+        diversify: bool = True,
+        max_overlap: float | None = None,
+    ) -> list[LayoutCandidate]:
+        """Return ranked candidate layouts with their scores, best first.
+
+        ``transform()`` applies the winner. This returns the trade space behind it, so a caller can
+        run a controlled comparison, or execute a candidate other than the top one deliberately,
+        without reaching into private internals.
+
+        Parameters
+        ----------
+        circuit :
+            The circuit to map.
+        top_k :
+            How many candidates to return. Defaults to ``config.top_k``. Asking for more than the
+            configured value raises the search budget for this call only.
+        diversify :
+            Apply the region heuristic, which is what ``transform()`` does. See the honest
+            description below.
+        max_overlap :
+            Drop a candidate that shares more than this fraction of its physical qubits with an
+            already-kept, better-scoring candidate. ``0.0`` keeps only fully disjoint hardware;
+            ``None`` (the default) applies no overlap filter.
+
+        What the two diversity controls actually do, stated plainly
+        ----------------------------------------------------------
+        ``diversify`` groups candidates by the **centroid of their physical qubit indices** and
+        keeps at most ``config.max_per_region`` from each group. Index proximity is a proxy for
+        chip locality, and it is only as good as the vendor's numbering: on a device where
+        neighbouring indices are neighbouring qubits it separates regions well, and on one where
+        they are not it separates very little.
+
+        ``max_overlap`` compares the **sets of physical qubits** directly, which is exact. It is
+        the control that removes the near-duplicate at the top of a ranking, because a candidate
+        that reuses the same qubits with the logical labels permuted has overlap 1.0 whatever the
+        chip numbering says.
+
+        Neither control makes the alternatives better. They make them different, which is what a
+        comparison needs.
+
+        Returns
+        -------
+        list[LayoutCandidate]
+            Ranked candidates. Never empty: a circuit that admits any layout at all yields one.
+        """
+        if max_overlap is not None and not 0.0 <= max_overlap <= 1.0:
+            raise ValueError(f"max_overlap must be between 0.0 and 1.0, got {max_overlap}")
+
+        n_logical = circuit.n_qubits
+        if n_logical > self._n_physical:
+            raise ValueError(
+                f"Circuit requires {n_logical} qubits but calibration data "
+                f"only covers {self._n_physical} physical qubits"
+            )
+
+        interactions = self._extract_interactions(circuit)
+        if not interactions:
+            layouts = [self._best_individual_qubits(circuit)]
+        else:
+            requested = top_k if top_k is not None else self._config.top_k
+            previous_top_k = self._config.top_k
+            self._config.top_k = max(previous_top_k, requested)
+            try:
+                layouts = self._find_top_k_layouts(circuit, interactions)
+            finally:
+                self._config.top_k = previous_top_k
+            if diversify and len(layouts) > 1:
+                layouts = self._diversify_candidates(layouts)
+
+        scored = sorted(
+            ((self._score_layout(layout, interactions, circuit), layout) for layout in layouts),
+            key=lambda pair: pair[0],
+        )
+
+        candidates: list[LayoutCandidate] = []
+        seen: set[tuple[tuple[int, int], ...]] = set()
+        for score, layout in scored:
+            key = tuple(sorted(layout.items()))
+            if key in seen:
+                # Overlapping search windows can find the same mapping twice; a ranking that
+                # lists one candidate under two ranks is not a trade space.
+                continue
+            seen.add(key)
+            candidate = LayoutCandidate(
+                rank=len(candidates),
+                layout=dict(layout),
+                score=score,
+                physical_qubits=tuple(sorted(layout.values())),
+            )
+            if max_overlap is not None and any(
+                candidate.overlap(kept) > max_overlap for kept in candidates
+            ):
+                continue
+            candidates.append(candidate)
+            if top_k is not None and len(candidates) >= top_k:
+                break
+
+        if top_k is not None:
+            candidates = candidates[:top_k]
+        return candidates
 
     # ── interaction graph extraction ─────────────────────────────────
 
@@ -944,6 +1107,9 @@ class CalibrationMapper(TransformationPass):
                 result.append(layout)
                 region_count[r] += 1
 
+        if self._config.max_overlap is not None and result:
+            result = self._filter_by_overlap(result, self._config.max_overlap)
+
         logger.debug(
             "CalibrationMapper: diversified %d candidates -> %d across %d regions",
             len(candidates),
@@ -951,6 +1117,29 @@ class CalibrationMapper(TransformationPass):
             len(regions),
         )
         return result if result else candidates[:1]
+
+    @staticmethod
+    def _filter_by_overlap(
+        candidates: list[dict[int, int]],
+        max_overlap: float,
+    ) -> list[dict[int, int]]:
+        """Drop candidates reusing more than *max_overlap* of an earlier candidate's qubits.
+
+        Exact set comparison on physical qubits, which is what removes the near-duplicate that
+        sits at the top of a raw VF2 ranking: the same hardware with the logical labels permuted.
+        The region heuristic cannot see that case, because both candidates have the same centroid.
+        """
+        kept: list[dict[int, int]] = []
+        kept_sets: list[set[int]] = []
+        for layout in candidates:
+            qubits = set(layout.values())
+            if not qubits:
+                continue
+            if any(len(qubits & earlier) / len(qubits) > max_overlap for earlier in kept_sets):
+                continue
+            kept.append(layout)
+            kept_sets.append(qubits)
+        return kept if kept else candidates[:1]
 
     def _get_qiskit_seed_layouts(
         self,

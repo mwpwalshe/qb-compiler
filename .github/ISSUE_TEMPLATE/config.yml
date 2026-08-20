@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/mwpwalshe/qb-compiler/discussions
+    about: >-
+      Ask how something works, or float an idea before writing code. Discussions is the right place
+      for anything that is not a defect.
+  - name: Security report
+    url: https://github.com/mwpwalshe/qb-compiler/security/policy
+    about: >-
+      Report a vulnerability privately. Do not open a public issue for one.
+  - name: Documentation
+    url: https://mwpwalshe.github.io/qb-compiler/
+    about: The command reference, guides and API docs.

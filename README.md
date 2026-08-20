@@ -5,8 +5,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://github.com/mwpwalshe/qb-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/mwpwalshe/qb-compiler/actions)
-[![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)]()
-[![Docs](https://img.shields.io/badge/docs-README-blue)](https://github.com/mwpwalshe/qb-compiler#readme)
+[![Coverage floor](https://img.shields.io/badge/coverage%20floor-60%25-yellow)](https://github.com/mwpwalshe/qb-compiler/blob/master/pyproject.toml)
+[![Docs](https://img.shields.io/badge/docs-site-blue)](https://mwpwalshe.github.io/qb-compiler/)
 
 **Quantum Execution Intelligence. Know before you run.**
 
@@ -381,7 +381,20 @@ Calibration data can be loaded from local JSON files OR fetched live from vendor
 
 ## Installation
 
-**Compatibility:** Qiskit 1.0-1.4 | Python 3.10-3.12 | Tested on IBM Fez, Torino, Marrakesh, Rigetti Ankaa-3
+**Compatibility**
+
+| | |
+|---|---|
+| Python | 3.10 to 3.12 |
+| Qiskit | 1.0 to 1.4, and 2.3 (both legs run in CI) |
+| Hardware the fidelity model is validated against | IBM Fez, Torino, Marrakesh |
+| Hardware with an adapter but no validation | Rigetti Ankaa-3, IonQ, IQM, Quantinuum |
+
+**Known pairing problem.** On qiskit 1.x with qiskit-ibm-runtime 0.40 or newer, an IBM backend can
+advertise a translation plugin that the installed qiskit does not ship, and a plain `transpile`
+raises `TranspilerError: Invalid plugin name` on a circuit that has nothing wrong with it. Pass
+`translation_method="translator"`, or move to qiskit 2.x. `qbc doctor` detects the pairing and
+prints the same workaround.
 
 ```bash
 # Core (IBM backends via Qiskit)
@@ -410,6 +423,12 @@ pip install "qb-compiler[dev]"
 | `qbc compile <circuit> -b <backend> --receipt` | Compile with audit trail |
 | `qbc info` | Show version and available backends |
 | `qbc calibration show <backend>` | Show calibration summary |
+| `qbc chem-audit <file>` | Five integrity checks on a qubit Hamiltonian: ACCEPT / INCOMPLETE / REFUSE |
+| `qbc measure-plan <file>` | Terms, QWC settings and shots for that operator, before you submit |
+| `qbc verify-receipt <file>` | Check a receipt signature offline against a public key |
+| `qbc corpus list \| show \| verify` | Public QEC datasets, and whether your copy matches the published bytes |
+| `qbc when <circuit>` | Rank backends by predicted fidelity per dollar |
+| `qbc dem-audit <file>` | QEC decoder-input correctness audit |
 
 ---
 
@@ -432,20 +451,42 @@ Copyright 2026 QubitBoost.
 
 ## Selection receipts
 
-`CalibrationMapper` already chooses a layout from live calibration by scoring candidates on gate
-error, coherence (T1/T2), readout error, T1 asymmetry, and temporal correlation, then picking the
-best via VF2 subgraph search. `selection_receipt()` turns that choice into an auditable record: the
-chosen layout, its score, the per-signal breakdown, and a stable calibration fingerprint. The check
-is free; the signed, stored receipt is the product.
+`CalibrationMapper` chooses a layout from calibration data by scoring candidates on gate error,
+coherence, readout error, T1 asymmetry and temporal correlation, then picking the best via VF2
+subgraph search. `selection_receipt()` turns that choice into a record somebody else can check: the
+layout, its score, the per signal breakdown, the calibration fingerprint, and how old that
+calibration was.
 
 ```python
+import functools
 from qb_compiler.passes.mapping import CalibrationMapper, selection_receipt
 
-mapper = CalibrationMapper(backend)          # backend: BackendProperties (live calibration)
+mapper = CalibrationMapper(backend)
 result = mapper.run(circuit, {})
-receipt = selection_receipt(result, calibration=backend)   # unsigned dict
+
+receipt = selection_receipt(result, calibration=backend)          # the recommendation ran
+
+receipt = selection_receipt(                                       # something else ran
+    result,
+    calibration=backend,
+    executed_layout={0: 6, 1: 5, 2: 4},
+    scorer=functools.partial(mapper.score_layout, circuit=circuit),
+)
 ```
 
-`sign=True` produces an Ed25519-signed receipt when the QubitBoost SDK is installed, and otherwise
-degrades to an unsigned receipt with a pointer, never raising. Signing lives in the paid layer; the
-receipt itself is Apache-2.0 with zero paid-SDK dependency.
+Pass `executed_layout=` whenever you run a layout other than the pass's pick. The receipt then
+describes what ran, keeps the recommendation in `recommended_layout`, and records what the override
+cost in `score_penalty_vs_recommended`. Before 0.12.0 the receipt always named the recommendation,
+so a receipt could describe a run that never happened.
+
+`sign=True` signs with an Ed25519 key created once at `~/.qb-compiler/signing_key`, or wherever
+`QBC_SIGNING_KEY` points, and the receipt carries that key's fingerprint rather than the key.
+Anyone can check it offline with `qbc verify-receipt receipt.json --key their-public-key.txt`, which
+needs no account, no network and no compiled crypto library.
+
+**Receipts signed by 0.9.0 to 0.11.0 should not be treated as evidence of origin.** Those releases
+generated a fresh keypair per call and embedded its public half in the receipt, so the signature
+verified against a key that travelled with it. The verifier reports that shape as
+`LEGACY_SELF_SIGNED` and refuses it.
+
+Full detail: [docs/receipts.md](docs/receipts.md).

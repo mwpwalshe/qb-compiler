@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+title: "qb-compiler: preflight, cost and provenance checks for quantum circuit execution"
+message: "If you use this software, please cite it using the metadata in this file."
+type: software
+authors:
+  - given-names: Michael William Perry
+    family-names: Walshe
+    affiliation: QubitBoost
+    email: mike@qubitboost.io
+repository-code: "https://github.com/mwpwalshe/qb-compiler"
+url: "https://mwpwalshe.github.io/qb-compiler/"
+abstract: >-
+  qb-compiler is a preflight layer for quantum circuit execution. It reports whether a circuit is
+  viable on a chosen backend, what it will cost across vendors, which physical qubits a
+  calibration-aware layout search selected and how old the calibration behind that choice was, and
+  whether a decoder input or a chemistry input is well formed before any shots are bought. Every
+  check emits a machine-readable receipt that a third party can verify offline. It is a Qiskit
+  Ecosystem member and uses Qiskit for transpilation and routing.
+keywords:
+  - quantum computing
+  - quantum compiler
+  - qiskit
+  - calibration
+  - quantum error correction
+  - reproducibility
+license: Apache-2.0
+version: 0.12.0
+date-released: "2026-08-15"

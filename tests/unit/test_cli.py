@@ -199,3 +199,33 @@ class TestMultiBackendDiff:
         assert "2Q gates" in result.output
         assert "Depth" in result.output
         assert "Cost" in result.output
+
+
+class TestTranslationPluginWarning:
+    """Field finding 5: a qiskit 1.x plus recent qiskit-ibm-runtime pairing can raise
+    'Invalid plugin name' on a plain transpile. doctor names it rather than leaving a user to
+    blame whichever tool they were holding."""
+
+    def test_warning_shape_when_the_pairing_is_known_bad(self, monkeypatch) -> None:
+        import qb_compiler.cli.main as cli_main
+
+        monkeypatch.setattr("qiskit.__version__", "1.4.5", raising=False)
+        monkeypatch.setattr("importlib.metadata.version", lambda name: "0.44.0")
+        lines = cli_main._translation_plugin_warning()
+        assert lines
+        assert "Invalid plugin name" in lines[0]
+        assert "translation_method='translator'" in lines[1]
+
+    def test_silent_on_qiskit_2(self, monkeypatch) -> None:
+        import qb_compiler.cli.main as cli_main
+
+        monkeypatch.setattr("qiskit.__version__", "2.3.1", raising=False)
+        monkeypatch.setattr("importlib.metadata.version", lambda name: "0.44.0")
+        assert cli_main._translation_plugin_warning() == []
+
+    def test_silent_on_an_older_runtime(self, monkeypatch) -> None:
+        import qb_compiler.cli.main as cli_main
+
+        monkeypatch.setattr("qiskit.__version__", "1.4.5", raising=False)
+        monkeypatch.setattr("importlib.metadata.version", lambda name: "0.20.0")
+        assert cli_main._translation_plugin_warning() == []

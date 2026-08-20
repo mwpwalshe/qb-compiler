@@ -4,6 +4,17 @@ Thank you for your interest in contributing to qb-compiler, the open-source
 calibration-aware quantum circuit compiler by [QubitBoost](https://qubitboost.io).
 This guide covers everything you need to get started.
 
+## Before you write code
+
+If you have a question, an idea, or you are not sure whether something is a defect, open a
+[Discussion](https://github.com/mwpwalshe/qb-compiler/discussions) rather than an issue. Issues are
+for things that are broken.
+
+One rule matters more than the rest of this document: **the package does not print a number it did
+not measure.** A modelled estimate says it is modelled, a default says it is a default, and a check
+that was not run says it was not run. If a change adds or moves a number a user sees, say in the
+pull request where the number comes from and what it does not claim.
+
 ## Getting Started
 
 1. Fork the repository on GitHub.

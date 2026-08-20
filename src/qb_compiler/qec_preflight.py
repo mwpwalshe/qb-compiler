@@ -69,6 +69,15 @@ _FLOOR_NOTE: str = (
     "no logical errors at this size in simulation; experiment is below "
     "measurable floor at this budget"
 )
+#: Stated on every result, because the number above it is decoded with PyMatching and this package
+#: never checks whether matching is the right decoder for the model it was handed. An error model
+#: can carry mass that a matching construction cannot represent, in which case the rate below is
+#: measuring the decoder rather than the code, and nothing here would say so. Naming the gap is
+#: honest; closing it is a different piece of work and is not in this package.
+_FAITHFULNESS_NOTE: str = (
+    "this estimate assumes a matching-based decode is faithful on this error model; "
+    "qualifying that assumption is not something this package does"
+)
 
 
 @dataclass(frozen=True)
@@ -103,6 +112,11 @@ class QECPreflightResult:
         errors were observed in simulation.
     notes:
         Free-form caveats describing how the projection was produced.
+    matching_faithfulness:
+        Always ``"not_assessed"``.  The LER above is decoded with PyMatching, and whether a
+        matching-based decode is faithful on this error model is a question this package does
+        not answer.  The field is here so a consumer reads a stated gap rather than inferring
+        an assurance from a missing field.
     """
 
     backend: str | None
@@ -116,6 +130,7 @@ class QECPreflightResult:
     shots_for_rel_ci: dict[str, int]
     notes: list[str] = field(default_factory=list)
     observable_audit: ObservableAuditResult | None = None
+    matching_faithfulness: str = "not_assessed"
 
     def __str__(self) -> str:
         lo, hi = self.projected_ler_band
@@ -131,6 +146,7 @@ class QECPreflightResult:
             f"rel {width} -> {self.shots_for_rel_ci[width]}" for width in self.shots_for_rel_ci
         ]
         lines.append(f"  shots for rel. CI    : {', '.join(shot_parts)}")
+        lines.append(f"  matching faithfulness: {self.matching_faithfulness}")
         if self.observable_audit is not None:
             audit = self.observable_audit
             lines.append(
@@ -305,6 +321,7 @@ def qec_preflight(
         }
 
     notes.append(_SIM_NOTE)
+    notes.append(_FAITHFULNESS_NOTE)
 
     return QECPreflightResult(
         backend=backend,

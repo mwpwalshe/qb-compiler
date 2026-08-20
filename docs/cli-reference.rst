@@ -131,3 +131,86 @@ Environment Variables
 
       export QBC_CALIBRATION_DIR=/path/to/calibration/snapshots
       qbc compile circuit.qasm -b ibm_fez
+
+qbc chem-audit
+--------------
+
+Run the five integrity checks over a qubit Hamiltonian file.
+
+.. code-block:: bash
+
+   qbc chem-audit hamiltonian.json [--strict] [--json]
+
+``--strict``
+   Treat an undeclared field as a failure. What CI should use.
+
+``--json``
+   Emit a ``qb.chem_audit.v1`` receipt instead of text.
+
+Exit codes: 0 ACCEPT, 1 INCOMPLETE, 2 REFUSE, 3 unreadable file. See
+:doc:`chemistry` for what each check means.
+
+qbc measure-plan
+----------------
+
+Price the measurement of a Hamiltonian before submitting it.
+
+.. code-block:: bash
+
+   qbc measure-plan hamiltonian.json [--shots-per-setting 4096] [--json]
+
+Reports measurable terms, qubit-wise commuting settings, the grouping factor,
+the largest group, and total shots. A structural count: no variance weighting
+and no precision claim. See :doc:`chemistry`.
+
+qbc verify-receipt
+------------------
+
+Check a receipt offline against a public key you were given.
+
+.. code-block:: bash
+
+   qbc verify-receipt receipt.json [--key KEY] [--trusted-keys FILE] [--strict] [--json]
+
+``--key``
+   The signer's public key: base64, hex, or a path to a file holding one.
+
+``--trusted-keys``
+   A file of public keys, one per line. Defaults to ``QBC_TRUSTED_KEYS``, then
+   ``~/.qb-compiler/trusted_keys``.
+
+``--strict``
+   Also fail when the receipt carries no signature.
+
+Exit codes: 0 verified (or unsigned without ``--strict``), 1 cannot be checked,
+2 does not verify. See :doc:`receipts`.
+
+qbc corpus
+----------
+
+Public QEC datasets and whether your copy of one is intact.
+
+.. code-block:: bash
+
+   qbc corpus list [--json]
+   qbc corpus show NAME
+   qbc corpus verify NAME PATH [--json]
+
+``verify`` exits 0 when the digest matches, 1 when the file is missing or the
+name is unknown, and 2 on a mismatch. Nothing is mirrored by this package. See
+:doc:`corpora`.
+
+More Environment Variables
+--------------------------
+
+``QBC_SIGNING_KEY``
+   Path to the Ed25519 private key used by ``sign=True``. Defaults to
+   ``~/.qb-compiler/signing_key``, created once with mode 0600 on first use.
+
+``QBC_TRUSTED_KEYS``
+   Path to a file of public keys used by ``qbc verify-receipt`` when no key is
+   passed on the command line. Defaults to ``~/.qb-compiler/trusted_keys``.
+
+``QBC_DATA_DIR``
+   Where local receipt and verification logs are appended. Defaults to
+   ``~/.qb_compiler``.

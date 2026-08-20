@@ -315,6 +315,15 @@ def doctor() -> None:
     except Exception as e:
         console.print(f"[yellow]![/yellow]  IBM credentials check failed: {e}")
 
+    # 4b. The qiskit / qiskit-ibm-runtime pairing that breaks a plain transpile.
+    #
+    # An IBM backend can advertise a translation plugin that the installed qiskit does not ship,
+    # and the transpiler then raises `TranspilerError: Invalid plugin name` on a circuit that has
+    # nothing wrong with it. Users blame whichever tool they were holding, so name it here with
+    # the one-line workaround rather than leaving them to find it.
+    for line in _translation_plugin_warning():
+        console.print(line)
+
     # 5. Available backends
     n_backends = len(BACKEND_CONFIGS)
     console.print(f"[green]\u2714[/green]  {n_backends} backends configured")
@@ -683,6 +692,41 @@ def calibration_show(backend: str) -> None:
 # ── Helpers ──────────────────────────────────────────────────────────
 
 
+def _translation_plugin_warning() -> list[str]:
+    """Lines for ``qbc doctor`` about the qiskit / qiskit-ibm-runtime translation plugin break.
+
+    Returns an empty list when the pairing is fine or the runtime is not installed. Kept separate
+    from the command so the version logic is testable without a console.
+    """
+    try:
+        import qiskit
+    except ImportError:
+        return []
+    try:
+        from importlib.metadata import version
+
+        runtime_version = version("qiskit-ibm-runtime")
+    except Exception:
+        return []
+
+    try:
+        qiskit_major = int(str(qiskit.__version__).split(".")[0])
+        runtime_parts = [int(p) for p in runtime_version.split(".")[:2]]
+    except ValueError:  # pragma: no cover - a non-numeric version string
+        return []
+
+    if qiskit_major >= 2 or runtime_parts < [0, 40]:
+        return []
+    return [
+        f"[yellow]![/yellow]  qiskit {qiskit.__version__} with qiskit-ibm-runtime "
+        f"{runtime_version}: a backend on this pairing can advertise a translation plugin "
+        f"this qiskit does not ship, and a plain transpile then raises "
+        f"'TranspilerError: Invalid plugin name'.",
+        "         Workaround: pass translation_method='translator' to transpile, or move to "
+        "qiskit 2.x.",
+    ]
+
+
 def _show_gate_recommendations(qc: Any, cost_usd: float | None) -> None:
     """Show QubitBoost gate recommendations for a circuit."""
     from qb_compiler.integrations.qubitboost import (
@@ -958,3 +1002,232 @@ def verify(circuit: str, backend: str | None, shots: int, no_record: bool) -> No
     except ImportError as exc:
         raise click.ClickException(str(exc)) from exc
     click.echo(str(result))
+
+
+# ── qbc chem-audit ───────────────────────────────────────────────────
+
+
+@cli.command(name="chem-audit")
+@click.argument("hamiltonian", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Treat an undeclared field as a failure. What CI should use.",
+)
+@click.option("--json", "json_out", is_flag=True, help="Emit a machine-readable JSON receipt.")
+def chem_audit(hamiltonian: str, strict: bool, json_out: bool) -> None:
+    """Check a qubit Hamiltonian file against five integrity checks.
+
+    Arithmetic on the file's own declared metadata: is the reference method correlated, does the
+    exact energy sit below RHF, does the provenance chain reach a correlated solve and a qubit
+    mapping, is it flagged synthetic, and does the qubit count match the active space.
+
+    Exit 0 = ACCEPT, 1 = INCOMPLETE (nothing failed, something was not declared), 2 = REFUSE.
+    """
+    from qb_compiler.chem import audit_hamiltonian_file
+    from qb_compiler.chem.hamiltonian import HamiltonianFormatError
+
+    try:
+        verdict = audit_hamiltonian_file(hamiltonian, strict=strict)
+    except HamiltonianFormatError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(3)
+
+    if json_out:
+        click.echo(json.dumps(verdict.as_dict(), indent=2))
+    else:
+        click.echo(str(verdict))
+
+    if verdict.verdict == "REFUSE":
+        sys.exit(2)
+    if verdict.verdict == "INCOMPLETE":
+        sys.exit(1)
+
+
+# ── qbc measure-plan ─────────────────────────────────────────────────
+
+
+@cli.command(name="measure-plan")
+@click.argument("hamiltonian", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--shots-per-setting",
+    default=4096,
+    type=int,
+    show_default=True,
+    help="Shots you intend to take per measurement setting.",
+)
+@click.option("--json", "json_out", is_flag=True, help="Emit a machine-readable JSON receipt.")
+def measure_plan(hamiltonian: str, shots_per_setting: int, json_out: bool) -> None:
+    """Price the measurement of a Hamiltonian before you submit it.
+
+    Reports measurable terms, qubit-wise commuting settings, the grouping factor, the largest
+    group, and total shots at your chosen rate. A structural count: it prices observing every
+    term, and says nothing about the variance of the estimate that results.
+    """
+    from qb_compiler.chem import load_hamiltonian, measurement_plan
+    from qb_compiler.chem.hamiltonian import HamiltonianFormatError
+
+    try:
+        plan = measurement_plan(load_hamiltonian(hamiltonian), shots_per_setting=shots_per_setting)
+    except (HamiltonianFormatError, ValueError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(3)
+
+    if json_out:
+        click.echo(json.dumps(plan.as_dict(), indent=2))
+    else:
+        click.echo(str(plan))
+
+
+# ── qbc verify-receipt ───────────────────────────────────────────────
+
+
+@cli.command(name="verify-receipt")
+@click.argument("receipt", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--key",
+    default=None,
+    help="Signer's public key: base64, hex, or a file holding one.",
+)
+@click.option(
+    "--trusted-keys",
+    default=None,
+    type=click.Path(),
+    help="File of trusted public keys, one per line. Defaults to QBC_TRUSTED_KEYS.",
+)
+@click.option("--strict", is_flag=True, help="Also fail when the receipt carries no signature.")
+@click.option("--json", "json_out", is_flag=True, help="Emit the verdict as JSON.")
+def verify_receipt_cmd(
+    receipt: str,
+    key: str | None,
+    trusted_keys: str | None,
+    strict: bool,
+    json_out: bool,
+) -> None:
+    """Check a qb-compiler receipt offline, and print what it does and does not claim.
+
+    Verification needs nothing from us: the receipt, a public key you got from the signer, and
+    this command. A key carried inside the receipt is never trusted, because a signature that
+    verifies against a key travelling with it proves only that the two were made together.
+
+    Exit 0 = verified (or unsigned without --strict), 1 = cannot be checked, 2 = does not verify.
+    """
+    from qb_compiler.signing import (
+        INVALID_SIGNATURE,
+        LEGACY_SELF_SIGNED,
+        MALFORMED,
+        UNSIGNED,
+        SigningError,
+    )
+    from qb_compiler.signing import verify_receipt_file as _verify_file
+
+    try:
+        public_key = _read_key_argument(key)
+        result = _verify_file(receipt, public_key=public_key, trusted_keys_path=trusted_keys)
+    except SigningError as exc:
+        # A key that cannot be read is not a verdict about the receipt, so it exits as a usage
+        # error rather than as "this receipt does not verify".
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(3)
+
+    if json_out:
+        click.echo(json.dumps(result.as_dict(), indent=2))
+    else:
+        click.echo(str(result))
+
+    if result.status in (INVALID_SIGNATURE, LEGACY_SELF_SIGNED, MALFORMED):
+        sys.exit(2)
+    if result.status == UNSIGNED:
+        sys.exit(1 if strict else 0)
+    if not result.ok:
+        sys.exit(1)
+
+
+def _read_key_argument(key: str | None) -> str | None:
+    """Accept a public key inline, or as a path to a file holding one."""
+    if key is None:
+        return None
+    path = Path(key).expanduser()
+    if path.exists() and path.is_file():
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.split("#", 1)[0].strip()
+            if line:
+                return line
+        raise click.ClickException(f"{path} holds no key")
+    return key
+
+
+# ── qbc corpus ───────────────────────────────────────────────────────
+
+
+@cli.group()
+def corpus() -> None:
+    """Public QEC datasets: what they are, where they live, and whether your copy is intact."""
+
+
+@corpus.command("list")
+@click.option("--json", "json_out", is_flag=True, help="Emit the manifest as JSON.")
+def corpus_list(json_out: bool) -> None:
+    """List the public datasets this package knows the digest of."""
+    from qb_compiler.corpus import list_corpora
+
+    entries = list_corpora()
+    if json_out:
+        click.echo(json.dumps([e.as_dict() for e in entries], indent=2))
+        return
+    click.echo(f"{'NAME':<24} {'PUBLISHER':<20} {'SIZE':>14}  DOI")
+    click.echo("-" * 88)
+    for entry in entries:
+        click.echo(f"{entry.name:<24} {entry.publisher:<20} {entry.n_bytes:>14,}  {entry.doi}")
+    click.echo()
+    click.echo("Nothing is mirrored here. Fetch from the publisher, then run qbc corpus verify.")
+
+
+@corpus.command("show")
+@click.argument("name")
+def corpus_show(name: str) -> None:
+    """Show one dataset: where to get it, its digest, and the citation to use."""
+    from qb_compiler.corpus import CorpusError, get_corpus
+
+    try:
+        entry = get_corpus(name)
+    except CorpusError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo(f"{entry.name}")
+    click.echo(f"  {entry.description}")
+    click.echo(f"  publisher : {entry.publisher}")
+    click.echo(f"  doi       : {entry.doi}")
+    click.echo(f"  file      : {entry.filename} ({entry.n_bytes:,} bytes)")
+    click.echo(f"  url       : {entry.url}")
+    click.echo(f"  sha256    : {entry.sha256}")
+    click.echo(f"  fetched   : {entry.fetched}")
+    click.echo(f"  licence   : {entry.licence}")
+    click.echo(f"  cite      : {entry.citation}")
+
+
+@corpus.command("verify")
+@click.argument("name")
+@click.argument("path", type=click.Path())
+@click.option("--json", "json_out", is_flag=True, help="Emit the verdict as JSON.")
+def corpus_verify(name: str, path: str, json_out: bool) -> None:
+    """Check that your copy of a dataset is byte for byte the published one.
+
+    Exit 0 = verified, 1 = missing or unknown, 2 = digest mismatch.
+    """
+    from qb_compiler.corpus import MISMATCH, verify_corpus_file
+
+    result = verify_corpus_file(name, path)
+    if json_out:
+        click.echo(json.dumps(result.as_dict(), indent=2))
+    else:
+        click.echo(str(result))
+        if result.expected_sha256 and result.actual_sha256:
+            click.echo(f"  expected: {result.expected_sha256}")
+            click.echo(f"  actual  : {result.actual_sha256}")
+
+    if result.status == MISMATCH:
+        sys.exit(2)
+    if not result.ok:
+        sys.exit(1)

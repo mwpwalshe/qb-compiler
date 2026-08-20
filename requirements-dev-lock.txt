@@ -10,7 +10,7 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.12.1
     # via httpx
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
@@ -27,7 +27,7 @@ certifi==2026.2.25
     #   requests
 cfgv==3.5.0
     # via pre-commit
-charset-normalizer==3.4.5
+charset-normalizer==3.4.6
     # via requests
 click==8.3.1
     # via qb-compiler (pyproject.toml)
@@ -57,7 +57,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via qb-compiler (pyproject.toml)
-identify==2.6.17
+identify==2.6.18
     # via pre-commit
 idna==3.11
     # via
@@ -173,7 +173,7 @@ pytest==9.0.2
     #   qb-compiler (pyproject.toml)
 pytest-benchmark==5.2.3
     # via qb-compiler (pyproject.toml)
-pytest-cov==7.0.0
+pytest-cov==7.1.0
     # via qb-compiler (pyproject.toml)
 pytest-mock==3.15.1
     # via qb-compiler (pyproject.toml)
@@ -207,7 +207,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.5
+ruff==0.15.6
     # via qb-compiler (pyproject.toml)
 rustworkx==0.17.1
     # via
@@ -250,7 +250,7 @@ symengine==0.13.0
     # via qiskit
 sympy==1.14.0
     # via qiskit
-tinycss2==1.4.0
+tinycss2==1.5.1
     # via bleach
 tornado==6.5.5
     # via jupyter-client

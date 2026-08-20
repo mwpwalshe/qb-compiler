@@ -1,0 +1,115 @@
+name: "Quantum preflight"
+description: >-
+  Check quantum inputs before a job is submitted: Hamiltonian integrity, the measurement bill, and
+  receipt signatures. Fails the build on a malformed input.
+author: "QubitBoost"
+branding:
+  icon: "check-circle"
+  color: "purple"
+
+inputs:
+  hamiltonians:
+    description: >-
+      Glob of Hamiltonian JSON files to audit. Empty skips the audit step.
+    required: false
+    default: ""
+  measure-plan:
+    description: >-
+      Glob of Hamiltonian files to price. Prints terms, settings and shots per file. Reports only,
+      never fails the build.
+    required: false
+    default: ""
+  shots-per-setting:
+    description: "Shots per measurement setting used by the measurement plan."
+    required: false
+    default: "4096"
+  receipts:
+    description: >-
+      Glob of receipt JSON files to verify. Empty skips the verify step.
+    required: false
+    default: ""
+  public-key:
+    description: >-
+      Public key the receipts should verify against, as base64 or a path to a key file. Without it a
+      signed receipt cannot be checked and the step fails, which is the intended behaviour.
+    required: false
+    default: ""
+  strict:
+    description: >-
+      Treat an undeclared field as a failure in the audit, and an unsigned receipt as a failure in
+      the verify step.
+    required: false
+    default: "true"
+  version:
+    description: "Version specifier for the package to install, e.g. 'qb-compiler==0.12.0'."
+    required: false
+    default: "qb-compiler"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install qb-compiler
+      shell: bash
+      run: python -m pip install --quiet "${{ inputs.version }}"
+
+    - name: Versions
+      shell: bash
+      run: qbc info | head -1
+
+    - name: Hamiltonian integrity
+      if: inputs.hamiltonians != ''
+      shell: bash
+      env:
+        STRICT_FLAG: ${{ inputs.strict == 'true' && '--strict' || '' }}
+      run: |
+        set -o pipefail
+        failed=0
+        shopt -s nullglob
+        files=(${{ inputs.hamiltonians }})
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "no files matched ${{ inputs.hamiltonians }}"
+          exit 1
+        fi
+        for file in "${files[@]}"; do
+          echo "::group::chem-audit $file"
+          qbc chem-audit "$file" $STRICT_FLAG || failed=1
+          echo "::endgroup::"
+        done
+        exit $failed
+
+    - name: Measurement bill
+      if: inputs.measure-plan != ''
+      shell: bash
+      run: |
+        shopt -s nullglob
+        for file in ${{ inputs.measure-plan }}; do
+          echo "::group::measure-plan $file"
+          qbc measure-plan "$file" --shots-per-setting "${{ inputs.shots-per-setting }}"
+          echo "::endgroup::"
+        done
+
+    - name: Verify receipts
+      if: inputs.receipts != ''
+      shell: bash
+      env:
+        KEY: ${{ inputs.public-key }}
+        STRICT_FLAG: ${{ inputs.strict == 'true' && '--strict' || '' }}
+      run: |
+        set -o pipefail
+        failed=0
+        shopt -s nullglob
+        files=(${{ inputs.receipts }})
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "no files matched ${{ inputs.receipts }}"
+          exit 1
+        fi
+        for file in "${files[@]}"; do
+          echo "::group::verify-receipt $file"
+          if [ -n "$KEY" ]; then
+            qbc verify-receipt "$file" --key "$KEY" $STRICT_FLAG || failed=1
+          else
+            qbc verify-receipt "$file" $STRICT_FLAG || failed=1
+          fi
+          echo "::endgroup::"
+        done
+        exit $failed

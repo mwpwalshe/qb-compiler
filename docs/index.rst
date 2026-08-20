@@ -20,6 +20,10 @@ within budget.
 
    architecture
    calibration-guide
+   receipts
+   chemistry
+   corpora
+   github-action
    custom-passes
    migration-from-qiskit
    faq
