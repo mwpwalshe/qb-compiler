@@ -1,6 +1,6 @@
 # GPG Signing Guide
 
-All release tags and release commits must be GPG-signed. This document covers setup for maintainers and verification for consumers.
+All release tags and release commits must be GPG-signed. Setup for maintainers below, verification for consumers after it.
 
 This is about **release artifacts**: tags, commits and the packages on PyPI. Signing a **receipt**,
 which is a different key for a different purpose, is covered in [receipts.md](receipts.md).
