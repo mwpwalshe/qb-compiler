@@ -18,6 +18,8 @@ preflight bundle, Result Passport). Prove value for free, charge only once teams
 | **Receipt signing with your own key** | `selection_receipt(sign=True)`, `qb_compiler.signing` |
 | **Offline receipt verification** | `qbc verify-receipt` |
 | **Hash-verified public QEC corpora** | `qbc corpus list` / `show` / `verify` |
+| **QEC record construction checks and the residual metric** | `qbc record validate` / `residual` / `load-fez` |
+| **Vendor prices with their billing model, and a signed pricing feed** | `qbc pricing show` / `verify`, `--live` |
 | **Ranked layout candidates and scores** | `CalibrationMapper.rank_layouts()` |
 | Calibration-aware compilation + receipt | `qbc compile --receipt` |
 | Mirror-circuit verification | `qbc verify` |

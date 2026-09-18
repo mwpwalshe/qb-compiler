@@ -23,6 +23,8 @@ within budget.
    receipts
    chemistry
    corpora
+   record
+   pricing
    github-action
    custom-passes
    migration-from-qiskit

@@ -200,6 +200,40 @@ Public QEC datasets and whether your copy of one is intact.
 name is unknown, and 2 on a mismatch. Nothing is mirrored by this package. See
 :doc:`corpora`.
 
+qbc record
+----------
+
+How a QEC record was built, and what a feature block adds over a decoder's own
+output.
+
+.. code-block:: bash
+
+   qbc record validate PATH [--thresholds JSON] [--decoder NAME]
+   qbc record residual PATH --decoder-output NPZ --features NPZ
+   qbc record load-fez ROOT -d D -r R [--basis Z] [--stored-order] [--out NPZ]
+
+Human summary on stderr, JSON on stdout. Exit codes: 0 every critical check
+passed, 1 error, 2 a critical check failed, 3 could not run. See :doc:`record`.
+
+qbc pricing
+-----------
+
+Vendor prices, where each number came from, and whether the feed it came from
+is signed.
+
+.. code-block:: bash
+
+   qbc pricing show [--live] [--json]
+   qbc pricing verify FEED [--key KEY] [--json]
+
+``show`` lists every backend with its billing model, its per-shot figure where
+one exists, and whether that price is live, cached or static with the date it
+was last checked. ``verify`` checks a feed's schema and signature offline: exit
+0 verified, 2 refused.
+
+``--live`` also works on ``qbc when``, ``qbc measure-plan`` and ``qbc doctor``.
+Without it nothing fetches. See :doc:`pricing`.
+
 More Environment Variables
 --------------------------
 
@@ -214,3 +248,10 @@ More Environment Variables
 ``QBC_DATA_DIR``
    Where local receipt and verification logs are appended. Defaults to
    ``~/.qb_compiler``.
+
+``QBC_PRICING_FEED``
+   URL or local path of the signed pricing feed. Defaults to the published
+   feed URL. Read only when live pricing is asked for.
+
+``QBC_PRICING_LIVE``
+   Set to ``1`` to ask for live pricing without passing ``--live``.

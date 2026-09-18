@@ -10,9 +10,14 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any
 
+from qb_compiler.cost.pricing import VENDOR_PRICING as _VENDOR_PRICING
 from qb_compiler.exceptions import BackendNotSupportedError
 
 # ── per-backend hardware metadata ────────────────────────────────────
+#
+# cost_per_shot is read from qb_compiler.cost.pricing, which is the single source of the
+# per-shot numbers. It used to be a hand-copied duplicate, and the two drifted: the IonQ rows
+# here carried 0.30, which is Amazon Braket's flat per-task fee, not a per-shot price.
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +52,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=156,
         basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 156q (Heron r2)",
-        cost_per_shot=0.00016,
+        cost_per_shot=_VENDOR_PRICING["ibm_fez"].cost_per_shot_usd,
         median_cx_error=0.005,
         median_readout_error=0.01,
         t1_us=300.0,
@@ -58,7 +63,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=133,
         basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 133q (Heron r1)",
-        cost_per_shot=0.00014,
+        cost_per_shot=_VENDOR_PRICING["ibm_torino"].cost_per_shot_usd,
         median_cx_error=0.006,
         median_readout_error=0.012,
         t1_us=280.0,
@@ -69,7 +74,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=156,
         basis_gates=("id", "rz", "sx", "x", "cz", "reset"),
         coupling_map="heavy-hex 156q (Heron r2)",
-        cost_per_shot=0.00016,
+        cost_per_shot=_VENDOR_PRICING["ibm_marrakesh"].cost_per_shot_usd,
         median_cx_error=0.0055,
         median_readout_error=0.011,
         t1_us=290.0,
@@ -81,7 +86,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=84,
         basis_gates=("rx", "rz", "cz", "measure"),
         coupling_map="octagonal lattice 84q (Ankaa-3)",
-        cost_per_shot=0.00035,
+        cost_per_shot=_VENDOR_PRICING["rigetti_ankaa"].cost_per_shot_usd,
         median_cx_error=0.02,
         median_readout_error=0.03,
         t1_us=20.0,
@@ -93,7 +98,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=25,
         basis_gates=("gpi", "gpi2", "ms"),
         coupling_map="all-to-all 25q (Aria-2)",
-        cost_per_shot=0.30,
+        cost_per_shot=_VENDOR_PRICING["ionq_aria"].cost_per_shot_usd,
         median_cx_error=0.004,
         median_readout_error=0.003,
         t1_us=1_000_000.0,  # effectively infinite for trapped-ion
@@ -104,7 +109,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=36,
         basis_gates=("gpi", "gpi2", "ms"),
         coupling_map="all-to-all 36q (Forte-1)",
-        cost_per_shot=0.30,
+        cost_per_shot=_VENDOR_PRICING["ionq_forte"].cost_per_shot_usd,
         median_cx_error=0.003,
         median_readout_error=0.003,
         t1_us=1_000_000.0,
@@ -116,7 +121,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=20,
         basis_gates=("prx", "cz", "measure"),
         coupling_map="square lattice 20q (Garnet)",
-        cost_per_shot=0.00045,
+        cost_per_shot=_VENDOR_PRICING["iqm_garnet"].cost_per_shot_usd,
         median_cx_error=0.015,
         median_readout_error=0.02,
         t1_us=30.0,
@@ -127,7 +132,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=5,
         basis_gates=("prx", "cz", "measure"),
         coupling_map="star topology 5q (Emerald)",
-        cost_per_shot=0.00020,
+        cost_per_shot=_VENDOR_PRICING["iqm_emerald"].cost_per_shot_usd,
         median_cx_error=0.008,
         median_readout_error=0.015,
         t1_us=40.0,
@@ -139,7 +144,7 @@ BACKEND_CONFIGS: dict[str, BackendSpec] = {
         n_qubits=32,
         basis_gates=("rz", "u1q", "zz"),
         coupling_map="all-to-all 32q (H2-1)",
-        cost_per_shot=8.00,
+        cost_per_shot=_VENDOR_PRICING["quantinuum_h2"].cost_per_shot_usd,
         median_cx_error=0.001,
         median_readout_error=0.002,
         t1_us=10_000_000.0,  # effectively infinite for trapped-ion

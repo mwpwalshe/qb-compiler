@@ -257,7 +257,12 @@ def diff(circuit: str, backend: str, vs: str, seeds: int) -> None:
 
 
 @cli.command()
-def doctor() -> None:
+@click.option(
+    "--live",
+    is_flag=True,
+    help="Also check the pricing feed, which is the only thing here that touches the network.",
+)
+def doctor(live: bool) -> None:
     """Check your quantum development environment."""
     try:
         from rich.console import Console
@@ -343,6 +348,32 @@ def doctor() -> None:
             console.print(f"         {f.name}")
     else:
         console.print("[yellow]![/yellow]  No calibration snapshots found")
+
+    # 6b. Pricing. Static costs nothing to report; the feed is only read when asked for.
+    from qb_compiler.cost.pricing import PRICING_AS_OF
+
+    if live:
+        from qb_compiler.cost.pricing_provider import FeedPricingProvider
+
+        feed = FeedPricingProvider(prefer_live=True)
+        if feed.status == "live":
+            console.print(
+                f"[green]✔[/green]  pricing feed reachable, signature verified, "
+                f"prices as of {feed.as_of}"
+            )
+        elif feed.status == "cached":
+            console.print(
+                f"[yellow]![/yellow]  pricing feed served from the cache ({feed.as_of}): "
+                f"{feed.reason}"
+            )
+        else:
+            console.print(f"[yellow]![/yellow]  pricing feed not used: {feed.reason}")
+            console.print(f"         falling back to the shipped table, {PRICING_AS_OF}")
+    else:
+        console.print(
+            f"[green]✔[/green]  pricing static, table last checked {PRICING_AS_OF} "
+            "(--live checks the feed)"
+        )
 
     # 7. Optional: ML models
     try:
@@ -958,26 +989,39 @@ def _parse_qasm_gates(
     "Default: all backends with a loadable calibration snapshot.",
 )
 @click.option(
+    "--live",
+    is_flag=True,
+    help="Read the signed pricing feed for the cost column. Off means the shipped table.",
+)
+@click.option(
     "--json", "json_out", is_flag=True, help="Emit a machine-readable JSON advice receipt."
 )
-def when(circuit: str, shots: int, seeds: int, backends: tuple[str, ...], json_out: bool) -> None:
+def when(
+    circuit: str, shots: int, seeds: int, backends: tuple[str, ...], live: bool, json_out: bool
+) -> None:
     """Rank backends by predicted fidelity per dollar for this circuit.
 
     A neutral cross-vendor advisor: unlike a single-vendor SDK, this ranks across every
     configured vendor. The ``Data`` column states whether each number is validated on that
     backend's real hardware or a model/fixture estimate, so unvalidated non-IBM numbers are
-    never mistaken for measurements.
+    never mistaken for measurements. The ``Pricing`` column does the same for the money: live,
+    cached or static, with the date that price was last checked.
     """
     import dataclasses
 
+    from qb_compiler.cost.pricing_provider import get_pricing_provider, pricing_fields
     from qb_compiler.windows import format_table, rank_value
 
     qc = _load_circuit(circuit)
-    rows = rank_value(qc, backends=list(backends) or None, shots=shots, n_seeds=seeds)
+    provider = get_pricing_provider(prefer_live=live)
+    rows = rank_value(
+        qc, backends=list(backends) or None, shots=shots, n_seeds=seeds, provider=provider
+    )
     if json_out:
         payload = {
             "schema": "qb.cross_vendor_advice.v1",
             "shots": shots,
+            **pricing_fields(provider),
             "ranking": [dataclasses.asdict(r) for r in rows],
         }
         click.echo(json.dumps(payload, indent=2))
@@ -1056,16 +1100,33 @@ def chem_audit(hamiltonian: str, strict: bool, json_out: bool) -> None:
     show_default=True,
     help="Shots you intend to take per measurement setting.",
 )
+@click.option(
+    "--backend",
+    "-b",
+    default=None,
+    help="Price the grouped shot count on this backend (e.g. ibm_fez).",
+)
+@click.option(
+    "--live",
+    is_flag=True,
+    help="Read the signed pricing feed for that price. Off means the shipped table.",
+)
 @click.option("--json", "json_out", is_flag=True, help="Emit a machine-readable JSON receipt.")
-def measure_plan(hamiltonian: str, shots_per_setting: int, json_out: bool) -> None:
+def measure_plan(
+    hamiltonian: str, shots_per_setting: int, backend: str | None, live: bool, json_out: bool
+) -> None:
     """Price the measurement of a Hamiltonian before you submit it.
 
     Reports measurable terms, qubit-wise commuting settings, the grouping factor, the largest
     group, and total shots at your chosen rate. A structural count: it prices observing every
     term, and says nothing about the variance of the estimate that results.
+
+    With ``--backend`` it also puts a dollar figure on the grouped shot count, and says whether
+    that price is live, cached or static and when it was last checked.
     """
     from qb_compiler.chem import load_hamiltonian, measurement_plan
     from qb_compiler.chem.hamiltonian import HamiltonianFormatError
+    from qb_compiler.cost.pricing_provider import get_pricing_provider, pricing_fields
 
     try:
         plan = measurement_plan(load_hamiltonian(hamiltonian), shots_per_setting=shots_per_setting)
@@ -1073,10 +1134,28 @@ def measure_plan(hamiltonian: str, shots_per_setting: int, json_out: bool) -> No
         click.echo(f"Error: {exc}", err=True)
         sys.exit(3)
 
+    payload = plan.as_dict()
+    priced = None
+    if backend:
+        provider = get_pricing_provider(prefer_live=live)
+        entry = provider.get(backend)
+        if entry is None:
+            click.echo(f"Error: no pricing for backend {backend!r}", err=True)
+            sys.exit(3)
+        priced = entry.job_cost(plan.shots_qwc, status=provider.status_of(backend))
+        payload["backend"] = backend
+        payload["cost"] = priced.as_dict()
+        payload.update(pricing_fields(provider, backend))
+
     if json_out:
-        click.echo(json.dumps(plan.as_dict(), indent=2))
-    else:
-        click.echo(str(plan))
+        click.echo(json.dumps(payload, indent=2))
+        return
+    click.echo(str(plan))
+    if priced is not None:
+        click.echo(f"  backend             : {backend}")
+        click.echo(f"  cost, grouped       : {priced.usd:,.2f} USD")
+        click.echo(f"  pricing             : {priced.status}, checked {priced.as_of}")
+        click.echo(f"  assumes             : {priced.assumptions.get('basis', '')}")
 
 
 # ── qbc verify-receipt ───────────────────────────────────────────────
@@ -1231,3 +1310,281 @@ def corpus_verify(name: str, path: str, json_out: bool) -> None:
         sys.exit(2)
     if not result.ok:
         sys.exit(1)
+
+
+# ── qbc pricing ──────────────────────────────────────────────────────
+
+
+@cli.group()
+def pricing() -> None:
+    """Vendor prices: what they are, where each one came from, and whether it is signed."""
+
+
+@pricing.command("show")
+@click.option("--live", is_flag=True, help="Read the signed feed. Off means the shipped table.")
+@click.option("--json", "json_out", is_flag=True, help="Emit the table as JSON.")
+def pricing_show(live: bool, json_out: bool) -> None:
+    """Every backend's price, its billing model, and where the number came from."""
+    from qb_compiler.cost.pricing_provider import get_pricing_provider, pricing_fields
+
+    provider = get_pricing_provider(prefer_live=live)
+    rows = []
+    for name in provider.backends():
+        entry = provider.get(name)
+        if entry is None:  # pragma: no cover - backends() lists only what get() serves
+            continue
+        status = provider.status_of(name)
+        try:
+            per_shot: float | None = entry.cost_per_shot_usd
+        except Exception:
+            per_shot = None
+        rows.append(
+            {
+                "backend": name,
+                "provider": entry.provider,
+                "billing": entry.billing.name,
+                "cost_per_shot_usd": per_shot,
+                "status": status,
+                "as_of": entry.as_of,
+                "source": entry.source,
+                "notes": entry.notes,
+            }
+        )
+
+    if json_out:
+        click.echo(json.dumps({**pricing_fields(provider), "entries": rows}, indent=2))
+        return
+
+    click.echo(f"{'BACKEND':<18} {'BILLING':<14} {'USD/SHOT':>12}  PRICING")
+    click.echo("-" * 68)
+    for row in rows:
+        shot = f"{row['cost_per_shot_usd']:.6f}" if row["cost_per_shot_usd"] is not None else "N/A"
+        click.echo(
+            f"{row['backend']:<18} {row['billing']:<14} {shot:>12}  {row['status']} {row['as_of']}"
+        )
+    click.echo()
+    click.echo(f"feed: {provider.reason or 'the table shipped with this package'}")
+    click.echo(
+        "Three of these vendors do not sell shots. Run with --json to read the assumptions "
+        "behind any number that is a conversion."
+    )
+
+
+@pricing.command("verify")
+@click.argument("feed", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--key",
+    default=None,
+    help="Public key to check against: base64, hex, or a file holding one. "
+    "Defaults to the key shipped in this package.",
+)
+@click.option("--json", "json_out", is_flag=True, help="Emit the verdict as JSON.")
+def pricing_verify(feed: str, key: str | None, json_out: bool) -> None:
+    """Check a pricing feed's schema and signature offline.
+
+    Exit 0 = the schema is right and the signature verifies, 2 = it does not.
+    """
+    from qb_compiler.cost.pricing_feed import FeedError, parse_feed_text
+    from qb_compiler.cost.pricing_feed_pubkey import FEED_KEY_FINGERPRINT, feed_public_key
+    from qb_compiler.signing import SigningError, parse_public_key, public_key_fingerprint
+
+    try:
+        raw = _read_key_argument(key)
+        public = parse_public_key(raw) if raw else feed_public_key()
+    except SigningError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(3)
+
+    try:
+        parsed = parse_feed_text(Path(feed).read_text(encoding="utf-8"), public)
+    except FeedError as exc:
+        verdict = {"ok": False, "reason": str(exc), "entries": 0}
+        if json_out:
+            click.echo(json.dumps(verdict, indent=2))
+        else:
+            click.echo(f"REFUSED  {exc}")
+        sys.exit(2)
+
+    fingerprint = public_key_fingerprint(public)
+    verdict = {
+        "ok": parsed.signature_verified,
+        "reason": parsed.reason,
+        "entries": len(parsed.entries),
+        "generated_at": parsed.generated_at,
+        "signed_by": parsed.key_id,
+        "checked_against": fingerprint,
+        "shipped_key": FEED_KEY_FINGERPRINT,
+    }
+    if json_out:
+        click.echo(json.dumps(verdict, indent=2))
+    else:
+        head = "VERIFIED" if parsed.signature_verified else "REFUSED "
+        click.echo(f"{head} {parsed.reason}")
+        click.echo(f"  entries      : {len(parsed.entries)}")
+        click.echo(f"  generated at : {parsed.generated_at}")
+        click.echo(f"  signed by    : {parsed.key_id or 'nobody'}")
+        click.echo(f"  checked with : {fingerprint}")
+    if not parsed.signature_verified:
+        sys.exit(2)
+
+
+# ── qbc record ───────────────────────────────────────────────────────
+
+RECORD_OK = 0
+RECORD_ERROR = 1
+RECORD_FAILED = 2
+RECORD_CANNOT_RUN = 3
+
+
+@cli.group()
+def record() -> None:
+    """Check how a QEC record was built, and measure what a feature block adds over a decoder."""
+
+
+def _load_record_npz(path: str) -> Any:
+    from qb_compiler.record.loaders import read_npz
+
+    return read_npz(path)
+
+
+def _record_thresholds(text: str | None) -> dict[str, Any] | None:
+    if not text:
+        return None
+    candidate = Path(text).expanduser()
+    raw = candidate.read_text(encoding="utf-8") if candidate.is_file() else text
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise click.ClickException("--thresholds must be a JSON object of check name to settings")
+    return parsed
+
+
+@record.command("validate")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--thresholds",
+    default=None,
+    help="JSON object, or a path to one, overriding check thresholds.",
+)
+@click.option("--decoder", default="mwpm", show_default=True, help="Decoder the checks run.")
+def record_validate(path: str, thresholds: str | None, decoder: str) -> None:
+    """Run the construction checks on a record written to the .npz contract.
+
+    Exit 0 = every critical check passed, 2 = a critical check failed, 3 = could not run.
+    """
+    from qb_compiler.record import validate as run_validate
+
+    try:
+        spec = _load_record_npz(path)
+        report = run_validate(spec, decoder=decoder, thresholds=_record_thresholds(thresholds))
+    except (ImportError, FileNotFoundError) as exc:
+        click.echo(f"Cannot run: {exc}", err=True)
+        sys.exit(RECORD_CANNOT_RUN)
+    except (ValueError, KeyError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(RECORD_ERROR)
+
+    click.echo(str(report), err=True)
+    click.echo(report.to_json())
+    sys.exit(RECORD_OK if report.passed else RECORD_FAILED)
+
+
+@record.command("residual")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--decoder-output",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help="npz of per-shot decoder output; must hold a 'prediction' array.",
+)
+@click.option(
+    "--features",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help="npz holding 'features' (n, k) and optionally 'names'.",
+)
+@click.option(
+    "--holdout",
+    default="group",
+    show_default=True,
+    type=click.Choice(["group", "shot"]),
+    help="Fold over groups when the record carries them, or over shots.",
+)
+@click.option("--nulls", "n_nulls", default=20, show_default=True, type=int, help="Null draws.")
+@click.option("--seed", default=0, show_default=True, type=int, help="Fixes folds and nulls.")
+def record_residual(
+    path: str, decoder_output: str, features: str, holdout: str, n_nulls: int, seed: int
+) -> None:
+    """Held-out bits per shot that a feature block adds over the decoder's own output.
+
+    Features supplied as a file cannot be recomputed on a shuffled record, so the geometry null
+    does not run from the command line and the report says so. Exit 3 = could not run.
+    """
+    import numpy as np
+
+    from qb_compiler.record import residual as run_residual
+
+    try:
+        spec = _load_record_npz(path)
+        with np.load(decoder_output, allow_pickle=False) as payload:
+            output = {key: payload[key] for key in payload.files}
+        with np.load(features, allow_pickle=False) as payload:
+            matrix = payload["features"]
+            names = [str(n) for n in payload["names"]] if "names" in payload else None
+        block = (matrix, names) if names else matrix
+        report = run_residual(spec, output, block, holdout=holdout, n_nulls=n_nulls, seed=seed)
+    except (ImportError, FileNotFoundError) as exc:
+        click.echo(f"Cannot run: {exc}", err=True)
+        sys.exit(RECORD_CANNOT_RUN)
+    except (ValueError, KeyError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(RECORD_ERROR)
+
+    click.echo(str(report), err=True)
+    for warning in report.warnings:
+        click.echo(f"  note: {warning}", err=True)
+    click.echo(report.to_json())
+    sys.exit(RECORD_OK)
+
+
+@record.command("load-fez")
+@click.argument("root", type=click.Path(exists=True, file_okay=False))
+@click.option("-d", "distance", required=True, type=int, help="Chain length.")
+@click.option("-r", "rounds", required=True, type=int, help="Stabilizer rounds.")
+@click.option("--basis", default="Z", show_default=True, help="Preparation basis.")
+@click.option(
+    "--stored-order",
+    is_flag=True,
+    help="Read the rounds in stored order. These records store them last round first, so this "
+    "loads the run backwards; it is here to measure that, not to decode in.",
+)
+@click.option(
+    "--out", default=None, type=click.Path(dir_okay=False), help="Write the record as an .npz."
+)
+def record_load_fez(
+    root: str, distance: int, rounds: int, basis: str, stored_order: bool, out: str | None
+) -> None:
+    """Load one regime of an IBM Fez repetition-code memory run and check how it is built.
+
+    Exit 0 = every critical check passed, 2 = a critical check failed, 3 = could not run.
+    """
+    from qb_compiler.record import validate as run_validate
+    from qb_compiler.record.loaders import ibm_fez_repetition, write_npz
+
+    try:
+        spec = ibm_fez_repetition.load(
+            root, d=distance, r=rounds, basis=basis, reverse_rounds=not stored_order
+        )
+        report = run_validate(spec)
+    except (ImportError, FileNotFoundError) as exc:
+        click.echo(f"Cannot run: {exc}", err=True)
+        sys.exit(RECORD_CANNOT_RUN)
+    except (ValueError, KeyError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(RECORD_ERROR)
+
+    click.echo(str(report), err=True)
+    if out:
+        written = write_npz(out, spec)
+        click.echo(f"wrote {written}", err=True)
+    click.echo(report.to_json())
+    sys.exit(RECORD_OK if report.passed else RECORD_FAILED)

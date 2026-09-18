@@ -39,18 +39,22 @@ class TestCostEstimator:
         assert result.total_usd == pytest.approx(0.32, rel=0.01)
 
     def test_ionq_aria_cost(self) -> None:
-        """IonQ Aria at $0.30/shot should be much more expensive."""
+        """IonQ Aria at $0.03/shot should be much more expensive than IBM.
+
+        This used to assert 0.30, which was Amazon Braket's flat per-task fee copied into
+        config.py as if it were a per-shot price. The Braket per-shot price is 0.03.
+        """
         spec = get_backend_spec("ionq_aria")
         estimator = CostEstimator(spec)
 
         # depth=50, 4 qubits, 100 shots
         # depth_factor = max(1.0, 50/100) = 1.0
-        # per_shot = 0.30 * 1.0 = 0.30
-        # total = 0.30 * 100 = 30.0
+        # per_shot = 0.03 * 1.0 = 0.03
+        # total = 0.03 * 100 = 3.0
         result = estimator.estimate(depth=50, n_qubits=4, shots=100)
 
-        assert result.total_usd == pytest.approx(30.0, rel=0.01)
-        assert result.cost_per_shot_usd == pytest.approx(0.30, rel=0.01)
+        assert result.total_usd == pytest.approx(3.0, rel=0.01)
+        assert result.cost_per_shot_usd == pytest.approx(0.03, rel=0.01)
 
     def test_zero_shots(self) -> None:
         """Zero shots should result in zero cost."""

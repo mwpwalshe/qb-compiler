@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,17 @@ except ImportError:
 
 requires_qiskit = pytest.mark.skipif(not HAS_QISKIT, reason="qiskit not installed")
 requires_cirq = pytest.mark.skipif(not HAS_CIRQ, reason="cirq not installed")
+
+# ── QEC records ──────────────────────────────────────────────────────
+# Real records are large and are nobody's to redistribute, so the tests that read one are skipped
+# unless a local copy is pointed at. See tests/integration/test_record_data.py for the variables.
+
+HAS_RECORD_DATA = bool(os.environ.get("QB_RECORD_DATA"))
+
+requires_record_data = pytest.mark.skipif(
+    not HAS_RECORD_DATA,
+    reason="set QB_RECORD_DATA to a directory holding a QEC record",
+)
 
 # ── Paths ────────────────────────────────────────────────────────────
 

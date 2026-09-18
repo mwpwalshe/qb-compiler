@@ -427,6 +427,8 @@ pip install "qb-compiler[dev]"
 | `qbc measure-plan <file>` | Terms, QWC settings and shots for that operator, before you submit |
 | `qbc verify-receipt <file>` | Check a receipt signature offline against a public key |
 | `qbc corpus list \| show \| verify` | Public QEC datasets, and whether your copy matches the published bytes |
+| `qbc record validate \| residual \| load-fez` | How a QEC record was built, and what a feature block adds over a decoder |
+| `qbc pricing show \| verify` | Vendor prices with their billing model, and a signed feed checked offline |
 | `qbc when <circuit>` | Rank backends by predicted fidelity per dollar |
 | `qbc dem-audit <file>` | QEC decoder-input correctness audit |
 

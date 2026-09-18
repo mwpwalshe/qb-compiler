@@ -66,13 +66,18 @@ ising = [
     "stim>=1.14",
     "pymatching>=2.3",
 ]
+record = [
+    "stim>=1.14",
+    "pymatching>=2.3",
+    "scikit-learn>=1.4",
+]
 ising-nvidia = [
     "qb-compiler[ising]",
     "torch>=2.0",
     "safetensors>=0.4",
 ]
 all = [
-    "qb-compiler[qubitboost,ibm,rigetti,ionq,iqm,quantinuum,azure,qasm3,cirq,pennylane,ml,gnn,ising]",
+    "qb-compiler[qubitboost,ibm,rigetti,ionq,iqm,quantinuum,azure,qasm3,cirq,pennylane,ml,gnn,ising,record]",
 ]
 dev = [
     "qiskit-aer>=0.15",
@@ -152,6 +157,7 @@ markers = [
     "requires_qiskit: Requires qiskit extra",
     "requires_cirq: Requires cirq extra",
     "requires_braket: Requires braket extra",
+    "requires_record_data: Requires a local QEC record under QB_RECORD_DATA",
     "slow: Tests that take >10s",
 ]
 filterwarnings = [

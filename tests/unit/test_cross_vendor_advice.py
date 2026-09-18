@@ -127,6 +127,26 @@ class TestCli:
         assert "Backend" in res.output and "Data" in res.output
         assert not res.output.lstrip().startswith("{")
 
+    def test_the_table_says_where_the_price_came_from(self, circuit_file):
+        """The Data column does this for the calibration; Pricing does it for the money."""
+        from qb_compiler.cost.pricing import PRICING_AS_OF
+
+        res = CliRunner().invoke(cli, ["when", circuit_file, "-b", "ibm_fez"])
+        assert "Pricing" in res.output
+        assert f"static {PRICING_AS_OF}" in res.output
+
+    def test_json_carries_the_pricing_provenance(self, circuit_file):
+        from qb_compiler.cost.pricing import PRICING_AS_OF
+
+        res = CliRunner().invoke(cli, ["when", circuit_file, "-b", "ibm_fez", "--json"])
+        payload = json.loads(res.output)
+        assert payload["pricing_status"] == "static"
+        assert payload["pricing_as_of"] == PRICING_AS_OF
+        assert payload["pricing_signature_verified"] is False
+        row = payload["ranking"][0]
+        assert row["pricing_status"] == "static"
+        assert row["cost_assumptions"]["assumed_shots_per_second"] == 10_000
+
     def test_unknown_backend_does_not_crash_the_scan(self, circuit_file):
         res = CliRunner().invoke(
             cli, ["when", circuit_file, "-b", "ibm_fez", "-b", "not_a_real_backend"]

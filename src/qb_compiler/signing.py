@@ -115,6 +115,26 @@ def _raw_verify(public: bytes, payload: bytes, signature: bytes) -> bool:
     return fallback_verify(public, payload, signature)
 
 
+def public_key_from_seed(seed: bytes) -> bytes:
+    """The 32-byte public half of a 32-byte Ed25519 seed."""
+    return _derive_public(seed)
+
+
+def sign_bytes(seed: bytes, payload: bytes) -> bytes:
+    """Sign raw bytes with a 32-byte Ed25519 seed. Returns the 64-byte signature.
+
+    For anything that is not a receipt and carries its own envelope, such as the pricing feed.
+    Uses ``cryptography`` when it is installed and the pure-python implementation otherwise, so a
+    base install can still sign and verify.
+    """
+    return _raw_sign(seed, payload)
+
+
+def verify_bytes(public: bytes, payload: bytes, signature: bytes) -> bool:
+    """Check a signature over raw bytes. False on any failure, never raises."""
+    return _raw_verify(public, payload, signature)
+
+
 # ── keys ─────────────────────────────────────────────────────────────
 
 

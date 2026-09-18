@@ -66,6 +66,14 @@ class BackendValue:
         that hardware), ``"fixture-only"`` (static/fixture specs), or ``"no-adapter"``.
         Cross-vendor rankings must surface this so non-IBM estimates are never
         mistaken for validated measurements.
+    pricing_status :
+        Where the price came from: ``"live"``, ``"cached"`` or ``"static"``. The same
+        distinction the ``validation`` field makes for calibration, made for money.
+    pricing_as_of :
+        The date that price was last checked against the vendor.
+    cost_assumptions :
+        What the cost stood on: shots, task fees, and for a vendor that does not sell
+        shots the conversion or circuit behind the number.
     notes :
         Per-backend caveats (missing pricing, missing snapshots, ...).
     """
@@ -77,6 +85,9 @@ class BackendValue:
     trend: str
     trend_detail: str
     validation: str = "unknown"
+    pricing_status: str = "static"
+    pricing_as_of: str = ""
+    cost_assumptions: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
 
@@ -265,6 +276,8 @@ def rank_value(
     *,
     shots: int = 4096,
     n_seeds: int = 2,
+    prefer_live: bool = False,
+    provider: Any = None,
 ) -> list[BackendValue]:
     """Rank backends by fidelity per dollar for *circuit*.
 
@@ -280,6 +293,12 @@ def rank_value(
         Shot count used for the cost estimate.
     n_seeds :
         Transpiler seeds per backend (passed to ``check_viability``).
+    prefer_live :
+        Read the signed pricing feed for the cost column. Default False, which uses the
+        table that ships with the package and touches no network.
+    provider :
+        An already-built pricing provider, so a caller that wants the feed read once can
+        pass the same one in rather than have this build a second.
 
     Returns
     -------
@@ -287,10 +306,14 @@ def rank_value(
         Sorted by ``fidelity_per_dollar`` descending, ``None`` last.
         Backends that fail to assess are skipped (logged), never raised.
     """
+    from qb_compiler.cost.pricing_provider import get_pricing_provider
     from qb_compiler.viability import check_viability
 
     if backends is None:
         backends = _default_backends()
+
+    if provider is None:
+        provider = get_pricing_provider(prefer_live=prefer_live)
 
     rows: list[BackendValue] = []
     for name in backends:
@@ -303,12 +326,17 @@ def rank_value(
         predicted = result.estimated_fidelity
 
         cost: float | None = None
+        pricing_status = "static"
+        pricing_as_of = ""
+        assumptions: dict[str, Any] = {}
         with contextlib.suppress(Exception):
-            from qb_compiler.cost.pricing import get_pricing
-
-            pricing = get_pricing(name)
-            if pricing is not None:
-                cost = pricing.job_cost(shots)
+            entry = provider.get(name)
+            if entry is not None:
+                pricing_status = provider.status_of(name)
+                breakdown = entry.job_cost(shots, status=pricing_status)
+                cost = breakdown.usd
+                pricing_as_of = breakdown.as_of
+                assumptions = dict(breakdown.assumptions)
         if cost is None:
             notes.append("No pricing data; cannot compute fidelity per dollar.")
 
@@ -353,6 +381,9 @@ def rank_value(
                 trend=trend,
                 trend_detail=trend_detail,
                 validation=validation,
+                pricing_status=pricing_status,
+                pricing_as_of=pricing_as_of,
+                cost_assumptions=assumptions,
                 notes=notes,
             )
         )
@@ -379,8 +410,8 @@ def format_table(rows: list[BackendValue]) -> str:
     if not rows:
         return "No backends assessed."
 
-    headers = ("Backend", "Pred.Fid", "Cost USD", "Fid/$", "Trend", "Data")
-    cells: list[tuple[str, str, str, str, str, str]] = []
+    headers = ("Backend", "Pred.Fid", "Cost USD", "Fid/$", "Trend", "Data", "Pricing")
+    cells: list[tuple[str, str, str, str, str, str, str]] = []
     for r in rows:
         cells.append(
             (
@@ -390,6 +421,7 @@ def format_table(rows: list[BackendValue]) -> str:
                 f"{r.fidelity_per_dollar:.3g}" if r.fidelity_per_dollar is not None else "N/A",
                 r.trend,
                 r.validation,
+                f"{r.pricing_status} {r.pricing_as_of}".strip(),
             )
         )
 

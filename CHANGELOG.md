@@ -5,6 +5,133 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.13.2 - 2026-09-18
+
+0.13.0 was tagged and never published. 0.13.1 was published and withdrawn the same day. 0.13.2 is
+the first release of everything below.
+
+```
+FIXED
+- price table        re-checked against the vendor pages on 2026-09-17 and
+                     wrong, not merely stale. iqm_garnet 0.00045 -> 0.00145
+                     and iqm_emerald 0.00020 -> 0.00160, both understated
+                     against the Amazon Braket page by 3.2x and 8x.
+                     rigetti_ankaa 0.00035 -> 0.0009, the old figure was the
+                     Aspen generation price, corrected from the AWS price
+                     list 2026-09-18. rigetti_cepheus added at 0.000425.
+                     ionq_aria and rigetti_ankaa are no longer on the Braket
+                     pricing page; the rows stay so an existing config still
+                     resolves, the notes name the source of each number, and
+                     the AWS price list still carries aria at 0.03.
+                     PRICING_AS_OF 2026-09-17, the date of the full page
+                     review; the two rows re-read on the 18th carry that
+                     date in their notes.
+- ionq cost estimate config.py carried 0.30 per shot for aria and forte,
+                     which is Braket's flat per-task fee copied in as if it
+                     were a per-shot price. aria estimates came out ten
+                     times high, forte nearly four. config.py now reads
+                     cost_per_shot from cost/pricing.py, which is the single
+                     source, and a test fails if the two ever diverge again.
+- price provenance   three of the five vendors do not sell shots. the IBM
+                     rows are a throughput conversion from 1.60 per second
+                     and now say so with the assumed rate; the quantinuum
+                     row is a model and now carries the HQC formula, the
+                     12.50 per HQC the Standard plan implies, and the
+                     circuit that 8.00 per shot corresponds to. AQT Ibex-Q1
+                     and QuEra Aquila are named as on Braket and absent
+                     here, with no spec to hang them on.
+
+ADDED (all free)
+- dynamic pricing     prices now say where they came from. live, cached or
+                      static, with the date each one was last checked against
+                      the vendor. nothing fetches at import and nothing
+                      fetches at all unless asked: --live, prefer_live=True or
+                      QBC_PRICING_LIVE=1, one attempt, 5 second timeout, then
+                      the shipped table with the reason recorded.
+- billing models      per shot for braket, per second for IBM, per gate shot
+                      for IonQ on azure, per HQC for quantinuum. three of the
+                      four vendors do not sell shots, so job_cost returns a
+                      breakdown carrying the number AND the assumptions it
+                      stood on, never a bare float. a model that needs gate
+                      counts and is not given them falls back to a per-shot
+                      approximation and says so in the breakdown.
+- signed price feed   schema qb.pricing_feed.v1, ed25519 over the canonical
+                      JSON of everything but the signature. the public key
+                      ships in the package, so a feed verifies offline. a feed
+                      whose signature does not check out is REFUSED, never
+                      used with a warning, and the refusal is in the status
+                      reason. verified feeds cache at
+                      ~/.qb-compiler/pricing_cache.json with a 24 hour TTL.
+- qbc pricing         show / verify. show lists every backend with its billing
+                      model and where its number came from; verify checks a
+                      feed's schema and signature offline, exit 0 verified,
+                      2 refused.
+- pricing in receipts qbc when and qbc measure-plan take --live and carry
+                      pricing_status, pricing_as_of, pricing_source and
+                      pricing_signature_verified in --json, with the billing
+                      assumptions per row. qbc when gains a Pricing column
+                      beside Data; qbc measure-plan gains --backend and prices
+                      the grouped shot count on it. qbc doctor --live reports
+                      whether the feed is reachable and verified.
+- docs                docs/pricing.md: what live, cached and static mean, the
+                      billing models and their assumptions, the feed schema,
+                      and what a refusal looks like.
+- qb_compiler.record  eight checks on how a QEC record was built, run before
+                      a decoder result on it means anything. round profile,
+                      endpoint agreement, event density, type consistency,
+                      time mirror control, state profile, model fingerprint,
+                      label reconstruction. every one is listed as run, or
+                      skipped naming the field it wanted.
+                      shipped thresholds, overridable per check, each with
+                      its measured reason in the source. round profile and
+                      event density decide the verdict, and the model
+                      fingerprint too when you supply one to check against;
+                      the rest report without voting. endpoint agreement and
+                      time mirror control are one sided by design, calling a
+                      fault only on its signature and passing a record that
+                      gives them nothing to read, because a check with no
+                      power on a record should not vote against it. round
+                      profile judges only a record that declares a quiet
+                      first layer in meta["first_layer_premise"], which the
+                      ibm_fez and quera loaders set for their platforms. on
+                      a platform where preparation and final readout are
+                      the noisy part, a correctly built record is loud at
+                      both ends and flat between, so a record that declares
+                      nothing has its layer profile reported and the check
+                      abstains: SKIP, out of the critical set, never a fault.
+- record loaders      ibm_fez_repetition handles the round order these runs
+                      store backwards. reading them as stored gives 3.83
+                      percent logical error at d5 r5 against 1.62, and 9.69
+                      at d11 r11 against 1.43, with nothing raising.
+                      quera_surface builds detectors through the framework
+                      published with that dataset and refuses the naive
+                      construction, which gives an event rate of 0.45
+                      against 0.13. no dataset redistributed, no third party
+                      code vendored.
+- record .npz         one file, named keys, declared dtypes. a wrong dtype
+                      or a wrong shape is a refusal, not a coercion: a
+                      record quietly widened from uint8 still decodes, and
+                      the number it gives is wrong where nothing can see it.
+- record residual     held-out bits per shot that a feature block adds over
+                      a decoder's own output, against a floor built from
+                      geometry and shot permutation nulls. reports the
+                      number, the floor, both AUCs, the fold kind and the
+                      seed. a comparison against one decoder's summary on
+                      one record, not a decoder benchmark; the report reads
+                      nothing into either number.
+- qbc record          validate / residual / load-fez. summary to stderr,
+                      JSON to stdout. exit 2 when a critical check fails,
+                      3 when it could not run.
+- record extra        pip install 'qb-compiler[record]' for stim, pymatching
+                      and scikit-learn. the checks that neither decode nor
+                      fit need numpy only.
+- docs                docs/record.md: both construction traps with the
+                      numbers each one leaves behind, the check table, where
+                      the shipped thresholds came from, and what the
+                      residual does and does not say.
+```
+
+
 ## 0.12.0 - 2026-08-20
 
 Full notes: `docs/release/RELEASE_NOTES_0.12.0.md`.
