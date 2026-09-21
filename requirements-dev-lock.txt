@@ -189,7 +189,7 @@ pyyaml==6.0.3
     # via
     #   myst-parser
     #   pre-commit
-pyzmq==27.1.0
+pyzmq==27.2.0
     # via jupyter-client
 qiskit==1.4.5
     # via qb-compiler (pyproject.toml)
