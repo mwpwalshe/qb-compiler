@@ -65,7 +65,7 @@ against hardware yourself.
 | Shot budgets | how many shots to resolve your observable or error rate, before you pay |
 | QEC preflight | projected LER band + shot bill for a memory experiment, from calibration |
 | Backend discovery | rank whatever backends your own credentials expose |
-| NVIDIA Ising onramp | the only Qiskit-side bridge to the Ising decoder family, with telemetry |
+| NVIDIA Ising onramp | a Qiskit-side bridge to the Ising decoder family, with telemetry |
 
 **Fidelity estimate accuracy, measured on hardware**
 
@@ -83,21 +83,6 @@ Predicted vs measured on IBM Fez (GHZ family, 4096 shots, March 2026):
 Median absolute error 0.045; the model runs optimistic by about +0.05 (it prices gate and readout
 error, not crosstalk or idle decoherence). That is why every estimate prints with a +-0.05 band and
 why `qbc verify` exists: check it on your own circuits, the log stays on your machine.
-
-**Example: a real run vs the projection**
-
-50,000-shot distance-3 surface code memory run on ibm_fez, April 2026:
-
-| | LER |
-|---|---|
-| projected (uniform gate-error proxy at the day's calibration) | 0.005 to 0.059 |
-| measured, full run | 0.245 |
-| measured, first 25k shots | 0.129 |
-| measured, second 25k shots | 0.361 |
-
-The device drifted 2.8x inside the job, and the proxy doesn't model crosstalk, leakage or drift, so
-the projection undershoots by 5-50x. This is the case the calibration age warning, the regression
-watch and verify mode exist for.
 
 Notebooks 19 and 20 walk through everything with live outputs. Everything here is signals only,
 nothing gates or blocks your jobs.
@@ -243,7 +228,7 @@ dashboards, and CI policy bundles are part of QubitBoost Pro, see [docs/open-cor
 
 ## Hardware Validation
 
-Validated on IBM Fez (156 qubits, March 2026). All results are measured fidelity from real hardware, 4096 shots per circuit.
+Validated on IBM Fez (156 qubits, March 2026). All results are measured on real hardware, 4096 shots per circuit.
 
 ### Layout Selection. GHZ Circuits
 
@@ -253,10 +238,10 @@ qb-compiler's CalibrationMapper (post-routing scoring, multi-region search) vs Q
 |---------|--------|-------------|-------|-------|
 | GHZ-3 | 96.5% | 96.7% | +0.2% | Both find optimal region |
 | GHZ-5 | 92.5% | 93.2% | +0.7% | Different regions selected |
-| GHZ-8 | 82.1% | 87.5% | **+5.3%** | Best result, region 120-143 |
+| GHZ-8 | 82.1% | 87.5% | +5.3% | Region 120-143 |
 | GHZ-10 | 78.8% | 79.8% | +1.0% | Region 120-147 |
 
-Fidelity = P(000...0) + P(111...1) over 4096 shots.
+The score is the GHZ population, P(000...0) + P(111...1) over 4096 shots. It is an upper bound on GHZ state fidelity, not the fidelity itself. Each row is one A/B pair of jobs in one calibration window, so each delta is a single measurement: the same comparison on another day can move by more than the delta. Run it on your own circuits with `qbc verify`.
 
 Results vary by calibration window. In runs where both mappers converge on the same optimal region (identical qubit selection), results are statistically equivalent. Improvement is largest when qb-compiler discovers a better region than Qiskit's default search.
 
