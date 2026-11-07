@@ -21,6 +21,7 @@ within budget.
    architecture
    calibration-guide
    receipts
+   tendrils
    chemistry
    corpora
    record

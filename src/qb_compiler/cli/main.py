@@ -529,6 +529,26 @@ def info() -> None:
         )
 
 
+# ── qbc hello ────────────────────────────────────────────────────────
+
+HELLO_NOTE = (
+    "Running qb-compiler on real data? Tell us what it caught, or what it missed.\n"
+    "\n"
+    "  Discussions  https://github.com/mwpwalshe/qb-compiler/discussions\n"
+    "  Email        mike@qubitboost.io\n"
+    "\n"
+    "The first ten labs that do get a free evaluation of the QubitBoost assurance\n"
+    "tools on their own data. qb-compiler reports nothing back to us, so this is\n"
+    "the only way we find out."
+)
+
+
+@cli.command()
+def hello() -> None:
+    """How to tell us you are using it. Prints a note, sends nothing."""
+    click.echo(HELLO_NOTE)
+
+
 # ── qbc backends ─────────────────────────────────────────────────────
 
 
@@ -556,6 +576,141 @@ def backends(json_out: bool) -> None:
             f"{'yes' if s.live_deps_available else 'no':<6} "
             f"{'yes' if s.static_available else 'no'}"
         )
+
+
+# ── qbc tendrils / qbc tendril check ─────────────────────────────────
+
+
+@cli.command()
+@click.option("--json", "json_out", is_flag=True, help="Emit machine-readable JSON.")
+def tendrils(json_out: bool) -> None:
+    """List every vendor, format and toolkit qb-compiler can reach, with its label.
+
+    The labels are the ones `qbc when` prints. RECORD says whether a dated validation record
+    covers today (current), covered an earlier window (expired), or does not exist (none).
+    Other packages add tendrils through the `qb_compiler.tendrils` entry point group.
+    """
+    from qb_compiler.tendrils import discover
+
+    found, broken = discover()
+    if json_out:
+        payload = {
+            "tendrils": [
+                {**t.to_dict(), "origin": t.origin, "record": t.validation_state()} for t in found
+            ],
+            "broken": [b.to_dict() for b in broken],
+        }
+        click.echo(json.dumps(payload, indent=2))
+        return
+    click.echo(f"{'NAME':<12} {'KIND':<9} {'LABEL':<13} {'RECORD':<8} {'COVERS TO':<11} {'ORIGIN'}")
+    click.echo("-" * 72)
+    for t in found:
+        click.echo(
+            f"{t.name:<12} {t.kind:<9} {t.label:<13} {t.validation_state():<8} "
+            f"{t.validated_until() or '-':<11} {t.origin}"
+        )
+    for b in broken:
+        click.echo(f"{b.name:<12} BROKEN    {b.origin}: {b.reason}")
+
+
+@cli.group()
+def tendril() -> None:
+    """Check one tendril's declaration."""
+
+
+@tendril.command("check")
+@click.argument("name", required=False)
+@click.option(
+    "--file",
+    "manifest",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="Check a declaration in a JSON file instead of an installed tendril.",
+)
+@click.option("--sign", is_flag=True, help="Sign the receipt with your signing key.")
+@click.option(
+    "--key",
+    "key_path",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="Signing key to use with --sign. It must exist already; without it the default "
+    "qb-compiler key is used, and created if missing.",
+)
+@click.option("--out", type=click.Path(dir_okay=False), default=None, help="Write the receipt.")
+@click.option("--json", "json_out", is_flag=True, help="Print the receipt as JSON.")
+def tendril_check(
+    name: str | None,
+    manifest: str | None,
+    sign: bool,
+    key_path: str | None,
+    out: str | None,
+    json_out: bool,
+) -> None:
+    """Run the conformance check on one tendril and write a receipt.
+
+    Exit 0 = conforms, 2 = does not conform, 3 = could not run.
+    """
+    from qb_compiler.tendrils import (
+        CONFORMS,
+        Tendril,
+        TendrilError,
+        check,
+        conformance_receipt,
+        discover,
+        verdict,
+    )
+    from qb_compiler.tendrils.builtin import round_trip
+
+    if (name is None) == (manifest is None):
+        click.echo("Error: give either a tendril NAME or --file, not both or neither.", err=True)
+        sys.exit(3)
+    try:
+        if manifest is not None:
+            data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+            subject = Tendril.from_dict(data, origin=f"file:{Path(manifest).name}")
+        else:
+            found, broken = discover()
+            match = next((t for t in found if t.name == name), None)
+            if match is None:
+                why = next((b.reason for b in broken if b.name == name), None)
+                known = ", ".join(t.name for t in found)
+                msg = (
+                    f"tendril {name!r} failed to load: {why}"
+                    if why
+                    else f"no tendril called {name!r}. Known: {known}"
+                )
+                click.echo(f"Error: {msg}", err=True)
+                sys.exit(3)
+            subject = match
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TendrilError) as exc:
+        click.echo(f"Error: could not read the declaration: {exc}", err=True)
+        sys.exit(3)
+
+    builtin_format = subject.origin == "builtin" and subject.kind == "format"
+    extra = [round_trip(subject.name)] if builtin_format else []
+    checks = check(subject, extra=extra)
+    receipt = conformance_receipt(subject, checks)
+    if sign:
+        from qb_compiler.signing import SigningError, sign_receipt
+
+        try:
+            receipt = sign_receipt(receipt, key_path=key_path, create_key=key_path is None)
+        except (OSError, SigningError, ValueError) as exc:
+            click.echo(f"Error: could not sign: {exc}", err=True)
+            sys.exit(3)
+    if out is not None:
+        Path(out).write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    if json_out:
+        click.echo(json.dumps(receipt, indent=2))
+    else:
+        mark = {True: "pass", False: "FAIL", None: "note"}
+        click.echo(f"tendril {subject.name} ({subject.origin})")
+        for c in checks:
+            click.echo(f"  {mark[c.passed]:<4}  {c.name:<18} {c.detail}")
+        click.echo(f"verdict: {verdict(checks)}")
+        if out is not None:
+            click.echo(f"receipt written to {out}")
+    sys.exit(0 if verdict(checks) == CONFORMS else 2)
 
 
 # ── qbc dem-audit ────────────────────────────────────────────────────
@@ -1554,8 +1709,9 @@ def record_residual(
 @click.option(
     "--stored-order",
     is_flag=True,
-    help="Read the rounds in stored order. These records store them last round first, so this "
-    "loads the run backwards; it is here to measure that, not to decode in.",
+    help="Read the rounds in the order the files list them. These records list each register "
+    "highest bit first (Qiskit's order), so the last round comes first and this loads the run "
+    "backwards; it is here to measure that, not to decode in.",
 )
 @click.option(
     "--out", default=None, type=click.Path(dir_okay=False), help="Write the record as an .npz."
@@ -1563,7 +1719,7 @@ def record_residual(
 def record_load_fez(
     root: str, distance: int, rounds: int, basis: str, stored_order: bool, out: str | None
 ) -> None:
-    """Load one regime of an IBM Fez repetition-code memory run and check how it is built.
+    """Load one regime of an IBM repetition-code record (Stein release layout) and check it.
 
     Exit 0 = every critical check passed, 2 = a critical check failed, 3 = could not run.
     """

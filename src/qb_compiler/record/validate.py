@@ -71,7 +71,8 @@ DEFAULT_THRESHOLDS: dict[str, dict[str, Any]] = {
     # V1. The first round is fresh: it differences against a reset rather than against a previous
     # round, so it fires at roughly half the steady rate. The last differences the final data
     # parity against the last stabilizer round, which is quieter than a stabilizer round, not
-    # louder. Measured on corrected IBM Fez repetition-code memory runs, d5 r5 to d11 r11:
+    # louder. Measured on the corrected ibm_fez records of Samuel Stein's public IBM
+    # repetition-code release (Zenodo doi:10.5281/zenodo.20768087), d5 r5 to d11 r11:
     # first-round rate 0.052 to 0.083 against steady medians 0.099 to 0.145, ratios 0.52 to 0.57;
     # the same records read in stored order give first-round 0.192 to 0.277, ratios 1.94 to 1.91.
     #
@@ -84,15 +85,15 @@ DEFAULT_THRESHOLDS: dict[str, dict[str, Any]] = {
     # they were measured on and nothing here is tuned to that deposit; the check abstains there
     # instead.
     "round_profile": {"first_round_max_ratio": 0.9, "last_round_max_ratio": 1.5},
-    # V2. Asymmetric, and only the mirrored signature is a finding. Measured on corrected IBM Fez
-    # repetition-code memory runs: the round the corrected loader treats as last mismatches 0.077
-    # to 0.111 of the time against 0.202 to 0.283 for the round it treats as first, a ratio of
-    # 0.38 to 0.39; reading them in stored order inverts it to 2.5 to 2.6. The earlier rule, which
-    # also required the last round to mismatch at most half as often as the first, fails a correct
-    # record whose chains are all prepared in the ground state: such chains accumulate no endpoint
-    # asymmetry and give two near equal rates, measured at 0.094 against 0.110. The pooled Fez
-    # record only passed that rule because its prepared-one chains dominate. So the band 0.8 to
-    # 1.25 is reported as carrying no power rather than treated as a fault.
+    # V2. Asymmetric, and only the mirrored signature is a finding. Measured on the same corrected
+    # ibm_fez records of the Stein release: the round the corrected loader treats as last
+    # mismatches 0.077 to 0.111 of the time against 0.202 to 0.283 for the round it treats as
+    # first, a ratio of 0.38 to 0.39; reading them in stored order inverts it to 2.5 to 2.6. The
+    # earlier rule, which also required the last round to mismatch at most half as often as the
+    # first, fails a correct record whose chains are all prepared in the ground state: such chains
+    # accumulate no endpoint asymmetry and give two near equal rates, measured at 0.094 against
+    # 0.110. The pooled Fez record only passed that rule because its prepared-one chains dominate.
+    # So the band 0.8 to 1.25 is reported as carrying no power rather than treated as a fault.
     "endpoint_agreement": {"max_ratio": 2.0, "no_power_low": 0.8, "no_power_high": 1.25},
     # V3. Below the floor the detectors are dead or the record is all one value; above the ceiling
     # they are coin flips, which is what unframed readouts look like. Measured: 0.133 on the QuEra
@@ -115,9 +116,9 @@ DEFAULT_THRESHOLDS: dict[str, dict[str, Any]] = {
     # refuses to run at all below 30 failures in an arm, where no one-sided comparison is possible.
     "time_mirror_control": {"n_sigma": 3.0, "min_failures": 30, "max_shots": 20000, "seed": 0},
     # V6. Relaxation accumulates, so on chains prepared in the excited state the stored readout
-    # rate climbs round on round. Measured on corrected IBM Fez repetition-code memory runs: the
-    # smallest round-to-round step is +0.008 (d11 r11), +0.017 (d9 r9), +0.049 (d5 r5); read in
-    # stored order the same records step down by 0.086 to 0.098. The tolerance sits between.
+    # rate climbs round on round. Measured on the corrected ibm_fez records of the Stein release:
+    # the smallest round-to-round step is +0.008 (d11 r11), +0.017 (d9 r9), +0.049 (d5 r5); read
+    # in stored order the same records step down by 0.086 to 0.098. The tolerance sits between.
     "state_profile": {"min_step": -0.005},
     # V7. No default expectation: pass one in as {"dem_fingerprint": {"expected": {...}}} and the
     # check becomes critical, leave it out and the fingerprint is recorded.

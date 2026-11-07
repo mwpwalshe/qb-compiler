@@ -1,0 +1,95 @@
+{
+  "about": "Every tendril qb-compiler lists. Built-in rows are generated from the code and a test keeps them in step. To add yours, publish a package with a qb_compiler.tendrils entry point, run `qbc tendril check <name> --sign --out receipt.json`, and open a pull request adding one row with origin plugin:<your package> and the receipt's sha256.",
+  "tendrils": [
+    {
+      "name": "ibm",
+      "kind": "hardware",
+      "maintainer": "qb-compiler maintainers",
+      "label": "validated",
+      "validated_until": "2026-06-12",
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "ionq",
+      "kind": "hardware",
+      "maintainer": "qb-compiler maintainers",
+      "label": "UNVALIDATED",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "iqm",
+      "kind": "hardware",
+      "maintainer": "qb-compiler maintainers",
+      "label": "UNVALIDATED",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "quantinuum",
+      "kind": "hardware",
+      "maintainer": "qb-compiler maintainers",
+      "label": "UNVALIDATED",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "rigetti",
+      "kind": "hardware",
+      "maintainer": "qb-compiler maintainers",
+      "label": "UNVALIDATED",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "openqasm2",
+      "kind": "format",
+      "maintainer": "qb-compiler maintainers",
+      "label": "fixture-only",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "openqasm3",
+      "kind": "format",
+      "maintainer": "qb-compiler maintainers",
+      "label": "fixture-only",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "qiskit",
+      "kind": "format",
+      "maintainer": "qb-compiler maintainers",
+      "label": "fixture-only",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "cirq",
+      "kind": "format",
+      "maintainer": "qb-compiler maintainers",
+      "label": "fixture-only",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    },
+    {
+      "name": "pennylane",
+      "kind": "format",
+      "maintainer": "qb-compiler maintainers",
+      "label": "fixture-only",
+      "validated_until": null,
+      "receipt_sha256": null,
+      "origin": "builtin"
+    }
+  ]
+}

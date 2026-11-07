@@ -470,6 +470,13 @@ _SCHEMA_CLAIMS: dict[str, tuple[list[str], list[str]]] = {
         ["the result of a decoder-input audit on the supplied detector error model"],
         ["no claim that a decode on that model is faithful"],
     ),
+    "qb.tendril_conformance.v1": (
+        ["which conformance checks a tendril's own declaration passed or failed"],
+        [
+            "no claim that the adapter works on hardware beyond any validation record it names",
+            "no claim that a listed price is current after the date it was read",
+        ],
+    ),
 }
 
 

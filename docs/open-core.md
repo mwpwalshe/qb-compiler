@@ -24,6 +24,7 @@ preflight bundle, Result Passport). Prove value for free, charge only once teams
 | Calibration-aware compilation + receipt | `qbc compile --receipt` |
 | Mirror-circuit verification | `qbc verify` |
 | **Cross-vendor fidelity-per-dollar ranking** | `qbc when` (text or `--json` advice receipt) |
+| **Tendrils: every vendor, format and toolkit in one declared shape, with a conformance check you sign with your own key** | `qbc tendrils` / `qbc tendril check` |
 | **ObservableGate: QEC DEM correctness audit** | `qbc dem-audit` (text or `--json` receipt) |
 | **Observable-preserving DEM canonicalization** | `qbc dem-canonicalize` |
 | CI-safe exit codes (0 / 1 / 2) | all of the above |

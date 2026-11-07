@@ -44,11 +44,19 @@ print(residual(spec, {"prediction": served}, my_features))
 
 ## Two traps, with the numbers each one leaves behind
 
-### Rounds stored last round first
+Both were measured on public records, and neither is a fault in the data. Each is a gap between
+how a release lays its files out and what a reader assumes about them.
 
-**Where:** IBM Fez repetition-code memory runs. The `c_syndrome_<chain>` register stores its
-rounds in reverse, so reshaping it to `(shots, rounds, sites)` and using it as it comes runs the
-experiment backwards in time.
+### Rounds listed last round first
+
+**Where:** the public IBM repetition-code release of Samuel Stein
+([Zenodo 20768087](https://doi.org/10.5281/zenodo.20768087), CC BY 4.0), its `ibm_fez` records.
+The circuits fill each `c_syndrome_<chain>` register in index order, round after round, and
+`bitstrings.json` lists every register's bits highest index first, which is the order Qiskit
+prints a classical register in. Read as listed, the last round comes first, so reshaping the
+register to `(shots, rounds, sites)` and using it as it comes runs the experiment backwards in
+time. The data register is listed the same way, so the sites of each round and the data qubits
+are both read from the far end of the chain, which is consistent and needs no fix.
 
 **Symptom:** the stored round 0 detector rate comes out at **0.19 to 0.28** across d5 r5 to
 d11 r11, where the corrected orientation gives **0.05 to 0.08**. A first round differences
@@ -85,13 +93,17 @@ means nothing.
 
 **Caught by:** `event_density`, `type_consistency`.
 
-Cite the release as the publisher asks:
+Cite the releases as their publishers ask:
+
+> Samuel Stein, Calibration-Conditioned FiLM Decoders for Low-Latency Decoding of Quantum Error
+> Correction Evaluated on IBM Repetition-Code Experiments - Datasets, Zenodo, 2026,
+> doi:10.5281/zenodo.20768087, CC BY 4.0.
 
 > QuEra Computing, surface code dataset, Zenodo record 15685795. Cite the record and the paper it
 > accompanies, both named on the record page.
 
 Nothing is redistributed by this package. `qbc corpus verify quera-surface-code <your copy>`
-checks the archive against a pinned digest first.
+checks the QuEra archive against a pinned digest first.
 
 ## The eight checks
 
@@ -145,14 +157,14 @@ stating here because they were set against real records rather than picked:
   0.947 at round 0 but 0.228 to 0.901 at round 3, and nine of them sit inside [0.2, 0.8] on a
   record that is correctly built. None sit inside [0.3, 0.7]. The unframed construction on the
   same record gives 0.487 to 0.633, every one inside the band.
-* `state_profile` allows a round-to-round fall of **0.005**. On corrected IBM Fez records the
-  smallest step up is +0.008 at d11 r11, +0.017 at d9 r9 and +0.049 at d5 r5; read in stored
-  order the same records step down by 0.086 to 0.098.
+* `state_profile` allows a round-to-round fall of **0.005**. On the corrected `ibm_fez` records
+  of the Stein release the smallest step up is +0.008 at d11 r11, +0.017 at d9 r9 and +0.049 at
+  d5 r5; read in stored order the same records step down by 0.086 to 0.098.
 * `endpoint_agreement` fails only above **2.0x**, and reports no power between 0.8x and 1.25x. An
   earlier rule also required the last round to mismatch at most half as often as the first, which
   fails a correct record whose chains are all prepared in the ground state: those accumulate no
-  asymmetry between the endpoints, and measure 0.094 against 0.110. The pooled IBM Fez record
-  passed that rule only because its prepared-one chains dominate it.
+  asymmetry between the endpoints, and measure 0.094 against 0.110. The pooled `ibm_fez` record
+  of the Stein release passed that rule only because its prepared-one chains dominate it.
 
 Override one field of one check and the rest keep their defaults:
 
@@ -173,8 +185,9 @@ beats.
 
 **It does not catch a syndrome storage order fault**, which is what its name might suggest.
 Detectors rebuilt from reversed stored rounds are not the reverse of the detectors built from the
-correct ones, so the two operations are different. Reversing the detector axis of a corrected
-IBM Fez d11 r11 record moves the logical error rate from 1.434 percent to 1.477, well inside
+correct ones, so the two operations are different. Reversing the detector axis of the corrected
+d11 r11 `ibm_fez` record of the Stein release moves the logical error rate from 1.434 percent to
+1.477, well inside
 noise, and the control passes on the corrected record, on the stored-order record, and on one
 deliberately reversed. Storage order is caught by `round_profile`, `endpoint_agreement` and
 `state_profile`, which is why three checks look at it from three directions.
@@ -270,7 +283,7 @@ nothing is redistributed.
 
 | variable | points at |
 |---|---|
-| `QB_RECORD_DATA` | a directory holding `ibm_fez/`, which holds the `d<d>_r<r>` regime directories |
+| `QB_RECORD_DATA` | a directory holding `ibm_fez/`, which holds the `d<d>_r<r>` regime directories: `ibm_fez.tar.gz` of the Stein release (Zenodo 20768087), unpacked |
 | `QB_QUERA_ZIP` | the QuEra archive as the publisher serves it. Defaults to `$QB_RECORD_DATA/quera_surface_code.zip` |
 | `QB_QUERA_VENDOR` | the decoding framework published with that dataset, the directory holding `memory.py` and `noise_model.py` |
 | `QB_CAT_DATA` | the published AWS cat qubit repetition-code deposit. Defaults to `~/qec_public_data/aws_cat_2025/data_upload` |

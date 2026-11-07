@@ -5,6 +5,58 @@ All notable changes to [qb-compiler](https://qubitboost.io/compiler), the open-s
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 - 2026-11-08
+
+0.13.3 below was prepared and not published on its own. Everything in it ships in 0.14.0.
+
+```
+ADDED
+- tendrils           every vendor, format and toolkit qb-compiler reaches is
+                     declared in one shape: what it supports, its dated price
+                     rows, its calibration source and its label. built in:
+                     ibm, ionq, iqm, quantinuum, rigetti, openqasm2,
+                     openqasm3, qiskit, cirq, pennylane. other packages add
+                     their own through the qb_compiler.tendrils entry point
+                     group, without changing this package.
+- qbc tendrils       lists them, with whether a dated validation record covers
+                     today. a record covers 90 days. the labels are the ones
+                     qbc when prints.
+- qbc tendril check  the conformance check on one tendril, or on a JSON
+                     declaration with --file. every check is named and says
+                     what it found. --sign signs the receipt with the
+                     submitter's key. exit 0 conforms, 2 does not, 3 could
+                     not run. built-in formats also send a GHZ-3 circuit
+                     through and back.
+- ibm record         the ibm validated label now names the job it rests on,
+                     d6qknvfr88ds73dch6r0 on ibm_fez, committed 2026-03-14,
+                     and a test checks its sha256. the listing shows that
+                     record expired on 2026-06-12.
+- TENDRILS.json      the list, with a test that keeps the built-in rows in
+                     step with the code.
+```
+
+## 0.13.3 - prepared 2026-10-04, shipped in 0.14.0
+
+```
+FIXED
+- record attribution the IBM Fez records the loader reads and the checks were
+                     measured on are Samuel Stein's public release, Zenodo
+                     doi:10.5281/zenodo.20768087, CC BY 4.0. they are not
+                     ours. the loader said they were not a public dataset;
+                     it now names the release, and the docs, the CLI help
+                     and the record metadata cite it. the reversed rounds
+                     are Qiskit's bit order, highest bit first, not a fault
+                     in the release. no number and no check changes.
+ADDED
+- qbc hello          prints how to tell us you are running it on real data:
+                     the Discussions page and an address. sends nothing.
+CHANGED
+- README             the front page now leads with what 0.13 added, the
+                     record checks and the dated prices, with the install
+                     line that carries the record extra.
+- dependabot         one grouped pull request a month instead of a queue.
+```
+
 ## 0.13.2 - 2026-09-18
 
 0.13.0 was tagged and never published. 0.13.1 was published and withdrawn the same day. 0.13.2 is

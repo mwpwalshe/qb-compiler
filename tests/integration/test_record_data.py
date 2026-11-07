@@ -8,7 +8,9 @@ and nothing downloads.
 variable              what it points at
 ===================== ==========================================================================
 ``QB_RECORD_DATA``    a directory holding ``ibm_fez/``, which holds the ``d<d>_r<r>`` regime
-                      directories of an IBM Fez repetition-code memory run
+                      directories: ``ibm_fez.tar.gz`` of Samuel Stein's public IBM
+                      repetition-code release, unpacked (Zenodo doi:10.5281/zenodo.20768087,
+                      CC BY 4.0)
 ``QB_QUERA_ZIP``      the QuEra surface-code archive as the publisher serves it. Defaults to
                       ``$QB_RECORD_DATA/quera_surface_code.zip``
 ``QB_QUERA_VENDOR``   the decoding framework published with that dataset, the directory holding

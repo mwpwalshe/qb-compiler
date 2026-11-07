@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Loader for IBM Fez repetition-code memory runs, with the round-order trap handled.
+"""Loader for the IBM repetition-code memory records of Samuel Stein's public release.
+
+The records are a public dataset: Samuel Stein, "Calibration-Conditioned FiLM Decoders for
+Low-Latency Decoding of Quantum Error Correction Evaluated on IBM Repetition-Code Experiments -
+Datasets", Zenodo, 2026, doi:10.5281/zenodo.20768087, licensed CC BY 4.0. The ``ibm_fez`` records
+come in ``ibm_fez.tar.gz`` of that record, and the ibm_kingston and ibm_pittsburgh archives share
+the layout. Nothing from the release is redistributed here: this reads the layout of a copy you
+fetched. Cite the record if you use it.
 
 Layout this reads: one directory per regime, named ``d{d}_r{rounds}``, holding one or more
 ``job_*`` directories. Each job has an ``info.json`` recording ``d``, ``rounds``, ``basis``,
@@ -8,15 +15,20 @@ submitted circuit with ``metadata.logical_state`` and ``per_shot_cregs``. The re
 pairs: one ``c_data_<chain>`` holding the final data readout and one ``c_syndrome_<chain>``
 holding every stabilizer round, for each chain packed into the circuit.
 
-The trap
---------
-``c_syndrome_<chain>`` stores its rounds **last round first**. Reshaping the register to
+The bit order
+-------------
+The circuits fill ``c_syndrome_<chain>`` in index order, round after round, and
+``per_shot_cregs`` lists each register's bits **highest index first**, which is the order Qiskit
+prints a classical register in. Read as listed, the rounds come **last round first**. That is
+Qiskit's convention, not a fault in the release. Reshaping the register to
 ``(shots, rounds, d - 1)`` and using it as it comes puts the run backwards in time. Nothing errors.
 The detectors build, the decoder runs, and the logical error rate comes out roughly two to seven
 times too high: measured on these records, 3.83 percent against 1.62 at d5 r5, and 9.69 against
 1.43 at d11 r11.
 
-``reverse_rounds=True``, the default, reverses the round axis and is what these records need.
+``reverse_rounds=True``, the default, reverses the round axis and is what these records need. The
+data register is listed the same way, so the sites of every round and the data qubits are both
+read from the far end of the chain, and the record stays consistent.
 ``reverse_rounds=False`` is kept so the mirrored orientation can be measured side by side, which
 is what the checks in :mod:`qb_compiler.record.validate` were calibrated against. It is not a
 mode anyone should decode in.
@@ -25,9 +37,6 @@ What comes back is a :class:`~qb_compiler.record.types.RecordSpec` with the dete
 one group per chain, and the raw stabilizer block and final parity that the endpoint and state
 checks need. The raw block is returned in loader order, so it is reversed too when
 ``reverse_rounds`` is on.
-
-These are not a public dataset and nothing is redistributed here. This reads a layout; where a
-copy of such a record comes from is the caller's business.
 """
 
 from __future__ import annotations
@@ -73,7 +82,7 @@ def load(
     basis: str = "Z",
     reverse_rounds: bool = True,
 ) -> RecordSpec:
-    """Load one regime of an IBM Fez repetition-code memory run.
+    """Load one regime of an IBM repetition-code memory record in the Stein release layout.
 
     Parameters
     ----------
@@ -84,7 +93,7 @@ def load(
     basis :
         Preparation basis, matched against ``info.json``.
     reverse_rounds :
-        Reverse the stored round order. True is correct for these records; see the module
+        Reverse the listed round order. True is correct for these records; see the module
         docstring.
 
     Returns
@@ -166,9 +175,10 @@ def load(
             "loader": "ibm_fez_repetition",
             "loader_version": LOADER_VERSION,
             "source": (
-                "layout of the IBM Fez repetition-code memory runs collected by QubitBoost "
-                "(OpenQASM 3 circuits, one c_data_<chain> and one c_syndrome_<chain> register per "
-                "chain, info.json with d, rounds, basis, logical_states, shots, n_chains)"
+                "layout of the IBM repetition-code memory records in Samuel Stein's public "
+                "release, Zenodo doi:10.5281/zenodo.20768087, CC BY 4.0 (OpenQASM 3 circuits, one "
+                "c_data_<chain> and one c_syndrome_<chain> register per chain, info.json with d, "
+                "rounds, basis, logical_states, shots, n_chains)"
             ),
             "d": int(d),
             "rounds": int(r),
@@ -176,15 +186,16 @@ def load(
             "reverse_rounds": bool(reverse_rounds),
             "observable": "data qubit 0",
             "n_chains": len(set(groups)),
-            # These runs reset the ancillas before the first stabilizer round, so that round
-            # differences against a prepared value and fires below the steady rate: measured 0.52
-            # to 0.57 times the steady median across d5 r5 to d11 r11 in the corrected
-            # orientation. The round profile check runs on this platform because of that.
+            # The release's circuits reset the ancillas before the first stabilizer round, so that
+            # round differences against a prepared value and fires below the steady rate: measured
+            # 0.52 to 0.57 times the steady median across d5 r5 to d11 r11 of its ibm_fez records
+            # in the corrected orientation. The round profile check runs on this platform because
+            # of that.
             FIRST_LAYER_PREMISE: {
                 "source": (
-                    "corrected IBM Fez repetition-code memory runs, d5 r5 to d11 r11: first-round "
-                    "rate 0.052 to 0.083 against steady medians 0.099 to 0.145, ratios 0.52 to "
-                    "0.57"
+                    "corrected ibm_fez records of the Stein release (Zenodo "
+                    "doi:10.5281/zenodo.20768087), d5 r5 to d11 r11: first-round rate 0.052 to "
+                    "0.083 against steady medians 0.099 to 0.145, ratios 0.52 to 0.57"
                 )
             },
         },

@@ -3,8 +3,9 @@
 
 Three of them:
 
-* :mod:`~qb_compiler.record.loaders.ibm_fez_repetition` reads the layout of IBM Fez
-  repetition-code memory runs, handling the stored round order.
+* :mod:`~qb_compiler.record.loaders.ibm_fez_repetition` reads the layout of the IBM
+  repetition-code records in Samuel Stein's public release (Zenodo doi:10.5281/zenodo.20768087,
+  CC BY 4.0), handling their bit order.
 * :mod:`~qb_compiler.record.loaders.quera_surface` reads the QuEra surface-code release through
   the decoding framework published with it.
 * :mod:`~qb_compiler.record.loaders.generic_npz` reads and writes the ``.npz`` contract, which is

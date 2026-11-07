@@ -37,6 +37,31 @@ class TestDoctor:
         assert "backends configured" in result.output
 
 
+# ── qbc hello ───────────────────────────────────────────────────────
+
+
+class TestHello:
+    def test_prints_both_routes_and_exits_clean(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["hello"])
+        assert result.exit_code == 0
+        assert "github.com/mwpwalshe/qb-compiler/discussions" in result.output
+        assert "mike@qubitboost.io" in result.output
+
+    def test_says_it_reports_nothing_back(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["hello"])
+        assert "reports nothing back to us" in result.output
+
+    def test_opens_no_socket(self, runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
+        import socket
+
+        def refuse(*args: object, **kwargs: object) -> None:
+            raise AssertionError("qbc hello must not touch the network")
+
+        monkeypatch.setattr(socket.socket, "connect", refuse)
+        result = runner.invoke(cli, ["hello"])
+        assert result.exit_code == 0
+
+
 # ── qbc preflight ───────────────────────────────────────────────────
 
 

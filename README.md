@@ -45,6 +45,59 @@ compiled = compiler.compile(circuit)
 
 ---
 
+## 0.14: tendrils
+
+Every vendor, format and toolkit qb-compiler can reach is now a tendril, and each one declares the
+same things: what it supports, where its prices come from, where its calibration comes from, and
+how far its numbers have been checked on real hardware.
+
+```bash
+qbc tendrils             # every tendril, its label, and whether a validation record covers today
+qbc tendril check ibm    # the conformance check, with a receipt
+```
+
+The labels are the ones `qbc when` prints. `validated` needs a named record of a real job: date,
+backend, job id and the sha256 of the result. A record covers 90 days and the listing says when it
+lapsed, so IBM today reads `validated`, record `expired` since 2026-06-12.
+
+Anyone can add a tendril without changing qb-compiler. Register an entry point in the
+`qb_compiler.tendrils` group, run `qbc tendril check <name> --sign`, and the receipt is signed with
+your key, not ours. See [docs/tendrils.md](docs/tendrils.md).
+
+## 0.13: check the record before you decode it
+
+A wrong number should never reach your results without something telling you. 0.13 closes two
+places it could get through.
+
+**Wrong QEC data.** If a QEC dataset is put together wrong, with the rounds in the wrong order for
+example, the decoder still runs and still gives you a logical error rate. It is just the wrong one.
+`qbc record validate` runs eight checks on how the record was built and prints what it found,
+before you decode anything. In Samuel Stein's public IBM Fez repetition code release
+([Zenodo 20768087](https://doi.org/10.5281/zenodo.20768087)) each register is listed highest bit
+first, the order Qiskit prints it in, so the rounds come last round first. Read them as they come
+and the logical error rate is 9.69 percent where the correctly built record gives 1.43 (d11, r11),
+and nothing errors. Both traps, each measured on a public hardware record, with the numbers each
+one leaves behind, are in [docs/record.md](docs/record.md).
+
+**Wrong prices.** qb-compiler ranks backends by what a run will cost you. The price table was
+re-checked against the vendor pages, the cost tables show the date each price was checked, and
+`qbc pricing verify` checks a signed price file offline against a public key that ships in the
+package.
+
+```bash
+pip install -U "qb-compiler[record]"
+qbc record validate --help
+```
+
+**Running it on real data?** Tell us what it caught, or what it missed. Open a thread in
+[Discussions](https://github.com/mwpwalshe/qb-compiler/discussions) or write to mike@qubitboost.io.
+The first ten labs that do get a free evaluation of the QubitBoost assurance tools on their own
+data.
+`qbc hello` prints this note. qb-compiler reports nothing back to us, so this is the only way we
+find out.
+
+---
+
 ## v0.7: trust the number
 
 Every estimate now tells you how much to trust it, the tool keeps receipts, and you can check it
@@ -151,7 +204,7 @@ $ qbc doctor
 
 qbc doctor
 
-✔  qb-compiler 0.9.0
+✔  qb-compiler 0.13.3
 ✔  Python 3.11.14
 ✔  Qiskit 1.4.5
 ✔  IBM credentials configured (2 account(s))
@@ -413,6 +466,9 @@ pip install "qb-compiler[dev]"
 | `qbc verify-receipt <file>` | Check a receipt signature offline against a public key |
 | `qbc corpus list \| show \| verify` | Public QEC datasets, and whether your copy matches the published bytes |
 | `qbc record validate \| residual \| load-fez` | How a QEC record was built, and what a feature block adds over a decoder |
+| `qbc hello` | How to tell us you are running it on real data. Prints a note, sends nothing |
+| `qbc tendrils` | Every vendor, format and toolkit qb-compiler reaches, its label, and whether a validation record covers today |
+| `qbc tendril check <name>` | The conformance check on one tendril, or on a declaration with `--file`; `--sign` signs the receipt with your key |
 | `qbc pricing show \| verify` | Vendor prices with their billing model, and a signed feed checked offline |
 | `qbc when <circuit>` | Rank backends by predicted fidelity per dollar |
 | `qbc dem-audit <file>` | QEC decoder-input correctness audit |
