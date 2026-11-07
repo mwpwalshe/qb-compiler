@@ -17,8 +17,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev,ising]"
@@ -30,8 +30,8 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           # Typecheck on the OLDEST supported interpreter, matching requires-python. mypy takes
           # its target from the interpreter it runs under (tool.mypy sets no python_version), so
@@ -50,8 +50,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
         qiskit-version: ["1.4", "2.3"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -67,7 +67,7 @@ jobs:
             --cov-report=xml:coverage.xml
       - name: Upload coverage
         if: matrix.python-version == '3.12' && matrix.qiskit-version == '2.0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage.xml
